@@ -1,0 +1,8 @@
+flask
+SQLAlchemy
+Flask-SQLAlchemy
+Jinja2
+WTForms
+Flask-WTF
+gunicorn
+itsdangerous
