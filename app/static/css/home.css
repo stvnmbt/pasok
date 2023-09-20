@@ -1,0 +1,94 @@
+.sidebar > * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body{
+    background-color: #800101;
+    min-height: 100vh;
+    font-family: 'Outfit', sans-serif;
+    
+}
+
+.sidebar {
+    position: absolute;
+    width: 22%; /*60px*/  
+    height: 100vh;
+    background: white;
+    /* overflow: hidden; */
+    transition: 0.5s;
+}
+/* .sidebar:hover{
+    width: 300px;
+} */
+
+.sidebar ul {
+    position: relative;
+    height: 100vh;
+}
+
+.sidebar ul li {
+    list-style: none;
+
+}
+
+.sidebar ul li:hover {
+    background: #f69a9a;
+}
+
+.sidebar ul li a {
+    position: relative;
+    display: flex;
+    white-space: nowrap;
+    text-decoration: none;
+}
+
+.sidebar ul li a .icon {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-width: 60px;
+    height: 60px;
+    font-size: 1.5em;
+    color: #800101;
+}
+
+.sidebar ul li a .text {
+    position: relative;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    font-size: 1em;
+    color: #800101;
+    text-transform: uppercase;
+    letter-spacing: 0.05cm;
+    
+}
+
+.navbar-brand {
+    color: #800101;
+}
+
+.nav-link {
+    color: #800101;
+}
+
+.container {
+    position: absolute;
+    margin: 10%;
+    margin-left: 27%;
+    background-color: aliceblue;
+    width: 70%;
+    height: 73%;
+    border-radius: 5px;
+}
+
+.Paragraph{
+    position: relative;
+    color: #fdd00f;
+    margin: 1% 0 0 27%;
+    font-size: 600%;
+    font-family: 'Lato', sans-serif;
+}
