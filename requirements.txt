@@ -1,9 +1,9 @@
-flask
-Flask-SQLAlchemy
-flask-login
-Flask-WTF
-Flask-Security-Too
+Flask
+Flask-Login
 Flask-Bcrypt
-FLask-Migrate
+Flask-WTF
+Flask-Mail
+Flask-Migrate
+Flask-SQLAlchemy
 Flask-Testing
 python-decouple
