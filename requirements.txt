@@ -1,9 +1,9 @@
-flask
-SQLAlchemy
-Flask-SQLAlchemy
-Jinja2
-WTForms
+Flask
+Flask-Login
+Flask-Bcrypt
 Flask-WTF
-gunicorn
-itsdangerous
-flask-nav
+Flask-Mail
+Flask-Migrate
+Flask-SQLAlchemy
+Flask-Testing
+python-decouple
