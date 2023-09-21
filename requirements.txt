@@ -7,3 +7,4 @@ Flask-Migrate
 Flask-SQLAlchemy
 Flask-Testing
 python-decouple
+python-dotenv
