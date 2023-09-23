@@ -2,42 +2,109 @@
 
 {% block content %}
 
-<div class="row">
-  <div class="col-md-4"></div>
-  <div class="col-md-4">
-    <main class="form-signin w-100 m-auto">
-      <form role="form" method="post" action="">
-        {{ form.csrf_token }}
-        <h1 class="h3 mb-3 fw-normal text-center">Please sign in</h1>
+<div class="container-fluid" style="background-color: black; padding: 0;">
+  <div class="row g-0" style="margin-right: 0; margin-left: 0;">
+    
+      
+      <!-- IMAGE CONTAINER BEGIN -->
+      <div class="col-lg-6 col-md-6 d-none d-md-block pup-image-container">
+        <div class="pup-image-container" style="background: linear-gradient(62deg, #800000, #8A1200,#9A2D00, #A94800, #E1A801);
+        background-size: cover;
+        height: 100vh;
+        position: relative;">
+            <div class="centered-text" style="position: absolute;
+              top: 50%;
+              left: 50%;
+              transform: translate(-50%, -50%);
+              text-align: center;"
+              >
+              <h1 style="font-size: 55px; color: #fff; font-family: roboto; font-weight: 700;">PASOK:<br>STUDENT<br> ATTENDANCE<br> TRACKER</h1>
+            </div>
+            <!-- Company Logo -->
+            <img src="..\static\images\PUP logo.png" width="120px" class="logo" style="position: absolute;
+            top: 20px;
+            left: 20px;">
+        </div>
+      </div>
+      <!-- IMAGE CONTAINER END -->
 
-        <div class="form-floating">
-          {{ form.email(placeholder="email", class="form-control mb-2") }}
-          {{ form.email.label }}
-            {% if form.email.errors %}
-              {% for error in form.email.errors %}
-                <div class="alert alert-danger" role="alert">
-                  {{ error }}
-                </div>
-              {% endfor %}
-            {% endif %}
-        </div>
-        <div class="form-floating">
-          {{ form.password(placeholder="password", class="form-control mb-2") }}
-          {{ form.password.label }}
-            {% if form.password.errors %}
-              {% for error in form.password.errors %}
-                <div class="alert alert-danger" role="alert">
-                  {{ error }}
-                </div>
-              {% endfor %}
-            {% endif %}
-        </div>
-        <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
-        <p class="text-center mt-3">New User? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
-      </form>
-    </main>
+      <!-- FORM CONTAINER BEGIN -->
+      {% block form_container %}
+      <div class="col-lg-6 col-md-6 pup-form-container"
+      style=
+        "background: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        position: relative;">
+
+        <div class="col-lg-9 col-md-12 col-sm-9 col-xs-12 pup-form"
+        style=
+          "display: flex;
+          flex-direction: column;
+          justify-content: center;
+          min-height: 100vh;">
+
+          <form role="form" method="post" action="">
+            {{ form.csrf_token }}
+            <div class="form-floating ">
+              {{ form.email(placeholder="email", class="form-control mb-2") }}
+              {{ form.email.label }}
+              {% if form.email.errors %}
+                {% for error in form.email.errors %}
+                  <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+            <div class="form-floating">
+              {{ form.password(placeholder="password", class="form-control mb-2") }}
+              {{ form.password.label }}
+                {% if form.password.errors %}
+                  {% for error in form.password.errors %}
+                    <div class="alert alert-danger" role="alert">
+                      {{ error }}
+                    </div>
+                  {% endfor %}
+                {% endif %}
+
+                <!-- eye i tag -->
+                <i class="fa-regular fa-eye-slash" id="toggleButton" onclick="togglePasswordVisibility()"
+                style=
+                  "position: absolute;
+                  top: 67%;
+                  right: 20px;
+                  transform: translateY(-50%);
+                  cursor: pointer;
+                  width: 25px;" >
+                </i>
+            </div>
+            <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+            <p class="text-center mt-3">New User? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
+          </form>
+        <div>
+      </div>
+      {% endblock %}
+      <!-- FORM CONTAINER END -->
+    
   </div>
-  <div class="col-md-4"></div>
-</div>
+  <script>
+    function togglePasswordVisibility() {
+        var passwordField = document.getElementById("password");
+        var toggleButton = document.getElementById("toggleButton");
+        
+        if (passwordField.type === "password") {
+            passwordField.type = "text";
+            toggleButton.classList.remove("fa-eye-slash");
+            toggleButton.classList.add("fa-eye");
+        } else {
+            passwordField.type = "password";
+            toggleButton.classList.remove("fa-eye");
+            toggleButton.classList.add("fa-eye-slash");
+        }
+    }
+</script>
 
 {% endblock %}
