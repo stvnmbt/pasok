@@ -1,3 +1,4 @@
+email-validator
 Flask
 Flask-Login
 Flask-Bcrypt
