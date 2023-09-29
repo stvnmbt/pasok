@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import EmailField, PasswordField
+from wtforms import EmailField, PasswordField, StringField
 from wtforms.validators import DataRequired, Email, EqualTo, Length
 
 from src.accounts.models import User
@@ -23,6 +23,15 @@ class RegisterForm(FlaskForm):
             DataRequired(),
             EqualTo("password", message="Passwords must match."),
         ],
+    )
+    first_name = StringField(
+        "First name", validators=[DataRequired(), Length(min=3, max=30)]
+    )
+    middle_name = StringField(
+        "Middle name (optional)"
+    )
+    last_name = StringField(
+        "Last name", validators=[DataRequired(), Length(min=3, max=30)]
     )
 
     def validate(self, extra_validators=None):
