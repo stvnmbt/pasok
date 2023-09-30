@@ -26,9 +26,9 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(150), unique=True, nullable=False) 
     password = db.Column(db.String(150), nullable=False)
-    #first_name = db.Column(db.String(150), nullable=False)
-    #middle_name = db.Column(db.String(150), nullable=True)
-    #last_name = db.Column(db.String(150), nullable=False)
+    first_name = db.Column(db.String(150), nullable=False)
+    middle_name = db.Column(db.String(150), nullable=True)
+    last_name = db.Column(db.String(150), nullable=False)
     #qr_data = db.Column(db.String(150), unique=True, nullable=True)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
     is_confirmed = db.Column(db.Boolean, nullable=False, default=False)
@@ -37,13 +37,13 @@ class User(UserMixin, db.Model):
     attendance = db.relationship('Attendance', back_populates='user')
 
     def __init__(
-        self, email, password, is_admin=False, is_confirmed=False, confirmed_on=None  #, first_name, middle_name, last_name, qr_data, attendance=[]
-    ): 
+        self, email, password, first_name, middle_name, last_name, is_admin=False, is_confirmed=False, confirmed_on=None
+    ):  # qr_data, attendance=[]
         self.email = email
         self.password = bcrypt.generate_password_hash(password)
-        #self.first_name = first_name
-        #self.middle_name = middle_name
-        #self.last_name = last_name
+        self.first_name = first_name
+        self.middle_name = middle_name
+        self.last_name = last_name
         #self.qr_data = qr_data
         self.created_on = datetime.now()
         self.is_admin = is_admin

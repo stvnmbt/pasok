@@ -19,7 +19,13 @@ accounts_bp = Blueprint("accounts", __name__)
 def register():
     form = RegisterForm(request.form)
     if form.validate_on_submit():
-        user = User(email=form.email.data, password=form.password.data)
+        user = User(
+            email=form.email.data,
+            password=form.password.data,
+            first_name=form.first_name.data,
+            middle_name=form.middle_name.data,
+            last_name=form.last_name.data,
+        )
         db.session.add(user)
         db.session.commit()
         token = generate_token(user.email)
