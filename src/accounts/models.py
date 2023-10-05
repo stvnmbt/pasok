@@ -4,7 +4,7 @@ from src import bcrypt, db
 from sqlalchemy import func, Enum
 import enum
 
-class StatusEnum(str, enum.Enum):
+class Status(enum.Enum):
     PRESENT = 'PRESENT'
     ABSENT = 'ABSENT'
     LATE = 'LATE'
@@ -13,7 +13,7 @@ class Attendance(db.Model):
     __tablename__ = "attendance"
 
     id = db.Column(db.Integer, primary_key=True)
-    attendance_status = db.Column(Enum(StatusEnum), nullable=False)
+    attendance_status = db.Column(Enum(Status), nullable=False)
     created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     #subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
@@ -24,7 +24,7 @@ class User(UserMixin, db.Model):
     __tablename__ = "user"
 
     id = db.Column(db.Integer, primary_key=True)
-    email = db.Column(db.String(150), unique=True, nullable=False) 
+    email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     first_name = db.Column(db.String(150), nullable=False)
     middle_name = db.Column(db.String(150), nullable=True)
@@ -37,8 +37,8 @@ class User(UserMixin, db.Model):
     attendance = db.relationship('Attendance', back_populates='user')
 
     def __init__(
-        self, email, password, first_name, middle_name, last_name, is_admin=False, is_confirmed=False, confirmed_on=None
-    ):  # qr_data, attendance=[]
+        self, email, password, first_name, middle_name, last_name, attendance, is_admin=False, is_confirmed=False, confirmed_on=None
+    ):  # qr_data
         self.email = email
         self.password = bcrypt.generate_password_hash(password)
         self.first_name = first_name
@@ -49,7 +49,7 @@ class User(UserMixin, db.Model):
         self.is_admin = is_admin
         self.is_confirmed = is_confirmed
         self.confirmed_on = confirmed_on
-        #self.attendance = Attendance()
+        self.attendance = Attendance()
 
     def __repr__(self):
         return f"<email {self.email}>"
