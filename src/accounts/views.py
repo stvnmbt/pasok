@@ -9,6 +9,9 @@ from src.accounts.token import confirm_token, generate_token
 from src.utils.decorators import logout_required
 from src.utils.email import send_email
 
+from qrcode import QRCode
+from io import BytesIO
+
 from .forms import LoginForm, RegisterForm
 
 accounts_bp = Blueprint("accounts", __name__)
@@ -28,6 +31,21 @@ def register():
         )
         db.session.add(user)
         db.session.commit()
+
+        # Generate and store a QR code for the user
+        qr = QRCode(
+            version=1,
+            error_correction=QRCode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+        qr.add_data(f"User ID: {user.id}\nName: {user.first_name} {user.last_name}")
+        qr.make(fit=True)
+        qr_code = qr.make_image(fill_color="black", back_color="white")
+        user.qr_code = qr_code.tobytes()
+        db.session.commit()
+
+        # Send confirmation email with QR code
         token = generate_token(user.email)
         confirm_url = url_for("accounts.confirm_email", token=token, _external=True)
         html = render_template("accounts/confirm_email.html", confirm_url=confirm_url)
