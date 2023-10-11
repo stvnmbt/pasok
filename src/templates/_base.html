@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>PASOK: A student attendance system using QR code</title>
+    <!-- meta -->
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <!-- styles -->
+    <!-- CSS only, search icons at: https://fontawesome.com/search?o=r&m=free -->
+    <link rel="stylesheet" href="..\static\fontawesome\css\all.min.css">
+    <link rel="stylesheet" href="..\static\css\bootstrap.min.css">
+    <link rel="stylesheet" href="..\static\css\styles.css">
+    <style>
+      @import url("../static/css/fonts.css");
+    </style>
+    {% block css %}{% endblock %}
+    <!-- scripts -->
+    <script defer src="..\static\js\jquery-3.7.1.min.js"></script>
+    <!-- JavaScript Bundle with Popper -->
+    <script defer src="..\static\js\bootstrap.bundle.min.js"></script>
+    {% block js %}{% endblock %}
+  </head>
+  <body>
+    <div class="container">
+      
+      <!-- messages -->
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="row ">
+        
+        <div class="col-md-4">
+          {% for category, message in messages %}
+          <!-- position of alerts -->
+          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert"
+          style="
+            position: fixed; 
+            top: 0px; 
+            left: 25%; 
+            width: 50%;
+            z-index:9999; 
+            border-radius:0px">
+           {{message}}
+           <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+          {% endfor %}
+        </div>
+        
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      <!-- child template -->
+      {% block content %}{% endblock %}
+
+    </div>
+  </body>
+</html>
