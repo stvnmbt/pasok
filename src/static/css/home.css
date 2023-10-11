@@ -2,28 +2,31 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-}
+} 
 
 body{
     background-color: #800101;
-    min-height: 100vh;
+    min-height: max-content;
+    min-width: max-content;
     font-family: 'Outfit', sans-serif;
+    overflow: hidden;
     
 }
 
 .sidebar {
     position: absolute;
-    width: 22%; /*60px*/  
+    width: 22%;  /*60px;*/
     height: 100vh;
     background: white;
-    /* overflow: hidden; */
+       /* overflow: hidden; */
     transition: 0.5s;
 }
+
 /* .sidebar:hover{
     width: 300px;
 } */
 
-.sidebar ul {
+ .sidebar ul {
     position: relative;
     height: 100vh;
 }
@@ -44,13 +47,13 @@ body{
     text-decoration: none;
 }
 
-.sidebar ul li a .icon {
+.sidebar ul li a .icon{
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
-    min-width: 60px;
-    height: 60px;
+    min-width: 80px;
+    height: 80px;
     font-size: 1.5em;
     color: #800101;
 }
@@ -75,7 +78,7 @@ body{
     color: #800101;
 }
 
-.container {
+/* .container {
     position: absolute;
     margin: 10%;
     margin-left: 27%;
@@ -83,12 +86,59 @@ body{
     width: 70%;
     height: 73%;
     border-radius: 5px;
-}
+} */
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 .Paragraph{
-    position: relative;
+    position: absolute;
     color: #fdd00f;
     margin: 1% 0 0 27%;
-    font-size: 600%;
+    font-size: 7vw; /*600  */
     font-family: 'Lato', sans-serif;
 }
+
+.custom-square {
+    width: 70%;
+    height: 130%;
+    background-color: white;
+    border-radius: 5px; /* Adjust the radius to control the roundness of corners*/
+    margin: 10%;
+    margin-left: 27%;
+} 
+
+a {
+    text-transform: uppercase;
+}
+
+.content-container {
+    position: relative;
+}
+
+/* Button styles */
+/* .button-in-front {
+    position: absolute;
+    z-index: 1; 
+    top: 275px; 
+    left: 450px;
+}Controls the stacking orderAdjust the positioning as needed */
+
+.dropdown-button {
+    position: relative;
+    z-index: auto; /* Control the stacking order */
+    bottom: 10.9375em;
+    left: 27.5em;
+}
+
+
