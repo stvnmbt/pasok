@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app
 from flask_login import current_user, login_required, login_user, logout_user
 
 from src import bcrypt, db
@@ -11,6 +11,10 @@ from src.utils.email import send_email
 
 from qrcode import QRCode
 from io import BytesIO
+from qrcode.constants import ERROR_CORRECT_L
+from qrcode import make
+from PIL import Image
+
 
 from .forms import LoginForm, RegisterForm
 
@@ -29,22 +33,25 @@ def register():
             middle_name=form.middle_name.data,
             last_name=form.last_name.data,
         )
+        
         db.session.add(user)
         db.session.commit()
 
-        # Generate and store a QR code for the user
+        # Generate and store a QR code for the user (using the newly created user)
         qr = QRCode(
             version=1,
-            error_correction=QRCode.constants.ERROR_CORRECT_L,
+            error_correction=ERROR_CORRECT_L,
             box_size=10,
             border=4,
         )
         qr.add_data(f"User ID: {user.id}\nName: {user.first_name} {user.last_name}")
         qr.make(fit=True)
         qr_code = qr.make_image(fill_color="black", back_color="white")
-        user.qr_code = qr_code.tobytes()
+        
+        user.qr_code = qr_code.tobytes()  # Include the QR code data here
         db.session.commit()
 
+        
         # Send confirmation email with QR code
         token = generate_token(user.email)
         confirm_url = url_for("accounts.confirm_email", token=token, _external=True)
@@ -100,6 +107,20 @@ def confirm_email(token):
     else:
         flash("The confirmation link is invalid or has expired.", "danger")
     return redirect(url_for("core.home"))
+
+
+
+
+def get_user_data():
+    user = User.query.get(current_user.id)  # Assuming you're using Flask-Login
+    return user
+
+from flask_login import login_required
+
+@accounts_bp.route('/view_qr_code')
+@login_required
+def view_qr_code():
+    return render_template('core/qr_code.html', user=current_user)
 
 
 @accounts_bp.route("/inactive")

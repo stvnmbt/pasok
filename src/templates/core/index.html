@@ -4,6 +4,9 @@
 <h1 class="text-center">Welcome {{current_user.email}}!</h1>
 <form action="{{ url_for('core.add') }}" method="post">
     <input type="submit" name="add_attendance"/>   
+
+     <!-- Add a button to navigate to qr_code.html -->
+     <a href="/view_qr_code" class="btn btn-primary">View QR Code</a>
 </form>
 
 <table>

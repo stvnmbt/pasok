@@ -1,0 +1,15 @@
+{% extends "_base.html" %}
+
+{% block content %}
+    <div class="container">
+        <h1>QR Code Test</h1>
+
+        <!-- Display the generated QR code image here -->
+        <img src="data:image/png;base64, {{ user.qr_code | safe }}" alt="User QR Code" />
+
+        <!-- Download button to save the QR code as a file -->
+        <a href="data:image/png;base64, {{ user.qr_code | safe }}" download="{{ user.first_name }}-{{ user.last_name }}_qr_code.png">
+            <button class="btn btn-primary">Download QR Code</button>
+        </a>
+    </div>
+{% endblock %}
