@@ -1,8 +1,10 @@
 import cv2
 from pyzbar.pyzbar import decode
 from threading import Thread
-from src import User, db, Attendance 
-from flask import Flask
+from src import User, db
+from flask import Flask, url_for
+from core.views import add_attendance
+import time
 
 class QRCodeDetector:
     def __init__(self):
@@ -22,10 +24,10 @@ class QRCodeDetector:
                 # Perform actions based on the decoded QR code data
                 user = User.query.filter_by(qr_code=data).first()
                 if user:
-                    # Mark the user as present for attendance
-                    attendance = Attendance(attendance_status='PRESENT', user_id=user.id)
-                    db.session.add(attendance)
-                    db.session.commit()
+                    add_attendance()
+                    print("Attendance added successfully!")
+
+            time.sleep(1)  # Add a delay of 1 second between frames
 
     def stop(self):
         self.stopped = True

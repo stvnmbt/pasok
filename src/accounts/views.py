@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app
+from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app, Response, send_file, make_response
 from flask_login import current_user, login_required, login_user, logout_user
 
 from src import bcrypt, db
@@ -10,13 +10,19 @@ from src.utils.decorators import logout_required
 from src.utils.email import send_email
 
 from qrcode import QRCode
-from io import BytesIO
+
+import io
+
 from qrcode.constants import ERROR_CORRECT_L
 from qrcode import make
 from PIL import Image
-
-
+#import base64  # accessing base64 module
+#import os
+import logging
 from .forms import LoginForm, RegisterForm
+
+logger = logging.getLogger("accounts_bp")
+logger.setLevel(logging.INFO)
 
 accounts_bp = Blueprint("accounts", __name__)
 
@@ -35,23 +41,13 @@ def register():
         )
         
         db.session.add(user)
+
+        # Generate and save the QR code for the user
+        generate_and_save_qr_code(user)
+
         db.session.commit()
 
-        # Generate and store a QR code for the user (using the newly created user)
-        qr = QRCode(
-            version=1,
-            error_correction=ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(f"User ID: {user.id}\nName: {user.first_name} {user.last_name}")
-        qr.make(fit=True)
-        qr_code = qr.make_image(fill_color="black", back_color="white")
-        
-        user.qr_code = qr_code.tobytes()  # Include the QR code data here
-        db.session.commit()
 
-        
         # Send confirmation email with QR code
         token = generate_token(user.email)
         confirm_url = url_for("accounts.confirm_email", token=token, _external=True)
@@ -66,6 +62,26 @@ def register():
 
     return render_template("accounts/register.html", form=form)
 
+
+def generate_and_save_qr_code(user):
+    qr = QRCode(
+        version=1,
+        error_correction=ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(f"{user.id}{user.first_name}{user.last_name}")
+    qr.make(fit=True)
+    qr_code_image = qr.make_image(fill_color="black", back_color="white")
+
+    # Convert the QR code image to bytes
+    qr_code_bytes = io.BytesIO()
+    qr_code_image.save(qr_code_bytes, format='PNG')
+    qr_code_bytes = qr_code_bytes.getvalue()
+
+    # Store the QR code bytes in the user's record
+    user.qr_code = qr_code_bytes
+    db.session.commit()
 
 @accounts_bp.route("/login", methods=["GET", "POST"])
 @logout_required
@@ -111,16 +127,47 @@ def confirm_email(token):
 
 
 
-def get_user_data():
-    user = User.query.get(current_user.id)  # Assuming you're using Flask-Login
-    return user
 
-from flask_login import login_required
+#put this sa core
 
 @accounts_bp.route('/view_qr_code')
 @login_required
 def view_qr_code():
-    return render_template('core/qr_code.html', user=current_user)
+    user = current_user
+
+    # Check if the user has a QR code
+    if user.qr_code:
+        # Render the HTML template and pass the QR code file path
+        return render_template('core/qr_code.html', qr_code_path=user.qr_code)
+
+    # Handle the case where the user doesn't have a QR code
+    return "QR code not found", 404
+
+
+@accounts_bp.route('/download_qr_code')
+@login_required
+def download_qr_code():
+    user = current_user
+
+    # Check if the user has a QR code
+    if user.qr_code:
+        # Get the QR code bytes from the user object
+        qr_code_bytes = user.qr_code
+
+        # Create a response object with the QR code data
+        response = make_response(qr_code_bytes)
+
+        # Set the appropriate headers for the response
+        response.headers.set('Content-Type', 'image/png')
+
+        # Set the filename as the first name and last name of the user
+        filename = f"{user.first_name}_{user.last_name}_qr_code.png"
+        response.headers.set('Content-Disposition', 'attachment', filename=filename)
+
+        return response
+        
+    # Handle the case where the user doesn't have a QR code
+    return "QR code not found", 404
 
 
 @accounts_bp.route("/inactive")

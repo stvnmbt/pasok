@@ -1,15 +1,19 @@
+<!-- core/qr_code.html -->
+
 {% extends "_base.html" %}
-
 {% block content %}
-    <div class="container">
-        <h1>QR Code Test</h1>
 
-        <!-- Display the generated QR code image here -->
-        <img src="data:image/png;base64, {{ user.qr_code | safe }}" alt="User QR Code" />
+    <title>QR Code</title>
+</head>
+<body>
+    <h1>QR Code</h1>
+    <img src="{{ qr_code_path }}" alt="QR Code">
 
-        <!-- Download button to save the QR code as a file -->
-        <a href="data:image/png;base64, {{ user.qr_code | safe }}" download="{{ user.first_name }}-{{ user.last_name }}_qr_code.png">
-            <button class="btn btn-primary">Download QR Code</button>
-        </a>
+    <div>
+        <a href="{{ url_for('accounts.view_qr_code') }}">View QR Code</a>
+        <a href="{{ url_for('accounts.download_qr_code') }}"><button type="button">Download QR Code</button></a>
     </div>
+    </div>
+</body>
+
 {% endblock %}
