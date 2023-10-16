@@ -7,6 +7,7 @@ import unittest
 import getpass
 from datetime import datetime
 
+from src.accounts.scanner import QRCodeDetector # Add this line
 
 cli = FlaskGroup(app)
 
@@ -45,6 +46,13 @@ def create_admin():
         except Exception:
             print("Couldn't create admin user.")
 
-
 if __name__ == "__main__":
+    # Create the Flask app
+    cli = FlaskGroup(app)
+
+    # Start the QR code detector
+    qr_code_detector = QRCodeDetector()
+    qr_code_detector.start()
+
+    # Run the Flask app with the added commands and QR code detector
     cli()
