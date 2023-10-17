@@ -86,8 +86,9 @@
             {% endif %}
         </div>
 
-        <button class="w-100 btn btn-lg btn-primary" type="submit">Sign up</button>
-        <p class="text-center mt-3">Already registered? <a href="{{ url_for('accounts.login') }}">Login now</a></p>
+        <button class="w-100 btn btn-lg btn-primary" type="submit" style="background-color: #800000; 
+            border-radius: 40px; margin-top: 20px; font-family: roboto; font-weight: 550; font-size: 17px;">Sign up</button>
+            <p class="text-center mt-3">Already registered? <a href="{{ url_for('accounts.login') }}">Login now</a></p>
       </form>
     </main>
   </div>
@@ -95,3 +96,5 @@
 </div>
 
 {% endblock %}
+
+
