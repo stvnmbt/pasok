@@ -1,43 +1,112 @@
 {% extends "_base.html" %}
 {% block content %}
+<html>
+<body>
+    {% include "navigation.html" %}
+    <!--navbar-->
+    <nav class="navbar navbar-expand-sm bg-light navbar-light " >
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#" style="margin-left: 20px; color: #800000; font-weight: 500;">PASOK</a>
+  
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+  
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="myAccountDropdown" role: "button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-right: 40px;">
+                My Account
+              </a>
+              <div class="dropdown-menu" aria-labelledby="myAccountDropdown">
+                <a class="dropdown-item" href="#">Profile</a>
+                <a class="dropdown-item" href="#">Settings</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{{ url_for('accounts.logout') }}">Log Out</a>
+                
+               
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  
+    <!-- Sidebar -->
+    <div class="container-fluid overflow-hidden">
+      <div class="row vh-100 overflow-auto">
+          <div class="col-12 col-sm-3 col-xl-2 px-sm-2 px-0 bg-light d-flex sticky-top">
+              <div class="d-flex flex-sm-column flex-row flex-grow-1 align-items-center align-items-sm-start px-3 pt-2 text-white">
+                  <ul class="nav flex-sm-column flex-row flex-nowrap flex-shrink-1 flex-sm-grow-0 flex-grow-1 mb-sm-auto mb-0 justify-content-center align-items-center align-items-sm-start" id="menu">
+                      <li class="nav-item mb-2">
+                          <a href="#" class="nav-link px-sm-0 px-2 ms-2">
+                            <i class="fa-light fa-house"></i><span class="ms-1 d-none d-sm-inline" style="color: black;">HOME</span>
+                          </a>
+                      </li>
+                      <li class="nav-item mb-2">
+                        <a href="#" class="nav-link px-sm-0 px-2 ms-2">
+                          <i class="lar la-file-alt" style="font-size: 32px; color:black;"></i><span class="ms-1 d-none d-sm-inline" style="color: black;">REAL TIME ATTENDANCE</span>
+                        </a>
+                      </li>
+                      <li class="nav-item mb-2">
+                        <a href="#" class="nav-link px-sm-0 px-2 ms-2">
+                          <i class="lar la-folder" style="font-size: 32px; color: black;"></i><span class="ms-1 d-none d-sm-inline" style="color: black;">STUDENT RECORDS</span>
+                        </a>
+                      </li>
+                      <li class="nav-item mb-2">
+                        <a href="#" class="nav-link px-sm-0 px-2 ms-2">
+                          <i class="las la-clipboard-list" style="font-size: 32px; color: black;"> </i><span class="ms-1 d-none d-sm-inline" style="color: black;">CLASS LIST</span>
+                        </a>
+                      </li>
+                  </ul>
+              </div>
+          </div>
+         
+          <!-- Basta sa loob ng box >< -->
+          
+          
+          <div class="col d-flex flex-column h-100" style="background-color: #800000;">
+            <main class="row">
+                <div class="col pt-4">
+                  <p style="font-size: 80px; color: #FFDF00; margin-left: 20px;">Overview</p>
+                </div>
+            </main>
+            <div class="container mt-8">
+              <div class="custom-square p-4" style="background-color: #F2F2F2;
+              border: 2px solid #CCCCCC;
+              border-radius: 10px; height: 700px;
+            ">
+              <div class="dropdown">
+                <button class="btn btn-warning dropdown-toggle dropdown-button" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Section
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="#">Item 1</a>
+                  <a class="dropdown-item" href="#">Item 2</a>
+                  <a class="dropdown-item" href="#">Item 3</a>
+                </div>
+                
+                <button class="btn btn-warning dropdown-toggle dropdown-button" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Subjects
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="#">Item 1</a>
+                  <a class="dropdown-item" href="#">Item 2</a>
+                  <a class="dropdown-item" href="#">Item 3</a>
+                </div>
+                <button class="btn btn-warning dropdown-toggle dropdown-button" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  Date
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <a class="dropdown-item" href="#">Item 1</a> 
+                  <a class="dropdown-item" href="#">Item 2</a>
+                  <a class="dropdown-item" href="#">Item 3</a>
+                </div>
+      </div>
+          </div>
+            </div>
+          </div>
+        </body>
 
-<h1 class="text-center">Welcome {{current_user.email}}!</h1>
-<form action="{{ url_for('core.add') }}" method="post">
-    <input type="submit" name="add_attendance"/>   
-</form>
-
-<table>
-    <tr>
-        <th>
-            attendance_id
-        </th>
-        <th>
-            user_id
-        </th>
-        <th>
-            created
-        </th>
-        <th>
-            attendance_status
-        </th>
-    </tr>
-    {% for attendance in attendance_records %}
-    <tr>
-        <td>
-            {{ attendance.id }}
-        </td>
-        <td>
-            {{ attendance.user_id }}
-        </td>
-        <td>
-            {{ attendance.created }}
-        </td>
-        <td>
-            {{ attendance.attendance_status }}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-
-
+</html>
 {% endblock %}
