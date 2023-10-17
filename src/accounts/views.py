@@ -14,6 +14,8 @@ from io import BytesIO
 
 from .forms import LoginForm, RegisterForm
 
+import re
+
 accounts_bp = Blueprint("accounts", __name__)
 
 
@@ -30,22 +32,15 @@ def register():
             last_name=form.last_name.data,
         )
         db.session.add(user)
+
+        # Assign faculty role if email domain is valid
+        email_domain = re.search(r"@(.*)$", user.email)
+        if email_domain.group(0) == "@inboxkitten.com": # change to "@pup.edu.ph" in production
+            user.is_faculty = True
+        
         db.session.commit()
 
-        # Generate and store a QR code for the user
-        qr = QRCode(
-            version=1,
-            error_correction=QRCode.constants.ERROR_CORRECT_L,
-            box_size=10,
-            border=4,
-        )
-        qr.add_data(f"User ID: {user.id}\nName: {user.first_name} {user.last_name}")
-        qr.make(fit=True)
-        qr_code = qr.make_image(fill_color="black", back_color="white")
-        user.qr_code = qr_code.tobytes()
-        db.session.commit()
-
-        # Send confirmation email with QR code
+        # Send confirmation email
         token = generate_token(user.email)
         confirm_url = url_for("accounts.confirm_email", token=token, _external=True)
         html = render_template("accounts/confirm_email.html", confirm_url=confirm_url)
@@ -55,6 +50,7 @@ def register():
         login_user(user)
 
         flash("A confirmation email has been sent via email.", "success")
+
         return redirect(url_for("accounts.inactive"))
 
     return render_template("accounts/register.html", form=form)
@@ -66,9 +62,12 @@ def login():
     form = LoginForm(request.form)
     if form.validate_on_submit():
         user = User.query.filter_by(email=form.email.data).first()
-        if user and bcrypt.check_password_hash(user.password, request.form["password"]):
+        if user and bcrypt.check_password_hash(user.password, request.form["password"]) and user.is_faculty:
             login_user(user)
-            return redirect(url_for("core.home"))
+            return redirect(url_for("core.home_faculty"))
+        elif user and bcrypt.check_password_hash(user.password, request.form["password"]) and not user.is_faculty:
+            login_user(user)
+            return redirect(url_for("core.home_student"))
         else:
             flash("Invalid email and/or password.", "danger")
             return render_template("accounts/login.html", form=form)
@@ -86,9 +85,13 @@ def logout():
 @accounts_bp.route("/confirm/<token>")
 @login_required
 def confirm_email(token):
-    if current_user.is_confirmed:
+    if current_user.is_confirmed and current_user.is_faculty:
         flash("Account already confirmed.", "success")
-        return redirect(url_for("core.home"))
+        return redirect(url_for("core.home_faculty"))
+    elif current_user.is_confirmed and not current_user.is_faculty:
+        flash("Account already confirmed.", "success")
+        return redirect(url_for("core.home_student"))
+
     email = confirm_token(token)
     user = User.query.filter_by(email=current_user.email).first_or_404()
     if user.email == email:
@@ -99,23 +102,32 @@ def confirm_email(token):
         flash("You have confirmed your account. Thanks!", "success")
     else:
         flash("The confirmation link is invalid or has expired.", "danger")
-    return redirect(url_for("core.home"))
+
+    if current_user.is_faculty:
+        return redirect(url_for("core.home_faculty"))
+    elif not current_user.is_faculty:
+        return redirect(url_for("core.home_student"))
 
 
 @accounts_bp.route("/inactive")
 @login_required
 def inactive():
-    if current_user.is_confirmed:
-        return redirect(url_for("core.home"))
+    if current_user.is_confirmed and current_user.is_faculty:
+        return redirect(url_for("core.home_faculty"))
+    elif current_user.is_confirmed and not current_user.is_faculty:
+        return redirect(url_for("core.home_student"))
     return render_template("accounts/inactive.html")
 
 
 @accounts_bp.route("/resend")
 @login_required
 def resend_confirmation():
-    if current_user.is_confirmed:
-        flash("Your account has already been confirmed.", "success")
-        return redirect(url_for("core.home"))
+    if current_user.is_confirmed and current_user.is_faculty:
+        flash("Your account has already been confirmed. Thank you!", "success")
+        return redirect(url_for("core.home_faculty"))
+    elif current_user.is_confirmed and not current_user.is_faculty:
+        flash("Your account has already been confirmed. Thank you!", "success")
+        return redirect(url_for("core.home_student"))
     token = generate_token(current_user.email)
     confirm_url = url_for("accounts.confirm_email", token=token, _external=True)
     html = render_template("accounts/confirm_email.html", confirm_url=confirm_url)
