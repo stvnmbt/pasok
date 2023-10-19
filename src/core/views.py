@@ -13,6 +13,8 @@ def home():
     attendance_records = Attendance.query.order_by(Attendance.created.desc())
     return render_template("core/index.html", attendance_records=attendance_records)
 
+
+
 @core_bp.route("/add", methods=["GET", "POST"])
 @login_required
 @check_is_confirmed

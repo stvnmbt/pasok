@@ -9,7 +9,7 @@ from src.accounts.token import confirm_token, generate_token
 from src.utils.decorators import logout_required
 from src.utils.email import send_email
 
-from qrcode import QRCode
+from qrcode import QRCode, ERROR_CORRECT_L
 
 import io
 
@@ -63,6 +63,7 @@ def register():
     return render_template("accounts/register.html", form=form)
 
 
+
 def generate_and_save_qr_code(user):
     qr = QRCode(
         version=1,
@@ -70,18 +71,23 @@ def generate_and_save_qr_code(user):
         box_size=10,
         border=4,
     )
-    qr.add_data(f"{user.id}{user.first_name}{user.last_name}")
-    qr.make(fit=True)
-    qr_code_image = qr.make_image(fill_color="black", back_color="white")
 
-    # Convert the QR code image to bytes
-    qr_code_bytes = io.BytesIO()
-    qr_code_image.save(qr_code_bytes, format='PNG')
-    qr_code_bytes = qr_code_bytes.getvalue()
+    # Check if user.id is not None before concatenating
+    if user.id is not None:
+        qr_data = f"{user.id}{user.first_name}{user.last_name}"
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        qr_code_image = qr.make_image(fill_color="black", back_color="white")
 
-    # Store the QR code bytes in the user's record
-    user.qr_code = qr_code_bytes
-    db.session.commit()
+        # Convert the QR code image to bytes
+        qr_code_bytes = io.BytesIO()
+        qr_code_image.save(qr_code_bytes, format='PNG')
+        qr_code_bytes = qr_code_bytes.getvalue()
+
+        # Store the QR code bytes in the user's record
+        user.qr_code = qr_code_bytes
+        db.session.commit()
+
 
 @accounts_bp.route("/login", methods=["GET", "POST"])
 @logout_required
