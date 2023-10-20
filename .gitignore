@@ -169,3 +169,7 @@ cython_debug/
 pyvenv.cfg
 .venv
 pip-selfcheck.json
+
+# migrations folder
+migrations/
+src/student_qrcode/
