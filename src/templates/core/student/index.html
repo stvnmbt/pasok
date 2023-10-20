@@ -1,0 +1,45 @@
+{% extends "_base.html" %}
+{% block content %}
+
+<h1 class="text-center">Welcome {{current_user.email}}!</h1>
+<form action="{{ url_for('core.add') }}" method="post">
+    <input type="submit" name="add_attendance"/>   
+
+     <!-- Add a button to navigate to qr_code.html -->
+     <a href="/view_qr_code" class="btn btn-primary">View QR Code</a>
+</form>
+
+<table>
+    <tr>
+        <th>
+            attendance_id
+        </th>
+        <th>
+            user_id
+        </th>
+        <th>
+            created
+        </th>
+        <th>
+            attendance_status
+        </th>
+    </tr>
+    {% for attendance in attendance_records %}
+    <tr>
+        <td>
+            {{ attendance.id }}
+        </td>
+        <td>
+            {{ attendance.user_id }}
+        </td>
+        <td>
+            {{ attendance.created }}
+        </td>
+        <td>
+            {{ attendance.attendance_status }}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}

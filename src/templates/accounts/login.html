@@ -2,8 +2,8 @@
 
 {% block content %}
 
-<div class="container-fluid" style="background-color: black; padding: 0;">
-  <div class="row g-0" style="margin-right: 0; margin-left: 0;">
+<div class="container-fluid" style="padding: 0;">
+  <div class="row g-x" style="margin-right: 0; margin-left: 0;">
     
       
       <!-- IMAGE CONTAINER BEGIN -->
@@ -49,7 +49,10 @@
           justify-content: center;
           min-height: 100vh;">
 
-          <form role="form" method="post" action="">
+  
+
+ 
+          <form role="form" method="post" action="" >
             {{ form.csrf_token }}
             <div class="form-floating ">
               {{ form.email(placeholder="email", class="form-control mb-2") }}
@@ -62,7 +65,7 @@
                 {% endfor %}
               {% endif %}
             </div>
-            <div class="form-floating">
+            <div class="form-floating" style="margin-top: 20px;">
               {{ form.password(placeholder="password", class="form-control mb-2") }}
               {{ form.password.label }}
                 {% if form.password.errors %}
@@ -77,15 +80,19 @@
                 <i class="fa-regular fa-eye-slash" id="toggleButton" onclick="togglePasswordVisibility()"
                 style=
                   "position: absolute;
-                  top: 67%;
+                  top: 55%;
                   right: 20px;
                   transform: translateY(-50%);
                   cursor: pointer;
                   width: 25px;" >
                 </i>
             </div>
-            <button class="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
-            <p class="text-center mt-3">No existing account? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
+            <button class="w-100 btn btn-lg btn-primary" type="submit" style="background-color: #800000; 
+            border-radius: 40px; margin-top: 30px; font-family: roboto; font-weight: 550; font-size: 17px;
+            margin-bottom: 30px;">LOGIN</button>
+             <hr class="my-2" >
+
+            <p class="text-center mt-3" style="margin-top: 20px;">No existing account? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
           </form>
         <div>
       </div>
