@@ -1,7 +1,7 @@
 import cv2
 from pyzbar.pyzbar import decode
 from threading import Thread
-from flask import Flask, render_template, redirect
+from flask import Flask, render_template, redirect, request
 from src import User
 from src.accounts.models import Attendance, Status
 from src.accounts import create_app
@@ -11,48 +11,37 @@ import requests
 app = create_app()
 
 class QRCodeDetector:
-    def __init__(self):
-        self.camera = cv2.VideoCapture(1)  # Use 0 for the default camera (you can change this if you have multiple cameras)
-        self.stopped = False
-
-    # Rest of your QRCodeDetector class
-
-    @staticmethod
-    def extract_user_info_from_qr_code(qr_code_content):
-        user_id = qr_code_content[:3]
-        first_name = qr_code_content[3:6]
-        last_name = qr_code_content[6:]
-
-        return user_id, first_name, last_name
 
     def start(self):
         Thread(target=self.detect_qr_codes, args=(), daemon=True).start()
 
     def detect_qr_codes(self):
+        camera_id = 1
+        window_name = 'OpenCV QR Code'
+        qcd = cv2.QRCodeDetector()
+        cap = cv2.VideoCapture(camera_id)
+
         with app.app_context():
             while True:
-                # Read the frame from the camera
-                _, frame = self.camera.read()
+                ret, frame = cap.read()
+                if ret:
+                    ret_qr, decoded_info, points, _ = qcd.detectAndDecodeMulti(frame)
+                    if ret_qr:
+                        for s, p in zip(decoded_info, points):
+                            if s:
+                                #print(s)
+                                # Decode the QR code data
+                                #data = obj.data.decode("utf-8")
 
-                # Decode QR codes from the frame
-                decoded_objects = decode(frame)
+                                # Process the decoded QR code data
+                                client = app.test_client()
+                                client.get('/core/add', headers=list(request.headers))
 
-                # Draw rectangles around the detected QR codes
-                for obj in decoded_objects:
-                    # Extract the QR code coordinates
-                    x, y, w, h = obj.rect
-
-                    # Draw a rectangle around the QR code
-                    cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-
-                    # Decode the QR code data
-                    data = obj.data.decode("utf-8")
-
-                    # Process the decoded QR code data
-                    self.process_decoded_qr_code(data)
-
-                # Display the frame with the detected QR codes
-                cv2.imshow("QR Code Detection", frame)
+                                color = (0, 255, 0)
+                            else:
+                                color = (0, 0, 255)
+                            frame = cv2.polylines(frame, [p.astype(int)], True, color, 8 )
+                    cv2.imshow(window_name, frame)
 
                 if cv2.waitKey(1) & 0xFF == ord("q"):  # Press 'q' to exit
                     break
@@ -68,7 +57,6 @@ class QRCodeDetector:
 
         # Extract user information from the QR code content
         qr_code_content = data
-        user_id, first_name, last_name = self.extract_user_info_from_qr_code(qr_code_content)
 
         # Retrieve the User object
         user = User.query.get(user_id)

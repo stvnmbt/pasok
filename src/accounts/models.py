@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
-from sqlalchemy import func, Enum
+from sqlalchemy import func, Enum, event, DDL
 import enum
 
 class Status(enum.Enum):
@@ -52,3 +52,8 @@ class User(UserMixin, db.Model):
     def __repr__(self):
         return f"<email {self.email}>"
 
+event.listen(
+    User.__table__,
+    "after_create",
+    DDL("ALTER TABLE %(table)s AUTO_INCREMENT = 10001;")
+)
