@@ -9,10 +9,13 @@ from src.accounts.token import confirm_token, generate_token
 from src.utils.decorators import logout_required
 from src.utils.email import send_email
 
-from qrcode import QRCode
-from io import BytesIO
-
+#import base64  # accessing base64 module
+#import os
+import logging
 from .forms import LoginForm, RegisterForm
+
+logger = logging.getLogger("accounts_bp")
+logger.setLevel(logging.INFO)
 
 import re
 
@@ -31,6 +34,7 @@ def register():
             middle_name=form.middle_name.data,
             last_name=form.last_name.data,
         )
+        
         db.session.add(user)
 
         # Assign faculty role if email domain is valid
@@ -54,7 +58,6 @@ def register():
         return redirect(url_for("accounts.inactive"))
 
     return render_template("accounts/register.html", form=form)
-
 
 @accounts_bp.route("/login", methods=["GET", "POST"])
 @logout_required
@@ -102,12 +105,10 @@ def confirm_email(token):
         flash("You have confirmed your account. Thanks!", "success")
     else:
         flash("The confirmation link is invalid or has expired.", "danger")
-
     if current_user.is_faculty:
         return redirect(url_for("core.home_faculty"))
     elif not current_user.is_faculty:
         return redirect(url_for("core.home_student"))
-
 
 @accounts_bp.route("/inactive")
 @login_required
