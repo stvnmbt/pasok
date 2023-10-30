@@ -1,4 +1,4 @@
-from flask import Blueprint, make_response, render_template, redirect, url_for, request, flash, jsonify
+from flask import Blueprint, make_response, render_template, redirect, send_file, url_for, request, flash, jsonify
 from flask_login import login_required, current_user
 from src import db
 from src.utils.decorators import check_is_confirmed
@@ -8,6 +8,7 @@ import io
 from qrcode.constants import ERROR_CORRECT_L
 from qrcode import make
 from PIL import Image
+import os
 
 core_bp = Blueprint("core", __name__)
 
@@ -64,7 +65,7 @@ def view_qr_code():
             border=4,
         )
         qr_data = user.id
-        
+
         qr.add_data(qr_data)
         qr.make(fit=True)
         qr_code_image = qr.make_image(fill_color="black", back_color="white")
@@ -78,8 +79,25 @@ def view_qr_code():
         user.qr_code = qr_code_bytes
         db.session.commit()
 
-    # Render the HTML template and pass the QR code file path
-    return render_template('core/student/qrcode.html', qr_code_path=user.qr_code)
+        # Determine the folder where you want to save the QR code
+        save_folder = 'student_qrcode'
+
+        # Create the folder if it doesn't exist
+        if not os.path.exists(save_folder):
+            os.makedirs(save_folder)
+
+        # Define the file path for the QR code image
+        file_path = os.path.join(save_folder, f"{user.id}_qr_code.png")
+
+        # Save the QR code image as a file
+        qr_code_image.save(file_path, format='PNG')
+
+        # Serve the QR code image directly
+        return send_file(file_path, mimetype='image/png')
+
+    # If the user already has a QR code, serve the existing QR code
+    return send_file(io.BytesIO(user.qr_code), mimetype='image/png')
+
 
 @core_bp.route('/download_qr_code')
 @login_required

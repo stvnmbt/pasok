@@ -5,8 +5,9 @@
 <form action="{{ url_for('core.add') }}" method="post">
     <input type="submit" name="add_attendance"/>   
 
-     <!-- Add a button to navigate to qr_code.html -->
+     <!-- Add a button to navigate to view the QR code -->
      <a href="/view_qr_code" class="btn btn-primary">View QR Code</a>
+     <a href="{{ url_for('core.download_qr_code') }}"><button type="button">Download QR Code</button></a>
 </form>
 
 <table>
