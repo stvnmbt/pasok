@@ -39,7 +39,7 @@
               <div class="d-flex flex-sm-column flex-row flex-grow-1 align-items-center align-items-sm-start px-3 pt-2 text-white">
                   <ul class="nav flex-sm-column flex-row flex-nowrap flex-shrink-1 flex-sm-grow-0 flex-grow-1 mb-sm-auto mb-0 justify-content-center align-items-center align-items-sm-start" id="menu">
                       <li class="nav-item ">
-                          <a href="#" class="nav-link px-sm-0 px-2 ms-2">
+                          <a href="{{ url_for('core.add') }}" class="nav-link px-sm-0 px-2 ms-2">
                             <i class="fa-solid fa-gauge" style="color:#6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Dashboard</span>
                           </a>
                       </li>
@@ -49,7 +49,7 @@
                         </a>
                       </li>
                       <li class="nav-item ">
-                        <a href="#" class="nav-link px-sm-0 px-2 ms-2">
+                        <a href="{{ url_for('core.records') }}" class="nav-link px-sm-0 px-2 ms-2">
                           <i class="fa-solid fa-clipboard-list" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Student Records</span>
                         </a>
                       </li>
@@ -83,7 +83,7 @@
                     <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
                         <option selected>Semester</option>
                         <option value="1">First Sem</option>
-                        <option value="2">2nd Sem</option>
+                        <option value="2">Second Sem</option>
                     </select>
                 </div>
             </div>
@@ -143,6 +143,7 @@
       
   </tbody>
 </table>
+
 
 
 <!--  Google Charts  -->

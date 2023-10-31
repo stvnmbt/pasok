@@ -29,3 +29,7 @@ def add():
     db.session.commit()
     attendance_records = Attendance.query.order_by(Attendance.created.desc())
     return render_template("core/faculty/index.html", attendance_records=attendance_records)
+
+@core_bp.route('/faculty/records')
+def records():
+    return render_template('core/faculty/records.html')
