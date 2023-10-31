@@ -33,3 +33,7 @@ def add():
 @core_bp.route('/faculty/records')
 def records():
     return render_template('core/faculty/records.html')
+
+@core_bp.route('/faculty/classlist')
+def classlist():
+    return render_template('core/faculty/classlist.html')
