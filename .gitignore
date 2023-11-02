@@ -172,3 +172,4 @@ pip-selfcheck.json
 
 # migrations folder
 migrations/
+src/student_qrcode/

@@ -1,6 +1,19 @@
+<!-- core/qr_code.html -->
+
 {% extends "_base.html" %}
 {% block content %}
 
-<!-- TODO: STUDENT - QR CODE --> 
+    <title>QR Code</title>
+</head>
+<body>
+    <h1>QR Code</h1>
+    <img src="{{ qr_code_image }}" alt="QR Code">
+
+    <div>
+        <a href="{{ url_for('core.view_qr_code') }}">View QR Code</a>
+        <a href="{{ url_for('core.download_qr_code') }}"><button type="button">Download QR Code</button></a>
+    </div>
+    </div>
+</body>
 
 {% endblock %}

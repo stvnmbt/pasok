@@ -68,6 +68,7 @@
           <div class="col d-flex flex-column h-100" >
             <div class="container-fluid p-0">
 
+
               <h1 class="h3 mb-4"><strong> Dashboard</strong></h1>
 
               <div class="row">
@@ -126,6 +127,42 @@
         <td tabindex="0">Subject 2</td>
         <td>Section B</td>
         <td>sem</td>
+
+<h1 class="text-center">Welcome {{current_user.email}}!</h1>
+<form action="{{ url_for('core.add') }}" method="post">
+    <input type="submit" name="add_attendance"/>   
+
+     <!-- Add a button to navigate to qr_code.html -->
+     <a href="/view_qr_code" class="btn btn-primary">View QR Code</a>
+</form>
+
+<table>
+    <tr>
+        <th>
+            attendance_id
+        </th>
+        <th>
+            user_id
+        </th>
+        <th>
+            created
+        </th>
+        <th>
+            attendance_status
+        </th>
+    </tr>
+    {% for attendance in attendance_records %}
+    <tr>
+        <td>
+            {{ attendance.id }}
+        </td>
+        <td>
+            {{ attendance.user_id }}
+        </td>
+        <td>
+            {{ attendance.created }}
+        </td>
+
         <td>
             <button class="btn btn-primary btn-sm" onclick="downloadAction()">Download</button>
             <button class="btn btn-danger btn-sm" onclick="deleteAction()">Delete</button>
@@ -143,7 +180,6 @@
       
   </tbody>
 </table>
-
 
 
 <!--  Google Charts  -->
@@ -192,3 +228,5 @@
 
           <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 {% endblock %}
+{% endblock %}
+
