@@ -1,40 +1,17 @@
 {% extends "core/faculty/sidebar.html" %}
 
 {% block header %}
-<script>
-  document.getElementById("search-button").addEventListener("click", function () {
-      filterTable();
-  });
 
-  document.getElementById("search-input").addEventListener("input", function () {
-      filterTable();
-  });
-
-  function filterTable() {
-      const input = document.getElementById("search-input");
-      const filter = input.value.toUpperCase();
-      const rows = document.querySelectorAll(".row-to-filter");
-
-      rows.forEach((row) => {
-          const text = row.getAttribute("data-filter");
-          if (text.toUpperCase().indexOf(filter) > -1) {
-              row.style.display = "";
-          } else {
-              row.style.display = "none";
-          }
-      });
-  }
-</script>
 {% endblock %}
 
 {% block body %}
 <h1 class="h3 mb-4"><strong> Student Records</strong></h1>
 
 <div class="input-group mb-3" style="width: 25%; ">
-    <input type="text" class="form-control" id="search-input" placeholder="Search" aria-label="Search" aria-describedby="search-button">
-    <button class="btn btn-outline-secondary" type="button" id="search-button" style="width: 13%; background-color: #800000;"> <i class="fa-solid fa-magnifying-glass" style="color: white;"></i></button>
+    <input type="text" class="form-control" id="search-input" placeholder="Search.." aria-label="Search" aria-describedby="search-button">
+    
 </div>
-
+<!-- For demo only-->
 <table class="table datatables table-bordered table-condensed table-striped p-0 m-0" >
     <thead >
         <tr>
@@ -42,7 +19,7 @@
             <th style="color: #800000;">Section</th>
             <th style="color: #800000;">Present</th>
             <th style="color: #800000;">Absent</th> 
-            <th style="color: #800000;">Late</th> <!-- New header cell -->
+            <th style="color: #800000;">Late</th> 
         </tr>
     </thead>
     <tbody>
@@ -52,11 +29,58 @@
             <td>{{ 'Section ' ~ i }}</td>
             <td>{{ 'Present ' ~ i }}</td>
             <td>{{ 'Absent ' ~ i }}</td> 
-            <td>{{ 'Late ' ~ i }}</td> <!-- New cell in each row -->
+            <td>{{ 'Late ' ~ i }}</td> 
         </tr>
         {% endfor %}
     </tbody>
 </table>
-</div>
+</div> 
 
+<!-- can  generate the table rows based on the actual data:
+
+<table class="table datatables table-bordered table-condensed table-striped p-0 m-0">
+    <thead>
+        <tr>
+            <th style="color: #800000;">Name</th>
+            <th style="color: #800000;">Section</th>
+            <th style="color: #800000;">Present</th>
+            <th style="color: #800000;">Absent</th> 
+            <th style="color: #800000;">Late</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for person in people %}
+            <tr data-filter="{{ 'Name ' ~ person.id }}" class="row-to-filter">
+                <td>{{ person.name }}</td>
+                <td>{{ person.section }}</td>
+                <td>{{ person.present }}</td>
+                <td>{{ person.absent }}</td> 
+                <td>{{ person.late }}</td>
+            </tr>
+        {% endfor %}
+    </tbody>
+</table>
+-->
+
+<script>
+    
+    document.getElementById("search-input").addEventListener("input", function () {
+        filterTable();
+    });
+  
+    function filterTable() {
+        const input = document.getElementById("search-input");
+        const filter = input.value.toUpperCase();
+        const rows = document.querySelectorAll(".row-to-filter");
+  
+        rows.forEach((row) => {
+            const text = row.getAttribute("data-filter");
+            if (text.toUpperCase().indexOf(filter) > -1) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+  </script>
 {% endblock %}

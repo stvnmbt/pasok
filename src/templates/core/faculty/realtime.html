@@ -1,42 +1,91 @@
 {% extends "core/faculty/sidebar.html" %}
 
 {% block header %}
-<meta http-equiv="refresh" content="5">
+
 {% endblock %}
 
 {% block body %}
-<h1 class="h3 mb-4"><strong> Real Time Attendance</strong></h1>
-<table>
-    <tr>
-        <th>
-            attendance_id
-        </th>
-        <th>
-            user_id
-        </th>
-        <th>
-            created
-        </th>
-        <th>
-            attendance_status
-        </th>
-    </tr>
-    {% for attendance in attendance_records %}
-    <tr>
-        <td>
-            {{ attendance.id }}
-        </td>
-        <td>
-            {{ attendance.user_id }}
-        </td>
-        <td>
-            {{ attendance.created }}
-        </td>
-        <td>
-            {{ attendance.attendance_status }}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3"><strong> Real Time Attendance</strong></h1>
+    <div class="input-group" style="width: 25%;">
+        <input type="text" class="form-control" id="search-input" placeholder="Search.." aria-label="Search" aria-describedby="search-button" 
+        style="margin-top: 15px;  
+        border-color: black;" >
+    </div>
+</div>
 
+<h6><strong>Instructor: </strong></h6>
+<h6 style="margin-top: 15px;"><strong>Subject:  </strong></h6>
+
+<!-- For demonstration purposes -->
+<table class="table datatables table-bordered table-condensed table-striped p-0 m-0">
+    <thead>
+        <tr>
+            <th style="color: #800000;">Student Name</th>
+            <th style="color: #800000;">Section</th>
+            <th style="color: #800000;">Date & Time</th>
+            <th style="color: #800000;">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for i in range(15) %}
+        <tr data-filter="{{ 'Student Name ' ~ i }}" class="row-to-filter">
+            <td>{{ 'Student Name ' ~ i }}</td>
+            <td>{{ 'Section ' ~ i }}</td>
+            <td>{{ 'Date & Time ' ~ i }}</td>
+            <td>{{ 'Status ' ~ i }}</td>
+        </tr>
+        
+        
+        
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+<!-- can  generate the table rows based on the actual data:-->
+
+<!--<table class="table datatables table-bordered table-condensed table-striped p-0 m-0">
+    <thead>
+        <tr>
+            <th style="color: #800000;">Student Name</th>
+            <th style="color: #800000;">Section</th>
+            <th style="color: #800000;">Date & Time</th>
+            <th style="color: #800000;">Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for person in registered_people %}
+        <tr data-filter="{{ person.name }}" class="row-to-filter">
+            <td>{{ person.name }}</td>
+            <td>{{ person.section }}</td>
+            <td>{{ person.date_time }}</td>
+            <td>{{ person.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+-->
+
+<script>
+   
+
+    document.getElementById("search-input").addEventListener("input", function () {
+        filterTable();
+    });
+
+    function filterTable() {
+        const input = document.getElementById("search-input");
+        const filter = input.value.toUpperCase();
+        const rows = document.querySelectorAll(".row-to-filter");
+
+        rows.forEach((row) => {
+            const text = row.getAttribute("data-filter");
+            if (text.toUpperCase().indexOf(filter) > -1) {
+                row.style.display = "";
+            } else {
+                row.style.display = "none";
+            }
+        });
+    }
+</script>
 {% endblock %}
