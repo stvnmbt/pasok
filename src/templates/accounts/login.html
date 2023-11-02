@@ -9,9 +9,6 @@
       {% include "accounts/gradient.html" %}
 
       <!-- FORM CONTAINER BEGIN -->
-      <!-- @ALYANNA: YOU CAN INHERIT THIS (by doing a {# % extends "login.html" % #} FOR register.html TO REUSE THE IMAGE CONTAINER PART. -->
-      <!-- THEN YOU CAN OVERWRITE THE FORM CONTAINER PART BY ENCLOSING THE NEW FORM CONTAINER CODE WITH {# % block form_container % #} {# % endblock % #} -->
-
       {% block form_container %}
       <div class="col-lg-6 col-md-6 pup-form-container"
       style=
@@ -29,9 +26,6 @@
           justify-content: center;
           min-height: 100vh;">
 
-  
-
- 
           <form role="form" method="post" action="" >
             {{ form.csrf_token }}
             <div class="form-floating ">
