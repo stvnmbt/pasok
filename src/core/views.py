@@ -6,17 +6,18 @@ from src.accounts.models import Attendance, Status
 from qrcode import QRCode, ERROR_CORRECT_L
 import io
 from qrcode.constants import ERROR_CORRECT_L
-from qrcode import make
-from PIL import Image
+
 
 core_bp = Blueprint("core", __name__)
 
 @core_bp.route("/")
 @login_required
 @check_is_confirmed
-def home_faculty():
-    attendance_records = Attendance.query.order_by(Attendance.created.desc())
-    return render_template("core/faculty/index.html", attendance_records=attendance_records)
+def home():
+    if current_user.is_faculty:
+        return render_template("core/faculty/index.html")
+    else:
+        return render_template("core/student/index.html")
 
 @core_bp.route("/")
 @login_required
@@ -25,29 +26,12 @@ def home_student():
     attendance_records = Attendance.query.order_by(Attendance.created.desc())
     return render_template("core/student/index.html", attendance_records=attendance_records)
 
-@core_bp.route("/add", methods=["GET", "POST"])
+@core_bp.route("/realtime", methods=["GET", "POST"])
 @login_required
 @check_is_confirmed
-def add():
-    if request.form.get("add_attendance"):
-        # Handle the form submit (button click) to add attendance
-        attendance = Attendance(attendance_status=Status.PRESENT, user_id=current_user.id)
-        db.session.add(attendance)
-        db.session.commit()
-        flash("Attendance added successfully!")
-
-    if request.is_json:
-        # Handle the POST request from the QR code scanner to add attendance
-        data = request.get_json()
-        user_id = data.get("user_id")
-        if user_id is not None:
-            attendance = Attendance(attendance_status=Status.PRESENT, user_id=user_id)
-            db.session.add(attendance)
-            db.session.commit()
-            return jsonify({"message": "Attendance added successfully"})
-        
+def realtime(): 
     attendance_records = Attendance.query.order_by(Attendance.created.desc()).all()
-    return render_template("core/faculty/index.html", attendance_records=attendance_records)
+    return render_template("core/faculty/realtime.html", attendance_records=attendance_records)
 
 
 @core_bp.route('/faculty/records')
