@@ -49,6 +49,15 @@ def add():
     attendance_records = Attendance.query.order_by(Attendance.created.desc()).all()
     return render_template("core/faculty/index.html", attendance_records=attendance_records)
 
+
+@core_bp.route('/faculty/records')
+def records():
+    return render_template('core/faculty/records.html')
+
+@core_bp.route('/faculty/classlist')
+def classlist():
+    return render_template('core/faculty/classlist.html')
+
 @core_bp.route('/view_qr_code')
 @login_required
 def view_qr_code():

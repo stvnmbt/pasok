@@ -1,6 +1,76 @@
 {% extends "_base.html" %}
 {% block content %}
 
-<!-- TODO: FACULTY - CLASS LIST --> 
+<html>
+<body >
+    {% include "navigation.html" %}
+    <!--navbar-->
+    <nav class="navbar navbar-expand-sm bg-light navbar-light">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#" style="color: #800000; font-weight: 500;">
+          <img src="..\static\images\PUP logo.png"  style="width:40px; height: 40px; margin-right: 10px;"> PASOK</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+  
+        <div class="collapse navbar-collapse" id="navbarNav">
+          <ul class="navbar-nav ms-auto">
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="myAccountDropdown" role: "button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-right: 40px;">
+                My Account
+              </a>
+              <div class="dropdown-menu" aria-labelledby="myAccountDropdown">
+                <a class="dropdown-item" href="#">Profile</a>
+                <a class="dropdown-item" href="#">Settings</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{{ url_for('accounts.logout') }}">Log Out</a>
+                
+               
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+  
+    <!-- Sidebar -->
+    <div class="container-fluid overflow-hidden">
+      <div class="row vh-100 overflow-auto">
+          <div class="col-12 col-sm-3 col-xl-2 px-sm-2 px-0 bg-light d-flex sticky-top">
+              <div class="d-flex flex-sm-column flex-row flex-grow-1 align-items-center align-items-sm-start px-3 pt-2 text-white">
+                  <ul class="nav flex-sm-column flex-row flex-nowrap flex-shrink-1 flex-sm-grow-0 flex-grow-1 mb-sm-auto mb-0 justify-content-center align-items-center align-items-sm-start" id="menu">
+                      <li class="nav-item ">
+                          <a href="{{ url_for('core.add') }}" class="nav-link px-sm-0 px-2 ms-2">
+                            <i class="fa-solid fa-gauge" style="color:#6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Dashboard</span>
+                          </a>
+                      </li>
+                      <li class="nav-item ">
+                        <a href="#" class="nav-link px-sm-0 px-2 ms-2">
+                          <i class="fa-regular fa-clock" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Real Time Attendance</span>
+                        </a>
+                      </li>
+                      <li class="nav-item ">
+                        <a href="{{ url_for('core.records') }}" class="nav-link px-sm-0 px-2 ms-2">
+                          <i class="fa-solid fa-clipboard-list" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Student Records</span>
+                        </a>
+                      </li>
+                      <li class="nav-item ">
+                        <a href="{{ url_for('core.classlist') }}" class="nav-link px-sm-0 px-2 ms-2">
+                          <i class="fa-solid fa-list" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Class List</span>
+                        </a>
+                      </li>
+                  </ul>
+              </div>
+          </div>
+         
+          <div class="col d-flex flex-column h-100" >
+            <div class="container-fluid p-0">
+
+              <h1 class="h3 mb-4"><strong> Class List</strong></h1>
+
+            </div>
+          </div>
+        </body>
+</html>
 
 {% endblock %}
