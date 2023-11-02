@@ -1,62 +1,63 @@
 {% extends "core/faculty/sidebar.html" %}
 
-{% block header %}
-<script>
-  document.getElementById("search-button").addEventListener("click", function () {
-      filterTable();
-  });
-
-  document.getElementById("search-input").addEventListener("input", function () {
-      filterTable();
-  });
-
-  function filterTable() {
-      const input = document.getElementById("search-input");
-      const filter = input.value.toUpperCase();
-      const rows = document.querySelectorAll(".row-to-filter");
-
-      rows.forEach((row) => {
-          const text = row.getAttribute("data-filter");
-          if (text.toUpperCase().indexOf(filter) > -1) {
-              row.style.display = "";
-          } else {
-              row.style.display = "none";
-          }
-      });
-  }
-</script>
-{% endblock %}
 
 {% block body %}
+
 <h1 class="h3 mb-4"><strong> Student Records</strong></h1>
 
 <div class="input-group mb-3" style="width: 25%; ">
-    <input type="text" class="form-control" id="search-input" placeholder="Search" aria-label="Search" aria-describedby="search-button">
+    <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search for surnames" aria-label="Search" aria-describedby="search-button">
     <button class="btn btn-outline-secondary" type="button" id="search-button" style="width: 13%; background-color: #800000;"> <i class="fa-solid fa-magnifying-glass" style="color: white;"></i></button>
 </div>
 
-<table class="table datatables table-bordered table-condensed table-striped p-0 m-0" >
+<table id="studentTable" class="table datatables table-bordered table-condensed table-striped p-0 m-0" >
     <thead >
         <tr>
-            <th style="color: #800000;">Name</th>
+            <th style="color: #800000;">Surname</th>
+            <th style="color: #800000;">Given Name</th>
             <th style="color: #800000;">Section</th>
             <th style="color: #800000;">Present</th>
             <th style="color: #800000;">Absent</th> 
-            <th style="color: #800000;">Late</th> <!-- New header cell -->
+            <th style="color: #800000;">Late</th>
         </tr>
     </thead>
     <tbody>
-        {% for i in range(10) %}
-        <tr data-filter="{{ 'Name ' ~ i }}" class="row-to-filter">
-            <td>{{ 'Name ' ~ i }} </td>
-            <td>{{ 'Section ' ~ i }}</td>
-            <td>{{ 'Present ' ~ i }}</td>
-            <td>{{ 'Absent ' ~ i }}</td> 
-            <td>{{ 'Late ' ~ i }}</td> <!-- New cell in each row -->
+        {% for student in students %}
+        <tr class="header">
+            <td>{{ student.last_name }} </td>
+            <td>{{ student.first_name }} </td>
+            <td>{{ 'Section' }}</td>
+            <td>{{ 'Present' }}</td>
+            <td>{{ 'Absent' }}</td> 
+            <td>{{ 'Late' }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
 </div>
+
+<script>
+    function searchFunction() {
+      // Declare variables
+      var input, filter, table, tr, td, i, txtValue;
+      input = document.getElementById("search-input");
+      filter = input.value.toUpperCase();
+      table = document.getElementById("studentTable");
+      tr = table.getElementsByTagName("tr");
+    
+      // Loop through all table rows, and hide those who don't match the search query
+      for (i = 0; i < tr.length; i++) {
+        td = tr[i].getElementsByTagName("td")[0];
+        if (td) {
+          txtValue = td.textContent || td.innerText;
+          if (txtValue.toUpperCase().indexOf(filter) > -1) {
+            tr[i].style.display = "";
+          } else {
+            tr[i].style.display = "none";
+          }
+        }
+      }
+    }
+</script>
 
 {% endblock %}
