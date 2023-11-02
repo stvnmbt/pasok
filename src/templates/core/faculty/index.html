@@ -1,6 +1,6 @@
-{% extends "_base.html" %}
+{% extends "core/faculty/sidebar.html" %}
 
-{% block js %}
+{% block header %}
 <!--  Google Charts  -->
 <script src="..\..\..\static\js\loader.js"></script>
 <script>
@@ -38,70 +38,39 @@
         }
     }
 </script>
-
 {% endblock %}
 
-{% block content %}
-    <!-- Sidebar -->
-    <div class="container-fluid overflow-hidden">
-      <div class="row vh-100 overflow-auto">
-          <div class="col-12 col-sm-3 col-xl-2 px-sm-2 px-0 bg-light d-flex sticky-top">
-              <div class="d-flex flex-sm-column flex-row flex-grow-1 align-items-center align-items-sm-start px-3 pt-2 text-white">
-                  <ul class="nav flex-sm-column flex-row flex-nowrap flex-shrink-1 flex-sm-grow-0 flex-grow-1 mb-sm-auto mb-0 justify-content-center align-items-center align-items-sm-start" id="menu">
-                      <li class="nav-item ">
-                          <a href="{{ url_for('core.add') }}" class="nav-link px-sm-0 px-2 ms-2">
-                            <i class="fa-solid fa-gauge" style="color:#6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Dashboard</span>
-                          </a>
-                      </li>
-                      <li class="nav-item ">
-                        <a href="#" class="nav-link px-sm-0 px-2 ms-2">
-                          <i class="fa-regular fa-clock" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Real Time Attendance</span>
-                        </a>
-                      </li>
-                      <li class="nav-item ">
-                        <a href="{{ url_for('core.records') }}" class="nav-link px-sm-0 px-2 ms-2">
-                          <i class="fa-solid fa-clipboard-list" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Student Records</span>
-                        </a>
-                      </li>
-                      <li class="nav-item ">
-                        <a href=" {{ url_for('core.classlist') }}" class="nav-link px-sm-0 px-2 ms-2">
-                          <i class="fa-solid fa-list" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Class List</span>
-                        </a>
-                      </li>
-                  </ul>
-              </div>
-          </div>
-         
-          <!-- Basta sa loob ng box >< -->
-          
-          
-          <div class="col d-flex flex-column h-100" >
-            <div class="container-fluid p-0">
+
+{% block body %}
+
+      <!-- Basta sa loob ng box >< -->
+      
+      
+      <div class="col d-flex flex-column h-100" >
+        <div class="container-fluid p-0">
 
 
-              <h1 class="h3 mb-4"><strong> Dashboard</strong></h1>
+          <h1 class="h3 mb-4"><strong> Dashboard</strong></h1>
 
-              <div class="row">
-                <div class="col-auto">
-                    <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
-                        <option selected>School Year</option>
-                        <option value="1">2023</option>
-                        <option value="2">2024</option>
-                        <option value="3">2025</option>
-                    </select>
-                </div>
-                <div class="col-auto" style="margin-right: 60px;">
-                    <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
-                        <option selected>Semester</option>
-                        <option value="1">First Sem</option>
-                        <option value="2">Second Sem</option>
-                    </select>
-                </div>
+          <div class="row">
+            <div class="col-auto">
+                <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
+                    <option selected>School Year</option>
+                    <option value="1">2023</option>
+                    <option value="2">2024</option>
+                    <option value="3">2025</option>
+                </select>
             </div>
-        
+            <div class="col-auto" style="margin-right: 60px;">
+                <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
+                    <option selected>Semester</option>
+                    <option value="1">First Sem</option>
+                    <option value="2">Second Sem</option>
+                </select>
+            </div>
+
     <!-- Google Pie Chart container -->
     <div id="google-pie-chart" style="width: 30%; height: 300px;"></div>
-</div>
 
 
 <!--Table-->

@@ -1,38 +1,46 @@
-{% extends "_base.html" %}
-{% block content %}
+{% extends "core/faculty/sidebar.html" %}
 
-<table>
-    <tr>
-        <th>
-            attendance_id
-        </th>
-        <th>
-            user_id
-        </th>
-        <th>
-            created
-        </th>
-        <th>
-            attendance_status
-        </th>
-    </tr>
-    {% for attendance in attendance_records %}
-    <tr>
-        <td>
-            {{ attendance.id }}
-        </td>
-        <td>
-            {{ attendance.user_id }}
-        </td>
-        <td>
-            {{ attendance.created }}
-        </td>
-        <td>
-            {{ attendance.attendance_status }}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+{% block header %}
+<meta http-equiv="refresh" content="5">
+{% endblock %}
 
+{% block body %}
+<div class="col d-flex flex-column h-100" >
+    <div class="container-fluid p-0">
+        <h1 class="h3 mb-4"><strong> Real Time Attendance</strong></h1>
+        <table>
+            <tr>
+                <th>
+                    attendance_id
+                </th>
+                <th>
+                    user_id
+                </th>
+                <th>
+                    created
+                </th>
+                <th>
+                    attendance_status
+                </th>
+            </tr>
+            {% for attendance in attendance_records %}
+            <tr>
+                <td>
+                    {{ attendance.id }}
+                </td>
+                <td>
+                    {{ attendance.user_id }}
+                </td>
+                <td>
+                    {{ attendance.created }}
+                </td>
+                <td>
+                    {{ attendance.attendance_status }}
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
 
 {% endblock %}
