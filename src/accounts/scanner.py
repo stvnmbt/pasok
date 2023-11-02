@@ -6,22 +6,15 @@ from src.accounts.models import Attendance, Status
 from src import app
 
 class QRCodeDetector:
-    def __init__(self): 
-        self._decoded = 0
-
-    # getter method 
-    @property
-    def decoded(self): 
-        return self._decoded
-
     def start(self):
         Thread(target=self.detect_qr_codes, args=(), daemon=True).start()
 
     def detect_qr_codes(self):
-        camera_id = 0 # change based on your device
+        camera_id = 0 # set to 1 to access device's second camera
         window_name = 'OpenCV QR Code'
         qcd = cv2.QRCodeDetector()
         cap = cv2.VideoCapture(camera_id)
+        delay = 1000 # how often the camera scans for qr code in miliseconds
 
         with app.app_context():
             while True:
@@ -32,7 +25,6 @@ class QRCodeDetector:
                         for s, p in zip(decoded_info, points):
                             if s:
                                 print(s + "\n")
-                                #self.decoded(s)
                                 attendance = Attendance(attendance_status=Status.PRESENT, user_id=s)
                                 db.session.add(attendance)
                                 db.session.commit()
@@ -43,7 +35,7 @@ class QRCodeDetector:
                             frame = cv2.polylines(frame, [p.astype(int)], True, color, 8 )
                     cv2.imshow(window_name, frame)
 
-                if cv2.waitKey(500) & 0xFF == ord("q"):  # Press 'q' to exit
+                if cv2.waitKey(delay) & 0xFF == ord("q"):  # Press 'q' to exit
                     break
 
         cv2.destroyAllWindows()
