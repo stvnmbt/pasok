@@ -42,35 +42,31 @@
 
 
 {% block body %}
+<div class="col d-flex flex-column h-100" >
+  <div class="container-fluid p-0">
+    <h1 class="h3 mb-4"><strong> Dashboard</strong></h1>
 
-      <!-- Basta sa loob ng box >< -->
-      
-      
-      <div class="col d-flex flex-column h-100" >
-        <div class="container-fluid p-0">
-
-
-          <h1 class="h3 mb-4"><strong> Dashboard</strong></h1>
-
-          <div class="row">
-            <div class="col-auto">
-                <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
-                    <option selected>School Year</option>
-                    <option value="1">2023</option>
-                    <option value="2">2024</option>
-                    <option value="3">2025</option>
-                </select>
-            </div>
-            <div class="col-auto" style="margin-right: 60px;">
-                <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
-                    <option selected>Semester</option>
-                    <option value="1">First Sem</option>
-                    <option value="2">Second Sem</option>
-                </select>
-            </div>
+    <div class="row">
+      <div class="col-auto">
+          <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
+              <option selected>School Year</option>
+              <option value="1">2023</option>
+              <option value="2">2024</option>
+              <option value="3">2025</option>
+          </select>
+      </div>
+      <div class="col-auto" style="margin-right: 60px;">
+          <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
+              <option selected>Semester</option>
+              <option value="1">First Sem</option>
+              <option value="2">Second Sem</option>
+          </select>
+      </div>
 
     <!-- Google Pie Chart container -->
     <div id="google-pie-chart" style="width: 30%; height: 300px;"></div>
+  </div>
+</div>
 
 
 <!--Table-->

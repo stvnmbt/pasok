@@ -7,7 +7,6 @@ from qrcode import QRCode, ERROR_CORRECT_L
 import io
 from qrcode.constants import ERROR_CORRECT_L
 
-
 core_bp = Blueprint("core", __name__)
 
 @core_bp.route("/")
@@ -19,28 +18,34 @@ def home():
     else:
         return render_template("core/student/index.html")
 
-@core_bp.route("/")
-@login_required
-@check_is_confirmed
-def home_student():
-    attendance_records = Attendance.query.order_by(Attendance.created.desc())
-    return render_template("core/student/index.html", attendance_records=attendance_records)
+########################
+# FACULTY VIEWS
+########################
 
 @core_bp.route("/realtime", methods=["GET", "POST"])
 @login_required
 @check_is_confirmed
-def realtime(): 
+def realtime():
     attendance_records = Attendance.query.order_by(Attendance.created.desc()).all()
     return render_template("core/faculty/realtime.html", attendance_records=attendance_records)
 
-
-@core_bp.route('/faculty/records')
+@core_bp.route('/records')
+@login_required
+@check_is_confirmed
 def records():
     return render_template('core/faculty/records.html')
 
-@core_bp.route('/faculty/classlist')
+@core_bp.route('/classlist')
+@login_required
+@check_is_confirmed
 def classlist():
     return render_template('core/faculty/classlist.html')
+
+
+
+########################
+# STUDENT VIEWS
+########################
 
 @core_bp.route('/view_qr_code')
 @login_required
