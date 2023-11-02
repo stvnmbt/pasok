@@ -1,37 +1,47 @@
 {% extends "_base.html" %}
+
+{% block js %}
+<!--  Google Charts  -->
+<script src="..\..\..\static\js\loader.js"></script>
+<script>
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+            ['Status', 'Count', { role: 'style' }],
+            ['Present', 10, 'green'],
+            ['Late', 5, 'orange'],
+            ['Absent', 3, 'red'],
+        ]);
+
+        var options = {
+            title: ' ',
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('google-pie-chart'));
+
+        chart.draw(data, options);
+    }
+
+    function downloadAction(row) {
+        // Implement download action logic here
+        // You can show a download dialog or perform a download operation.
+        alert('Downloading: Subject ' + row.cells[0].textContent + ', Section ' + row.cells[1].textContent + ', Semester ' + row.cells[2].textContent);
+    }
+
+    function deleteAction(row) {
+        // Implement delete action logic here
+        // You can show a confirmation dialog and delete the selected row.
+        if (confirm('Are you sure you want to delete this record?\nSubject: ' + row.cells[0].textContent + '\nSection: ' + row.cells[1].textContent + '\nSemester: ' + row.cells[2].textContent)) {
+            row.remove();
+        }
+    }
+</script>
+
+{% endblock %}
+
 {% block content %}
-<html>
-<body >
-    {% include "navigation.html" %}
-    <!--navbar-->
-    <nav class="navbar navbar-expand-sm bg-light navbar-light">
-      <div class="container-fluid">
-        <a class="navbar-brand" href="#" style="color: #800000; font-weight: 500;">
-          <img src="..\static\images\PUP logo.png"  style="width:40px; height: 40px; margin-right: 10px;"> PASOK</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-          <span class="navbar-toggler-icon"></span>
-        </button>
-  
-        <div class="collapse navbar-collapse" id="navbarNav">
-          <ul class="navbar-nav ms-auto">
-            <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle" href="#" id="myAccountDropdown" role: "button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false" style="margin-right: 40px;">
-                My Account
-              </a>
-              <div class="dropdown-menu" aria-labelledby="myAccountDropdown">
-                <a class="dropdown-item" href="#">Profile</a>
-                <a class="dropdown-item" href="#">Settings</a>
-                <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="{{ url_for('accounts.logout') }}">Log Out</a>
-                
-               
-              </div>
-            </li>
-          </ul>
-        </div>
-      </div>
-    </nav>
-  
     <!-- Sidebar -->
     <div class="container-fluid overflow-hidden">
       <div class="row vh-100 overflow-auto">
@@ -105,64 +115,19 @@
       </tr>
   </thead>
   <tbody>
-      <tr role="row" class="odd">
-          <td tabindex="0">Subject 1</td>
-          <td>Section A</td>
-          <td>Sem</td>
-          <td>
-              <button class="btn btn-primary btn-sm" onclick="downloadAction()">Download</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteAction()">Delete</button>
-          </td>
-      </tr>
-      <tr role="row" class="even">
-          <td tabindex="0">Subject 2</td>
-          <td>Section B</td>
-          <td>sem</td>
-          <td>
-              <button class="btn btn-primary btn-sm" onclick="downloadAction()">Download</button>
-              <button class="btn btn-danger btn-sm" onclick="deleteAction()">Delete</button>
-          </td>
-      </tr>
-      <tr role="row" class="even">
+    <tr role="row" class="odd">
+        <td tabindex="0">Subject 1</td>
+        <td>Section A</td>
+        <td>Sem</td>
+        <td>
+            <button class="btn btn-primary btn-sm" onclick="downloadAction()">Download</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteAction()">Delete</button>
+        </td>
+    </tr>
+    <tr role="row" class="even">
         <td tabindex="0">Subject 2</td>
         <td>Section B</td>
         <td>sem</td>
-
-<h1 class="text-center">Welcome {{current_user.email}}!</h1>
-<form action="{{ url_for('core.add') }}" method="post">
-    <input type="submit" name="add_attendance"/>   
-
-     <!-- Add a button to navigate to qr_code.html -->
-     <a href="/view_qr_code" class="btn btn-primary">View QR Code</a>
-</form>
-
-<table>
-    <tr>
-        <th>
-            attendance_id
-        </th>
-        <th>
-            user_id
-        </th>
-        <th>
-            created
-        </th>
-        <th>
-            attendance_status
-        </th>
-    </tr>
-    {% for attendance in attendance_records %}
-    <tr>
-        <td>
-            {{ attendance.id }}
-        </td>
-        <td>
-            {{ attendance.user_id }}
-        </td>
-        <td>
-            {{ attendance.created }}
-        </td>
-
         <td>
             <button class="btn btn-primary btn-sm" onclick="downloadAction()">Download</button>
             <button class="btn btn-danger btn-sm" onclick="deleteAction()">Delete</button>
@@ -176,57 +141,8 @@
           <button class="btn btn-primary btn-sm" onclick="downloadAction()">Download</button>
           <button class="btn btn-danger btn-sm" onclick="deleteAction()">Delete</button>
       </td>
-  </tr>
-      
+    </tr>
   </tbody>
 </table>
 
-
-<!--  Google Charts  -->
-<script src="https://www.gstatic.com/charts/loader.js"></script>
-<script>
-    google.charts.load('current', { 'packages': ['corechart'] });
-    google.charts.setOnLoadCallback(drawChart);
-
-    function drawChart() {
-        var data = google.visualization.arrayToDataTable([
-            ['Status', 'Count', { role: 'style' }],
-            ['Present', 10, 'green'],
-            ['Late', 5, 'orange'],
-            ['Absent', 3, 'red'],
-        ]);
-
-        var options = {
-            title: ' ',
-        };
-
-        var chart = new google.visualization.PieChart(document.getElementById('google-pie-chart'));
-
-        chart.draw(data, options);
-    }
-    
-   
-   
-    function downloadAction(row) {
-        // Implement download action logic here
-        // You can show a download dialog or perform a download operation.
-        alert('Downloading: Subject ' + row.cells[0].textContent + ', Section ' + row.cells[1].textContent + ', Semester ' + row.cells[2].textContent);
-    }
-
-    function deleteAction(row) {
-        // Implement delete action logic here
-        // You can show a confirmation dialog and delete the selected row.
-        if (confirm('Are you sure you want to delete this record?\nSubject: ' + row.cells[0].textContent + '\nSection: ' + row.cells[1].textContent + '\nSemester: ' + row.cells[2].textContent)) {
-            row.remove();
-        }
-    }
-</script>
-
-
-   
-          </html>
-
-          <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 {% endblock %}
-{% endblock %}
-
