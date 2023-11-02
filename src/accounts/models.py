@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
-from sqlalchemy import func, Enum, event, DDL
+from sqlalchemy import func, Enum
 import enum
 
 class Status(enum.Enum):
@@ -30,7 +30,7 @@ class User(UserMixin, db.Model):
     middle_name = db.Column(db.String(150), nullable=True)
     last_name = db.Column(db.String(150), nullable=False)
     qr_code = db.Column(db.LargeBinary, nullable=True)
-    is_faculty = db.Column(db.Boolean, nullable=False, default=False)  # Add is_faculty column
+    is_faculty = db.Column(db.Boolean, nullable=False, default=False)
     is_confirmed = db.Column(db.Boolean, nullable=False, default=False)
     created_on = db.Column(db.DateTime, nullable=False)
     confirmed_on = db.Column(db.DateTime, nullable=True)
@@ -51,9 +51,3 @@ class User(UserMixin, db.Model):
         self.qr_code = qr_code
     def __repr__(self):
         return f"<email {self.email}>"
-
-event.listen(
-    User.__table__,
-    "after_create",
-    DDL("ALTER TABLE %(table)s AUTO_INCREMENT = 10001;")
-)

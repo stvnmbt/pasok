@@ -18,9 +18,9 @@ def home():
     else:
         return render_template("core/student/index.html")
 
-########################
+#################
 # FACULTY VIEWS
-########################
+#################
 
 @core_bp.route("/realtime", methods=["GET", "POST"])
 @login_required
@@ -43,12 +43,13 @@ def classlist():
 
 
 
-########################
+#################
 # STUDENT VIEWS
-########################
+#################
 
 @core_bp.route('/view_qr_code')
 @login_required
+@check_is_confirmed
 def view_qr_code():
     user = current_user
 
@@ -81,6 +82,7 @@ def view_qr_code():
 
 @core_bp.route('/download_qr_code')
 @login_required
+@check_is_confirmed
 def download_qr_code():
     user = current_user
 

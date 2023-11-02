@@ -32,7 +32,11 @@
                 </ul>
             </div>
         </div>
-        {% block body %}{% endblock %}
+        <div class="col d-flex flex-column h-100" >
+            <div class="container-fluid p-0">
+                {% block body %}{% endblock %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
