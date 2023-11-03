@@ -2,8 +2,9 @@ import cv2
 from pyzbar.pyzbar import decode
 from threading import Thread
 from src import db
-from src.accounts.models import Attendance, Status
+from src.accounts.models import Attendance, Status, User
 from src import app
+from datetime import datetime
 
 class QRCodeDetector:
     def start(self):
@@ -24,8 +25,20 @@ class QRCodeDetector:
                     if ret_qr:
                         for s, p in zip(decoded_info, points):
                             if s:
-                                print(s + "\n")
-                                attendance = Attendance(attendance_status=Status.PRESENT, user_id=s)
+                                user = User.query.get(s)
+
+                                last_attendance = db.session.query(Attendance).order_by(Attendance.id.desc()).first()
+                                if last_attendance.user_id != s or (datetime.now()-last_attendance.created).total_seconds() > 600: # anti duplicate measure
+                                    attendance = Attendance(attendance_status=Status.PRESENT, user_id=s)
+                                    # TRIGGER YES BUZZER
+
+                                    if attendance.attendance_status==Status.PRESENT:
+                                        user.present_count += 1
+                                    elif attendance.attendance_status==Status.LATE:
+                                        user.late_count += 1
+                                    elif attendance.attendance_status==Status.ABSENT:
+                                        user.absent_count += 1
+                                # else TRIGGER NO BUZZER
                                 db.session.add(attendance)
                                 db.session.commit()
 
