@@ -2,7 +2,7 @@ from flask import Blueprint, make_response, render_template, redirect, url_for, 
 from flask_login import login_required, current_user
 from src import db
 from src.utils.decorators import check_is_confirmed
-from src.accounts.models import Attendance, User
+from src.accounts.models import Attendance, Status, User
 from qrcode import QRCode, ERROR_CORRECT_L
 import io
 from qrcode.constants import ERROR_CORRECT_L
@@ -22,7 +22,7 @@ def home():
 # FACULTY VIEWS
 #################
 
-@core_bp.route("/realtime", methods=["GET", "POST"])
+@core_bp.route("/realtime")
 @login_required
 @check_is_confirmed
 def realtime():
@@ -33,8 +33,9 @@ def realtime():
 @login_required
 @check_is_confirmed
 def records():
-    students = User.query.order_by(User.last_name.desc()).all()
-    return render_template('core/faculty/records.html', students = students)
+    students = db.session.query(User).filter(User.is_faculty==False).order_by(User.last_name.asc()).all()
+
+    return render_template('core/faculty/records.html', students=students)
 
 @core_bp.route('/classlist')
 @login_required
