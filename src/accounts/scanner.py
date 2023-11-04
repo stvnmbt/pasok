@@ -4,7 +4,7 @@ from threading import Thread
 from src import db
 from src.accounts.models import Attendance, Status, User
 from src import app
-from datetime import datetime
+from datetime import datetime, timezone
 
 class QRCodeDetector:
     def start(self):
@@ -15,7 +15,7 @@ class QRCodeDetector:
         window_name = 'OpenCV QR Code'
         qcd = cv2.QRCodeDetector()
         cap = cv2.VideoCapture(camera_id)
-        delay = 1000 # how often the camera scans for qr code in miliseconds
+        delay = 500 # how often the camera scans for qr code in miliseconds
 
         with app.app_context():
             while True:
@@ -27,10 +27,14 @@ class QRCodeDetector:
                             if s:
                                 user = User.query.get(s)
 
-                                last_attendance = db.session.query(Attendance).order_by(Attendance.id.desc()).first()
-                                if last_attendance.user_id != s or (datetime.now()-last_attendance.created).total_seconds() > 600: # anti duplicate measure
+                                last_attendance = Attendance.query.order_by(Attendance.created.desc()).first()
+                                time_now = datetime.utcnow()
+                                time_last = (time_now-last_attendance.created).total_seconds()
+                                print(last_attendance, last_attendance.id, last_attendance.user_id, s, time_now, last_attendance.created, time_last)
+                                if (last_attendance is None) or (str(last_attendance.user_id) != s) or (time_last > 300) : # anti duplicate measure
                                     attendance = Attendance(attendance_status=Status.PRESENT, user_id=s)
-                                    # TRIGGER YES BUZZER
+                                    db.session.add(attendance)
+                                    # ADD: TRIGGER GOOD BUZZER
 
                                     if attendance.attendance_status==Status.PRESENT:
                                         user.present_count += 1
@@ -38,9 +42,9 @@ class QRCodeDetector:
                                         user.late_count += 1
                                     elif attendance.attendance_status==Status.ABSENT:
                                         user.absent_count += 1
-                                # else TRIGGER NO BUZZER
-                                db.session.add(attendance)
-                                db.session.commit()
+
+                                    db.session.commit()
+                                # ADD: else TRIGGER BAD BUZZER
 
                                 color = (0, 255, 0)
                             else:
