@@ -1,48 +1,145 @@
-{% extends "_base.html" %}
-{% block content %}
+{% extends "core/student/sidebar.html" %}
 
-<h1 class="text-center">Welcome {{current_user.email}}!</h1>
-<form action="{{ url_for('core.add') }}" method="post">
-    <input type="submit" name="add_attendance"/>   
+{% block body %}
 
-    <!-- Add a button to navigate to view the QR code -->
-    <a href="/view_qr_code" class="btn btn-primary">View QR Code</a>
+<style>
+    .header-text {
+        font-size: 29px;
+        font-weight: bold;
+        color: black;
+        margin-bottom: 10px;
+        margin-top: 5px;
+    }
 
-    <!-- Add a button to download the QR code -->
-    <a href="{{ url_for('core.download_qr_code') }}"><button type="button">Download QR Code</button></a>
-</form>
+    body {
+        overflow: hidden;
+    }
 
-<table>
-    <tr>
-        <th>
-            attendance_id
-        </th>
-        <th>
-            user_id
-        </th>
-        <th>
-            created
-        </th>
-        <th>
-            attendance_status
-        </th>
-    </tr>
-    {% for attendance in attendance_records %}
-    <tr>
-        <td>
-            {{ attendance.id }}
-        </td>
-        <td>
-            {{ attendance.user_id }}
-        </td>
-        <td>
-            {{ attendance.created }}
-        </td>
-        <td>
-            {{ attendance.attendance_status }}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
+    .box {
+        -ms-flex: 1 1 auto;
+        flex: 1 1 auto;
+        margin-top: 17px;
+        padding: 1.25rem;
+        border: 0.001px solid rgba(0, 0, 0, 0.16);
+        border-top: 5px solid maroon;
+        border-radius: 10px;
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;
+    }
+
+    .attendance-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        position: relative;
+        padding: 10px; /* Add some padding to improve mobile view */
+    }
+
+    .attendanceSummary {
+        font-size: 30px;
+        font-weight: bold;
+        color: black;
+        margin-top: 5px;
+        margin-left: 10px; /* Add margin on the left to move it to the far left */
+        margin-bottom: 10px;
+    }
+
+    .subject-dropdown {
+        width: 100%; /* Full width for the dropdown */
+        text-align: center; /* Center text in the dropdown */
+        margin-bottom: 7px; /* Add spacing between dropdown and chart */
+    }
+
+    .subject-dropdown select {
+        padding: 8px;
+        width: 25%;
+        float: right;
+    }
+
+    .attendance-table {
+        width: 100%;
+        max-height: none; /* Reset max-height for the table */
+        overflow: auto;
+        border-collapse: collapse;
+        background-color: #f0f0f0;
+    }
+
+    .attendance-table th,
+    .attendance-table td {
+        padding: 8px;
+        text-align: center;
+        border: 1px solid #ddd;
+    }
+
+    .d-flex {
+        display: flex;
+    }
+</style>
+
+<div class="box">
+    <h1 class="header-text">Your Attendance Record</h1>
+    <hr>
+
+    <div class="attendance-container">
+        <div class="subject-dropdown">
+            <select>
+                <option value="subject1">Subject 1</option>
+                <option value="subject2">Subject 2</option>
+                <option value="subject3">Subject 3</option>
+            </select>
+        </div>
+        <!-- Dropdown Subjects -->
+        <div class="d-flex mt-4">
+            <h2 class="attendanceSummary">Attendance Summary</h2>
+            
+        </div>
+
+        <div id="attendancePieChart"></div>
+
+        <table class="attendance-table">
+            <tr>
+                <th>Attendance ID</th>
+                <th>User ID</th>
+                <th>Created</th>
+                <th>Attendance Status</th>
+            </tr>
+            {% for attendance in attendance_records %}
+            <tr>
+                <td>{{ attendance.id }}</td>
+                <td>{{ attendance.user_id }}</td>
+                <td>{{ attendance.created }}</td>
+                <td>{{ attendance.attendance_status }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+</div>
+
+<script src="..\..\..\static\js\loader.js"></script>
+<script>
+    google.charts.load('current', { 'packages': ['corechart'] });
+    google.charts.setOnLoadCallback(drawChart);
+
+    function drawChart() {
+        var data = google.visualization.arrayToDataTable([
+            ['Status', 'Count', { role: 'style' }],
+            ['Present', 50, 'green'],
+            ['Late', 20, 'orange'],
+            ['Absent', 10, 'red'],
+        ]);
+
+        var options = {
+            title: '',
+            titleTextStyle: {
+                fontSize: 20, // Set the font size to make it bigger
+            },
+            chartArea: { width: '100%', height: '95%' }, // I-customize ang laki ng chart area
+        };
+
+        var chart = new google.visualization.PieChart(document.getElementById('attendancePieChart'));
+
+        chart.draw(data, options);
+    }
+</script>
 
 {% endblock %}

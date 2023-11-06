@@ -1,32 +1,36 @@
-{% extends "_base.html" %}
+{% extends "accounts/login.html" %}
 
-{% block content %}
+{% block form_container %}
+<div class="col-lg-6 col-md-6 pup-form-container" style="background: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
 
-<div class="row">
-  <div class="col-md-4"></div>
-  <div class="col-md-4">
+  <div class="col-lg-9 col-md-12 col-sm-9 col-xs-12 pup-form" style="display: flex; flex-direction: column; justify-content: center; min-height: 100vh;">
     <main class="form-signin w-100 m-auto">
       <form role="form" method="post" action="">
         {{ form.csrf_token }}
-        <h1 class="h3 mb-3 fw-normal text-center">Sign Up</h1>
 
-        <!-- email -->
-        <div class="form-floating">
-          {{ form.email(placeholder="email", class="form-control mb-2") }}
-          {{ form.email.label }}
-            {% if form.email.errors %}
-              {% for error in form.email.errors %}
-                <div class="alert alert-danger" role="alert">
-                  {{ error }}
-                </div>
-              {% endfor %}
-            {% endif %}
-        </div>
+        <h1 class="h3 mb-3 fw-normal text-center" style="font-weight: bolder;">Create Account</h1>
+        
+        <div class="row">
+          <div class="col-md-6">
+          </div>
+            <!-- Email -->
+            <div class="form-floating">
+              {{ form.email(placeholder="Email", class="form-control mb-2") }}
+              {{ form.email.label }}
+              {% if form.email.errors %}
+                {% for error in form.email.errors %}
+                  <div class="alert alert-danger" role="alert">
+                    {{ error }}
+                  </div>
+                {% endfor %}
+              {% endif %}
+            </div>
+          
 
-        <!-- password -->
-        <div class="form-floating">
-          {{ form.password(placeholder="password", class="form-control mb-2") }}
-          {{ form.password.label }}
+          <!-- Password -->
+          <div class="form-floating">
+            {{ form.password(placeholder="Password", class="form-control mb-2") }}
+            {{ form.password.label }}
             {% if form.password.errors %}
               {% for error in form.password.errors %}
                 <div class="alert alert-danger" role="alert">
@@ -34,12 +38,12 @@
                 </div>
               {% endfor %}
             {% endif %}
-        </div>
+          </div>
 
-        <!-- confirm password -->
-        <div class="form-floating">
-          {{ form.confirm(placeholder="Confirm Password", class="form-control mb-2") }}
-          {{ form.confirm.label }}
+          <!-- Confirm Password -->
+          <div class="form-floating">
+            {{ form.confirm(placeholder="Confirm Password", class="form-control mb-2") }}
+            {{ form.confirm.label }}
             {% if form.confirm.errors %}
               {% for error in form.confirm.errors %}
                 <div class="alert alert-danger" role="alert">
@@ -47,12 +51,12 @@
                 </div>
               {% endfor %}
             {% endif %}
-        </div>
+          </div>
 
-        <!-- names -->
-        <div class="form-floating">
-          {{ form.first_name(placeholder="First name", class="form-control mb-2") }}
-          {{ form.first_name.label }}
+          <!-- Names -->
+          <div class="form-floating">
+            {{ form.first_name(placeholder="First Name", class="form-control mb-2") }}
+            {{ form.first_name.label }}
             {% if form.first_name.errors %}
               {% for error in form.first_name.errors %}
                 <div class="alert alert-danger" role="alert">
@@ -60,11 +64,11 @@
                 </div>
               {% endfor %}
             {% endif %}
-        </div>
+          </div>
 
-        <div class="form-floating">
-          {{ form.middle_name(placeholder="Middle name (optional)", class="form-control mb-2") }}
-          {{ form.middle_name.label }}
+          <div class="form-floating">
+            {{ form.middle_name(placeholder="Middle Name (Optional)", class="form-control mb-2") }}
+            {{ form.middle_name.label }}
             {% if form.middle_name.errors %}
               {% for error in form.middle_name.errors %}
                 <div class="alert alert-danger" role="alert">
@@ -72,11 +76,11 @@
                 </div>
               {% endfor %}
             {% endif %}
-        </div>
+          </div>
 
-        <div class="form-floating">
-          {{ form.last_name(placeholder="Last name", class="form-control mb-2") }}
-          {{ form.last_name.label }}
+          <div class="form-floating">
+            {{ form.last_name(placeholder="Last Name", class="form-control mb-2") }}
+            {{ form.last_name.label }}
             {% if form.last_name.errors %}
               {% for error in form.last_name.errors %}
                 <div class="alert alert-danger" role="alert">
@@ -84,17 +88,14 @@
                 </div>
               {% endfor %}
             {% endif %}
+          </div>
         </div>
 
-        <button class="w-100 btn btn-lg btn-primary" type="submit" style="background-color: #800000; 
-            border-radius: 40px; margin-top: 20px; font-family: roboto; font-weight: 550; font-size: 17px;">Sign up</button>
-            <p class="text-center mt-3">Already registered? <a href="{{ url_for('accounts.login') }}">Login now</a></p>
+        <button class="w-100 btn btn-lg btn-primary" type="submit" style="background-color: #800000; border-radius: 40px; margin-top: 20px; font-family: 'Roboto'; font-weight: 550; font-size: 17px;">Sign up</button>
+        <p class="text-center mt-3">Already registered? <a href="{{ url_for('accounts.login') }}">Login now</a></p>
       </form>
     </main>
   </div>
   <div class="col-md-4"></div>
 </div>
-
 {% endblock %}
-
-

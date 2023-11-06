@@ -15,14 +15,15 @@
     <style>
       @import url("../static/css/fonts.css");
     </style>
-    {% block css %}{% endblock %}
     <!-- scripts -->
     <script defer src="..\static\js\jquery-3.7.1.min.js"></script>
     <!-- JavaScript Bundle with Popper -->
     <script defer src="..\static\js\bootstrap.bundle.min.js"></script>
-    {% block js %}{% endblock %}
+    {% block header %}{% endblock %}
   </head>
   <body>
+    {% include "core/navbar.html" %}
+
     <div class="container">
       
       <!-- messages -->
@@ -50,10 +51,10 @@
       </div>
       {% endif %}
       {% endwith %}
-
+      
       <!-- child template -->
       {% block content %}{% endblock %}
-
+      
     </div>
   </body>
 </html>
