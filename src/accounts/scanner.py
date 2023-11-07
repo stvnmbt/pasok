@@ -6,6 +6,20 @@ from src.accounts.models import Attendance, Status, User
 from src import app
 from datetime import datetime, timezone
 
+def add_attendance(s):
+    user = User.query.get(s)
+    attendance = Attendance(attendance_status=Status.PRESENT, user_id=s)
+    db.session.add(attendance)
+    # ADD: TRIGGER GOOD BUZZER
+
+    if attendance.attendance_status==Status.PRESENT:
+        user.present_count += 1
+    elif attendance.attendance_status==Status.LATE:
+        user.late_count += 1
+    elif attendance.attendance_status==Status.ABSENT:
+        user.absent_count += 1
+
+    db.session.commit()
 class QRCodeDetector:
     def start(self):
         Thread(target=self.detect_qr_codes, args=(), daemon=True).start()
@@ -25,25 +39,18 @@ class QRCodeDetector:
                     if ret_qr:
                         for s, p in zip(decoded_info, points):
                             if s:
-                                user = User.query.get(s)
-
                                 last_attendance = Attendance.query.order_by(Attendance.created.desc()).first()
-                                time_now = datetime.utcnow()
-                                time_last = (time_now-last_attendance.created).total_seconds()
-                                print(last_attendance, last_attendance.id, last_attendance.user_id, s, time_now, last_attendance.created, time_last)
-                                if (last_attendance is None) or (str(last_attendance.user_id) != s) or (time_last > 300) : # anti duplicate measure
-                                    attendance = Attendance(attendance_status=Status.PRESENT, user_id=s)
-                                    db.session.add(attendance)
-                                    # ADD: TRIGGER GOOD BUZZER
+                                
+                                # anti duplicate measure
+                                if last_attendance is None:
+                                    add_attendance(s)
+                                else:
+                                    time_now = datetime.utcnow()
+                                    time_last = (time_now-last_attendance.created).total_seconds()
 
-                                    if attendance.attendance_status==Status.PRESENT:
-                                        user.present_count += 1
-                                    elif attendance.attendance_status==Status.LATE:
-                                        user.late_count += 1
-                                    elif attendance.attendance_status==Status.ABSENT:
-                                        user.absent_count += 1
-
-                                    db.session.commit()
+                                    if (str(last_attendance.user_id) != s) or (time_last > 300):
+                                        add_attendance(s)
+                                
                                 # ADD: else TRIGGER BAD BUZZER
 
                                 color = (0, 255, 0)

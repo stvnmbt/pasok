@@ -69,7 +69,9 @@ def home():
 @check_is_confirmed
 def realtime():
     attendance_records = Attendance.query.order_by(Attendance.created.desc()).all()
-    return render_template("core/faculty/realtime.html", attendance_records=attendance_records)
+    attendance_user = db.session.query(User).join(Attendance, User.id == Attendance.user_id).all()
+
+    return render_template("core/faculty/realtime.html", attendance_records=attendance_records, attendance_user=attendance_user, zip=zip)
 
 @core_bp.route('/records')
 @login_required

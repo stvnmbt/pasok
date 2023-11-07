@@ -1,7 +1,7 @@
 {% extends "core/faculty/sidebar.html" %}
 
 {% block header %}
-
+<meta http-equiv="refresh" content="5">
 {% endblock %}
 
 {% block body %}
@@ -21,50 +21,26 @@
 <table class="table datatables table-bordered table-condensed table-striped p-0 m-0">
     <thead>
         <tr>
-            <th style="color: #800000;">Student Name</th>
+            <th style="color: #800000;">Surname</th>
+            <th style="color: #800000;">Given Name</th>
             <th style="color: #800000;">Section</th>
             <th style="color: #800000;">Date & Time</th>
             <th style="color: #800000;">Status</th>
         </tr>
     </thead>
     <tbody>
-        {% for i in range(15) %}
+        {% for a, au in zip(attendance_records, attendance_user) %}
         <tr data-filter="{{ 'Student Name ' ~ i }}" class="row-to-filter">
-            <td>{{ 'Student Name ' ~ i }}</td>
-            <td>{{ 'Section ' ~ i }}</td>
-            <td>{{ 'Date & Time ' ~ i }}</td>
-            <td>{{ 'Status ' ~ i }}</td>
+            <td>{{ au.last_name }}</td>
+            <td>{{ au.first_name }}</td>
+            <td>{{ au.section_code }}</td>
+            <td>{{ a.created }}</td>
+            <td>{{ a.attendance_status }}</td>
         </tr>
-        
-        
-        
         {% endfor %}
     </tbody>
 </table>
 </div>
-<!-- can  generate the table rows based on the actual data:-->
-
-<!--<table class="table datatables table-bordered table-condensed table-striped p-0 m-0">
-    <thead>
-        <tr>
-            <th style="color: #800000;">Student Name</th>
-            <th style="color: #800000;">Section</th>
-            <th style="color: #800000;">Date & Time</th>
-            <th style="color: #800000;">Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for person in registered_people %}
-        <tr data-filter="{{ person.name }}" class="row-to-filter">
-            <td>{{ person.name }}</td>
-            <td>{{ person.section }}</td>
-            <td>{{ person.date_time }}</td>
-            <td>{{ person.status }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
--->
 
 <script>
    
