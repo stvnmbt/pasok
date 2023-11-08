@@ -1,14 +1,17 @@
-from flask import Blueprint, make_response, render_template, redirect, send_file, url_for, request, flash, jsonify
+from flask import Blueprint, Response, make_response, render_template, send_file
 from flask_login import login_required, current_user
 from src import db
 from src.utils.decorators import check_is_confirmed
 from src.accounts.models import Attendance, Status, User
 from qrcode import QRCode, ERROR_CORRECT_L
 import io
+import cv2
 from qrcode.constants import ERROR_CORRECT_L
 import os
 from qrcode import make
 from PIL import Image
+
+from src.utils.scanner import detect_qr_codes, gen_frames
 
 core_bp = Blueprint("core", __name__)
 
@@ -68,10 +71,10 @@ def home():
 @login_required
 @check_is_confirmed
 def realtime():
-    attendance_records = Attendance.query.order_by(Attendance.created.desc()).all()
-    attendance_user = db.session.query(User).join(Attendance, User.id == Attendance.user_id).all()
+    #attendance_records = Attendance.query.order_by(Attendance.created.desc()).all()
+    attendance_user = db.session.query(Attendance).join(User, User.id == Attendance.user_id).add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status).order_by(Attendance.created.desc()).all()
 
-    return render_template("core/faculty/realtime.html", attendance_records=attendance_records, attendance_user=attendance_user, zip=zip)
+    return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip)
 
 @core_bp.route('/records')
 @login_required
@@ -87,7 +90,15 @@ def records():
 def classlist():
     return render_template('core/faculty/classlist.html')
 
+@core_bp.route('/qrscanner')
+@login_required
+@check_is_confirmed
+def qrscanner():
+    return render_template('core/faculty/qrscanner.html')
 
+@core_bp.route('/video_feed')
+def video_feed():
+    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 #################
 # STUDENT VIEWS

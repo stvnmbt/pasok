@@ -25,13 +25,13 @@
         </tr>
     </thead>
     <tbody>
-        {% for a, au in zip(attendance_records, attendance_user) %}
+        {% for au in attendance_user %}
         <tr data-filter="{{ 'Student Name ' ~ i }}" class="row-to-filter">
             <td>{{ au.last_name }}</td>
             <td>{{ au.first_name }}</td>
             <td>{{ au.section_code }}</td>
-            <td>{{ a.created }}</td>
-            <td>{{ a.attendance_status }}</td>
+            <td>{{ au.created }}</td>
+            <td>{{ au.attendance_status }}</td>
         </tr>
         {% endfor %}
     </tbody>
