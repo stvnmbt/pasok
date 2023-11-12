@@ -9,6 +9,7 @@ from src.accounts.token import confirm_token, generate_token
 from src.utils.decorators import logout_required
 from src.utils.email import send_email
 
+import re
 #import base64  # accessing base64 module
 #import os
 import logging
@@ -17,16 +18,18 @@ from .forms import LoginForm, RegisterForm
 logger = logging.getLogger("accounts_bp")
 logger.setLevel(logging.INFO)
 
-import re
-
 accounts_bp = Blueprint("accounts", __name__)
-
 
 @accounts_bp.route("/register", methods=["GET", "POST"])
 @logout_required
 def register():
     form = RegisterForm(request.form)
     if form.validate_on_submit():
+        # Check password complexity
+        if not is_password_complex(form.password.data):
+            flash("Password must meet complexity requirements.", "danger")
+            return render_template("accounts/register.html", form=form)
+
         user = User(
             email=form.email.data,
             password=form.password.data,
@@ -58,6 +61,16 @@ def register():
         return redirect(url_for("accounts.inactive"))
 
     return render_template("accounts/register.html", form=form)
+
+# Helper function to check password complexity
+def is_password_complex(password):
+    # Add your password complexity requirements here
+    return (
+        any(c.islower() for c in password) and
+        any(c.isupper() for c in password) and
+        any(c.isdigit() for c in password) and
+        any(c in "!@#$%^&*()-_=+{};:,<.>/?'" for c in password)
+    )
 
 @accounts_bp.route("/login", methods=["GET", "POST"])
 @logout_required

@@ -2,93 +2,135 @@
 
 {% block content %}
 
-<div class="container-fluid" style="padding: 0;">
-  <div class="row g-x" style="margin-right: 0; margin-left: 0;">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="..\static\fontawesome\css\all.min.css"> <!-- Replace with the correct path or use a CDN for Font Awesome -->
+  <style>
+body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  margin: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("../static/images/Lagoon.jpg");
+  background-size: cover;
+  filter: blur(0.9px); /* Adjust the blur value as needed */
+  opacity: 0.9; /* Adjust the opacity value (0 to 1) as needed */
+  z-index: -2;
+}
+
+    .pup-form-container {
+      background: #fff;
     
-      
-      {% include "accounts/gradient.html" %}
+      width: 70%; /* Adjust the width as needed */
+      max-width: 369px; /* Set a maximum width if desired */
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+        -ms-flex: 1 1 auto;
+        flex: 1 1 auto;
+        margin-top: 15px;
+        padding: 1.25rem;
+        border: 0.001px solid rgba(0, 0, 0, 0.16);
+        border-top: 12px solid maroon;
+        border-radius: 22px;
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;
+    }
 
-      <!-- FORM CONTAINER BEGIN -->
-      {% block form_container %}
-      <div class="col-lg-6 col-md-6 pup-form-container"
-      style=
-        "background: #fff;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        position: relative;">
+    .form-floating {
+      position: relative;
+    }
 
-        <div class="col-lg-9 col-md-12 col-sm-9 col-xs-12 pup-form"
-        style=
-          "display: flex;
-          flex-direction: column;
-          justify-content: center;
-          min-height: 100vh;">
+    #toggleButton {
+      position: absolute;
+      top: 55%;
+      right: 20px;
+      transform: translateY(-50%);
+      cursor: pointer;
+      width: 25px;
+    }
 
-          <form role="form" method="post" action="" >
-            {{ form.csrf_token }}
-            <div class="form-floating ">
-              {{ form.email(placeholder="email", class="form-control mb-2") }}
-              {{ form.email.label }}
-              {% if form.email.errors %}
-                {% for error in form.email.errors %}
-                  <div class="alert alert-danger" role="alert">
-                    {{ error }}
-                  </div>
-                {% endfor %}
-              {% endif %}
-            </div>
-            <div class="form-floating" style="margin-top: 20px;">
-              {{ form.password(placeholder="password", class="form-control mb-2") }}
-              {{ form.password.label }}
-                {% if form.password.errors %}
-                  {% for error in form.password.errors %}
-                    <div class="alert alert-danger" role="alert">
-                      {{ error }}
-                    </div>
-                  {% endfor %}
-                {% endif %}
+    .login-header {
+      color: #800000; /* Maroon color */
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
 
-                <!-- eye i tag -->
-                <i class="fa-regular fa-eye-slash" id="toggleButton" onclick="togglePasswordVisibility()"
-                style=
-                  "position: absolute;
-                  top: 55%;
-                  right: 20px;
-                  transform: translateY(-50%);
-                  cursor: pointer;
-                  width: 25px;" >
-                </i>
-            </div>
-            <button class="w-100 btn btn-lg btn-primary" type="submit" style="background-color: #800000; 
-            border-radius: 40px; margin-top: 30px; font-family: roboto; font-weight: 550; font-size: 17px;
-            margin-bottom: 30px;">LOGIN</button>
-             <hr class="my-2" >
-
-            <p class="text-center mt-3" style="margin-top: 20px;">No existing account? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
-          </form>
-        <div>
-      </div>
-      {% endblock %}
-      <!-- FORM CONTAINER END -->
-    
+  <div class="pup-form-container">
+    <div class="login-header">PASOK LOGIN</div>
+    <div class="pup-form">
+      <form role="form" method="post" action="">
+        {{ form.csrf_token }}
+        <div class="form-floating">
+          {{ form.email(placeholder="email", class="form-control mb-2") }}
+          {{ form.email.label }}
+          {% if form.email.errors %}
+            {% for error in form.email.errors %}
+              <div class="alert alert-danger" role="alert">
+                {{ error }}
+              </div>
+            {% endfor %}
+          {% endif %}
+        </div>
+        <div class="form-floating" style="margin-top: 20px;">
+          {{ form.password(placeholder="password", class="form-control mb-2") }}
+          {{ form.password.label }}
+          {% if form.password.errors %}
+            {% for error in form.password.errors %}
+              <div class="alert alert-danger" role="alert">
+                {{ error }}
+              </div>
+            {% endfor %}
+          {% endif %}
+          <!-- eye i tag -->
+          <i class="fa-regular fa-eye-slash" id="toggleButton" onclick="togglePasswordVisibility()"
+          style="position: absolute; top: 55%; right: 20px; transform: translateY(-50%); cursor: pointer; width: 25px;">
+          </i>
+        </div>
+        <button class="w-100 btn btn-lg btn-primary" type="submit" style="background-color: #800000; border-radius: 40px; margin-top: 30px; font-family: roboto; font-weight: 550; font-size: 17px; margin-bottom: 30px;">LOGIN</button>
+        <hr class="my-2">
+        <p class="text-center mt-3" style="margin-top: 20px;">No existing account? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
+      </form>
+    </div>
   </div>
+
   <script>
     function togglePasswordVisibility() {
-        var passwordField = document.getElementById("password");
-        var toggleButton = document.getElementById("toggleButton");
-        
-        if (passwordField.type === "password") {
-            passwordField.type = "text";
-            toggleButton.classList.remove("fa-eye-slash");
-            toggleButton.classList.add("fa-eye");
-        } else {
-            passwordField.type = "password";
-            toggleButton.classList.remove("fa-eye");
-            toggleButton.classList.add("fa-eye-slash");
-        }
+      var passwordField = document.getElementById("password");
+      var toggleButton = document.getElementById("toggleButton");
+
+      if (passwordField.type === "password") {
+        passwordField.type = "text";
+        toggleButton.classList.remove("fa-eye-slash");
+        toggleButton.classList.add("fa-eye");
+      } else {
+        passwordField.type = "password";
+        toggleButton.classList.remove("fa-eye");
+        toggleButton.classList.add("fa-eye-slash");
+      }
     }
-</script>
+  </script>
+</body>
+</html>
 
 {% endblock %}
