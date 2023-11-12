@@ -51,8 +51,8 @@
                   {% endfor %}
                 {% endif %}
               </div>
-              <div class="text-muted">
-                Password must be at least 8 characters long and include at least one uppercase letter, one lowercase
+              <div class="text-muted" style="font-size: 12px; font-style: italic;">
+                * Password must be at least 8 characters long and include at least one uppercase letter, one lowercase
                 letter, one number, and one special character.
               </div>
 
@@ -110,8 +110,8 @@
               </div>
             </div>
 
-            <button class="w-100 btn btn-lg btn-primary"
-              style="background-color: #800000; border-radius: 40px; margin-top: 20px; font-family: 'Roboto'; font-weight: 550; font-size: 17px;"
+            <button class="w-100 btn btn-lg "
+              style="background-color: #800000; border-radius: 40px; margin-top: 20px; font-family: 'Roboto'; font-weight: 550; font-size: 17px; color: white;"
               type="submit">Sign up</button>
             <p class="text-center mt-3">Already registered? <a href="{{ url_for('accounts.login') }}">Login now</a></p>
           </form>
