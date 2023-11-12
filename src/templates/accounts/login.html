@@ -82,7 +82,7 @@ body::before {
       <form role="form" method="post" action="">
         {{ form.csrf_token }}
         <div class="form-floating">
-          {{ form.email(placeholder="email", class="form-control mb-2") }}
+          {{ form.email(placeholder="email", class="form-control mb-2" ) }}
           {{ form.email.label }}
           {% if form.email.errors %}
             {% for error in form.email.errors %}
@@ -107,7 +107,14 @@ body::before {
           style="position: absolute; top: 55%; right: 20px; transform: translateY(-50%); cursor: pointer; width: 25px;">
           </i>
         </div>
-        <button class="w-100 btn btn-lg btn-primary" type="submit" style="background-color: #800000; border-radius: 40px; margin-top: 30px; font-family: roboto; font-weight: 550; font-size: 17px; margin-bottom: 30px;">LOGIN</button>
+        <button class="w-100 btn btn-lg " type="submit" style="background-color: #800000; 
+        border-radius: 40px;
+         margin-top: 30px; 
+         font-family: roboto; 
+         font-weight: 550; 
+         font-size: 17px; 
+         margin-bottom: 30px;
+         color: white;">LOGIN</button>
         <hr class="my-2">
         <p class="text-center mt-3" style="margin-top: 20px;">No existing account? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
       </form>
