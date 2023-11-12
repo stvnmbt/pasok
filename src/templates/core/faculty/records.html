@@ -3,39 +3,41 @@
 {% block body %}
 
 <h1 class="h3 mb-4"><strong> Student Records</strong></h1>
+<hr>
 
 <div class="input-group mb-3" style="width: 25%; ">
     <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search for surnames" aria-label="Search" aria-describedby="search-button">
-    <button class="btn btn-outline-secondary" type="button" id="search-button" style="width: 13%; background-color: #800000;"> <i class="fa-solid fa-magnifying-glass" style="color: white;"></i></button>
+    
 </div>
 
-<table id="studentTable" class="table datatables table-bordered table-condensed table-striped p-0 m-0" >
-    <thead >
-        <tr>
-          <th style="color: #800000;">Surname</th>
-          <th style="color: #800000;">Given Name</th>
-          <th style="color: #800000;">Middle Name</th>
-          <th style="color: #800000;">Section</th>
-          <th style="color: #800000;">Present</th>
-          <th style="color: #800000;">Late</th> 
-          <th style="color: #800000;">Absent</th>
-        </tr>
-    </thead>
-    <tbody>
-      {% for s in students %}
-        <tr class="header">
-          <td>{{ s.last_name }} </td>
-          <td>{{ s.first_name }} </td>
-          <td>{{ s.middle_name }} </td>
-          <td>{{ s.section_code }}</td>
-          <td>{{ s.present_count }}</td>
-          <td>{{ s.late_count }}</td> 
-          <td>{{ s.absent_count }}</td>
-        </tr>
-      {% endfor %}
-    </tbody>
-</table>
-</div> 
+<div class="table-responsive">
+  <table id="studentTable" class="table datatables table-bordered table-condensed table-striped p-0 m-0">
+      <thead class="thead-dark">
+          <tr>
+              <th style="color: #800000;">Surname</th>
+              <th style="color: #800000;">Given Name</th>
+              <th style="color: #800000;">Middle Name</th>
+              <th style="color: #800000;">Section</th>
+              <th style="color: #800000;">Present</th>
+              <th style="color: #800000;">Late</th>
+              <th style="color: #800000;">Absent</th>
+          </tr>
+      </thead>
+      <tbody>
+          {% for s in students %}
+          <tr class="header">
+              <td>{{ s.last_name }} </td>
+              <td>{{ s.first_name }} </td>
+              <td>{{ s.middle_name }} </td>
+              <td>{{ s.section_code }}</td>
+              <td>{{ s.present_count }}</td>
+              <td>{{ s.late_count }}</td>
+              <td>{{ s.absent_count }}</td>
+          </tr>
+          {% endfor %}
+      </tbody>
+  </table>
+</div>
 
 <script>
     function searchFunction() {
