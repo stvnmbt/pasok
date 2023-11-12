@@ -1,7 +1,6 @@
 {% extends "core/student/sidebar.html" %}
 
 {% block body %}
-<div class="box">
     <div class="qr-code-container">
         <h1 class="header-text">QR Code</h1>
         <hr>
@@ -11,7 +10,7 @@
         
         <a href="{{ url_for('core.download_qr_code') }}" class="download-button">Download QR Code</a>
     </div>
-</div>
+
     <style>
 
         .box{
