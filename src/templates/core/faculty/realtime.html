@@ -1,7 +1,7 @@
 {% extends "core/faculty/sidebar.html" %}
 
 {% block header %}
-<meta http-equiv="refresh" content="5">
+
 {% endblock %}
 
 {% block body %}
@@ -36,11 +36,8 @@
         {% endfor %}
     </tbody>
 </table>
-</div>
 
 <script>
-   
-
     document.getElementById("search-input").addEventListener("input", function () {
         filterTable();
     });
