@@ -12,10 +12,10 @@ class LoginForm(FlaskForm):
 
 class RegisterForm(FlaskForm):
     email = EmailField(
-        "Email", validators=[DataRequired(), Email(message=None), Length(min=6, max=40)]
+        "Email", validators=[DataRequired(), Email(message=None), Length(min=6, max=40)],
     )
     password = PasswordField(
-        "Password", validators=[DataRequired(), Length(min=6, max=25)]
+        "Password", validators=[DataRequired(), Length(min=8, max=25)]
     )
     confirm = PasswordField(
         "Repeat password",

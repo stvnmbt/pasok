@@ -14,61 +14,30 @@
     </div>
 </div>
 
-<h6><strong>Instructor: </strong></h6>
-<h6 style="margin-top: 15px;"><strong>Subject:  </strong></h6>
-
-<!-- For demonstration purposes -->
 <table class="table datatables table-bordered table-condensed table-striped p-0 m-0">
     <thead>
         <tr>
-            <th style="color: #800000;">Student Name</th>
+            <th style="color: #800000;">Surname</th>
+            <th style="color: #800000;">Given Name</th>
             <th style="color: #800000;">Section</th>
             <th style="color: #800000;">Date & Time</th>
             <th style="color: #800000;">Status</th>
         </tr>
     </thead>
     <tbody>
-        {% for i in range(15) %}
+        {% for au in attendance_user %}
         <tr data-filter="{{ 'Student Name ' ~ i }}" class="row-to-filter">
-            <td>{{ 'Student Name ' ~ i }}</td>
-            <td>{{ 'Section ' ~ i }}</td>
-            <td>{{ 'Date & Time ' ~ i }}</td>
-            <td>{{ 'Status ' ~ i }}</td>
-        </tr>
-        
-        
-        
-        {% endfor %}
-    </tbody>
-</table>
-</div>
-<!-- can  generate the table rows based on the actual data:-->
-
-<!--<table class="table datatables table-bordered table-condensed table-striped p-0 m-0">
-    <thead>
-        <tr>
-            <th style="color: #800000;">Student Name</th>
-            <th style="color: #800000;">Section</th>
-            <th style="color: #800000;">Date & Time</th>
-            <th style="color: #800000;">Status</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for person in registered_people %}
-        <tr data-filter="{{ person.name }}" class="row-to-filter">
-            <td>{{ person.name }}</td>
-            <td>{{ person.section }}</td>
-            <td>{{ person.date_time }}</td>
-            <td>{{ person.status }}</td>
+            <td>{{ au.last_name }}</td>
+            <td>{{ au.first_name }}</td>
+            <td>{{ au.section_code }}</td>
+            <td>{{ au.created }}</td>
+            <td>{{ au.attendance_status }}</td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
--->
 
 <script>
-   
-
     document.getElementById("search-input").addEventListener("input", function () {
         filterTable();
     });
