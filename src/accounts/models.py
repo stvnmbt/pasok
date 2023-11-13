@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
 from sqlalchemy import Enum
@@ -31,7 +31,7 @@ class Attendance(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     attendance_status = db.Column(Enum(Status, values_callable=lambda x: [str(e.value) for e in Status]), nullable=False)
-    created = db.Column(db.DateTime(timezone=True), default=datetime.utcnow(), nullable=False)
+    created = db.Column(db.DateTime, default=datetime.now, nullable=False)
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user_attendance = db.relationship('User', foreign_keys=user_id, backref='user_attendance')
@@ -60,14 +60,14 @@ class User(UserMixin, db.Model):
 
 
     def __init__(
-        self, email, password, first_name, middle_name, last_name, section_code=None, present_count=0, late_count=0, absent_count=0, qr_code=None, is_confirmed=False, confirmed_on=None, is_faculty=False
+        self, email, password, first_name, middle_name, last_name, section_code='', present_count=0, late_count=0, absent_count=0, qr_code=None, is_confirmed=False, confirmed_on=None, is_faculty=False
     ):  
         self.email = email
         self.password = bcrypt.generate_password_hash(password)
         self.first_name = first_name
         self.middle_name = middle_name
         self.last_name = last_name
-        self.created_on = datetime.utcnow()
+        self.created_on = datetime.now()
         self.is_faculty = is_faculty
         self.is_confirmed = is_confirmed
         self.confirmed_on = confirmed_on
