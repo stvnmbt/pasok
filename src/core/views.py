@@ -1,14 +1,15 @@
-from flask import Blueprint, make_response, render_template, redirect, send_file, url_for, request, flash, jsonify
+from datetime import datetime
+from flask import Blueprint, make_response, render_template, request, send_file
 from flask_login import login_required, current_user
 from src import db
 from src.utils.decorators import check_is_confirmed
-from src.accounts.models import Attendance, Status
-from qrcode import QRCode, ERROR_CORRECT_L
+from src.accounts.models import Attendance, User
+import qrcode
+from qrcode.image.styledpil import StyledPilImage
 import io
-from qrcode.constants import ERROR_CORRECT_L
 import os
-from qrcode import make
-from PIL import Image
+
+from src.utils.scanner import add_attendance
 
 core_bp = Blueprint("core", __name__)
 
@@ -24,17 +25,15 @@ def home():
         # Check if the user has a QR code; if not, generate one
         if not user.qr_code:
             # Generate the QR code
-            qr = QRCode(
-                version=1,
-                error_correction=ERROR_CORRECT_L,
+            qr = qrcode.QRCode(
+                version=5,
+                error_correction=qrcode.constants.ERROR_CORRECT_H,
                 box_size=10,
                 border=4,
             )
             qr_data = user.id
-
             qr.add_data(qr_data)
-            qr.make(fit=True)
-            qr_code_image = qr.make_image(fill_color="black", back_color="white")
+            qr_code_image = qr.make_image(image_factory=StyledPilImage, embeded_image_path="src\static\images\PUP logo white bg.png")
 
             # Convert the QR code image to bytes
             qr_code_bytes = io.BytesIO()
@@ -64,18 +63,40 @@ def home():
 # FACULTY VIEWS
 #################
 
-@core_bp.route("/realtime", methods=["GET", "POST"])
+@core_bp.route("/realtime")
 @login_required
 @check_is_confirmed
 def realtime():
-    attendance_records = Attendance.query.order_by(Attendance.created.desc()).all()
-    return render_template("core/faculty/realtime.html", attendance_records=attendance_records)
+    attendance_user = db.session.query(Attendance)\
+    .join(User, User.id == Attendance.user_id)\
+    .add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status)\
+    .order_by(Attendance.created.desc())\
+    .all()
+
+    return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip)
+
+''' Di ko pa kayang i-let go haha halos buong araw ko to cinode comment ko muna
+@core_bp.route("/update_table", methods=['GET'])
+@login_required
+@check_is_confirmed
+def update_table():
+    last_attendance = db.session.query(Attendance)\
+    .join(User, User.id == Attendance.user_id)\
+    .add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status)\
+    .order_by(Attendance.created.desc())\
+    .first()
+
+    return json.dumps(last_attendance, default=str)
+    #return jsonify(last_attendance)
+'''
 
 @core_bp.route('/records')
 @login_required
 @check_is_confirmed
 def records():
-    return render_template('core/faculty/records.html')
+    students = db.session.query(User).filter(User.is_faculty==False).order_by(User.last_name.asc()).all()
+
+    return render_template('core/faculty/records.html', students=students)
 
 @core_bp.route('/classlist')
 @login_required
@@ -83,7 +104,31 @@ def records():
 def classlist():
     return render_template('core/faculty/classlist.html')
 
+@core_bp.route('/qrscanner')
+@login_required
+@check_is_confirmed
+def qrscanner():
+    return render_template('core/faculty/qrscanner.html')
 
+@core_bp.route('/get_qr', methods=['POST'])
+def get_qr():
+    s = request.get_json()
+
+    # anti duplicate measure
+    #last_attendance = Attendance.query.order_by(Attendance.created.desc()).first()
+    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s).order_by(Attendance.created.desc()).first()
+    if last_attendance is None:
+        add_attendance(s)
+        return ('Success!', 200)
+    else:
+        time_now = datetime.now()
+        time_last = (time_now-last_attendance.created).total_seconds()
+        # str(last_attendance.user_id) != s and 
+        if time_last > 60: # ADD: change duration later
+            print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
+            add_attendance(s)
+            return ('Success!', 200)
+    return ('', 204)
 
 #################
 # STUDENT VIEWS
