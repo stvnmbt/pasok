@@ -1,8 +1,9 @@
 from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
-from sqlalchemy import Enum
+from sqlalchemy import Enum, func
 import enum
+from sqlalchemy.orm import relationship
 
 class Status(enum.Enum):
     PRESENT = 'PRESENT'
@@ -26,15 +27,28 @@ class ClassList(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user_classlist = db.relationship('User', foreign_keys=user_id, backref='user_classlist')
 
+class Subject(db.Model):  # Define Subject model first
+    __tablename__ = "subject"
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Add other columns as needed
+
+    # Define a relationship with the Attendance model
+    attendance = db.relationship('Attendance', back_populates='subject')
+
 class Attendance(db.Model):
     __tablename__ = "attendance"
 
     id = db.Column(db.Integer, primary_key=True)
-    attendance_status = db.Column(Enum(Status, values_callable=lambda x: [str(e.value) for e in Status]), nullable=False)
-    created = db.Column(db.DateTime, default=datetime.now, nullable=False)
-
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user_attendance = db.relationship('User', foreign_keys=user_id, backref='user_attendance')
+    attendance_status = db.Column(Enum(Status), nullable=False)
+    created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
+    section_id = db.Column(db.Integer, db.ForeignKey('section.id'), nullable=True)
+    user = db.relationship('User', back_populates='attendance')
+    subject = db.relationship('Subject', back_populates='attendance')
+    section = db.relationship('Section', back_populates='attendance')  # Add this line
+    
 
 class User(UserMixin, db.Model):
     __tablename__ = "user"
@@ -58,6 +72,9 @@ class User(UserMixin, db.Model):
     classlist_id = db.Column(db.Integer, db.ForeignKey('classlist.id'))
     classlist = db.relationship('ClassList', foreign_keys=classlist_id)
 
+    # Add the following relationship
+    attendance = db.relationship('Attendance', back_populates='user')
+
 
     def __init__(
         self, email, password, first_name, middle_name, last_name, section_code='', present_count=0, late_count=0, absent_count=0, qr_code=None, is_confirmed=False, confirmed_on=None, is_faculty=False
@@ -79,3 +96,14 @@ class User(UserMixin, db.Model):
         
     def __repr__(self):
         return f"<email {self.email}>"
+
+
+class Section(db.Model):
+    __tablename__ = "section"
+
+    id = db.Column(db.Integer, primary_key=True)
+    # Add other columns as needed
+
+    # Define a relationship with the Attendance model
+    attendance = db.relationship('Attendance', back_populates='section')
+
