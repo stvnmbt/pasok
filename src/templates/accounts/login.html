@@ -9,107 +9,142 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="..\static\fontawesome\css\all.min.css"> <!-- Replace with the correct path or use a CDN for Font Awesome -->
   <style>
-body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  margin: 0;
-  overflow: hidden;
-  position: relative;
-}
-
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-image: url("../static/images/Lagoon.jpg");
-  background-size: cover;
-  filter: blur(0.9px); /* Adjust the blur value as needed */
-  opacity: 0.9; /* Adjust the opacity value (0 to 1) as needed */
-  z-index: -2;
-}
-
-    .pup-form-container {
-      background: #fff;
-    
-      width: 70%; /* Adjust the width as needed */
-      max-width: 369px; /* Set a maximum width if desired */
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-        -ms-flex: 1 1 auto;
-        flex: 1 1 auto;
-        margin-top: 15px;
-        padding: 1.25rem;
-        border: 0.001px solid rgba(0, 0, 0, 0.16);
-        border-top: 12px solid maroon;
-        border-radius: 22px;
-        box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;
-    }
-
-    .form-floating {
+      body {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
       position: relative;
     }
 
-    #toggleButton {
-      position: absolute;
-      top: 55%;
-      right: 20px;
-      transform: translateY(-50%);
-      cursor: pointer;
-      width: 25px;
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(128, 0, 0, 0.139); /* Maroon color with some transparency */
+      z-index: -1;
     }
 
-    .login-header {
-      color: #800000; /* Maroon color */
-      font-size: 24px;
-      font-weight: bold;
-      margin-bottom: 20px;
-      text-align: center;
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("../static/images/Lagoon.jpg");
+      background-size: cover;
+      opacity: 0.9;
+      z-index: -2;
     }
-  </style>
+
+
+.pup-form-container {
+  background: #fff;
+  width: 60%; /* Adjust the width as needed */
+  max-width: 350px; /* Set a maximum width if desired */
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  -ms-flex: 1 1 auto;
+  flex: 1 1 auto;
+  margin-top: 10px; /* Adjust the margin-top as needed */
+  padding: 1rem; /* Adjust the padding as needed */
+  border: 0.001px solid rgba(0, 0, 0, 0.16);
+  border-top: 8px solid maroon;
+  border-radius: 16px;
+  box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;
+}
+
+.form-floating {
+  position: relative;
+}
+
+#toggleButton {
+  position: absolute;
+  top: 50%; /* Adjust the top position as needed */
+  right: 10px; /* Adjust the right position as needed */
+  transform: translateY(-50%);
+  cursor: pointer;
+  width: 20px; /* Adjust the width as needed */
+}
+
+.login-header {
+  color: #800000;
+  font-size: 18px; /* Adjust the font size as needed */
+  font-weight: bold;
+  margin-bottom: 15px; /* Adjust the margin-bottom as needed */
+  text-align: center;
+}
+
+.form-control {
+  font-size: 14px; /* Adjust the font size as needed */
+}
+
+.btn-primary {
+  background-color: #800000;
+  border-radius: 30px; /* Adjust the border-radius as needed */
+  font-family: roboto;
+  font-weight: 550;
+  font-size: 14px; /* Adjust the font size as needed */
+  margin-top: 20px; /* Adjust the margin-top as needed */
+  margin-bottom: 20px; /* Adjust the margin-bottom as needed */
+}
+
+.text-center {
+  margin-top: 15px; /* Adjust the margin-top as needed */
+  font-size: 12px; /* Adjust the font size as needed */
+}
+
+</style>
 </head>
 <body>
-
+  <div id="overlay"></div>
   <div class="pup-form-container">
+    <img src="../static/images/PUP logo.png" alt="PUP Logo" style="display: block; margin: 0 auto; max-width: 80px; max-height: 80px; margin-bottom: 10px;">
     <div class="login-header">PASOK LOGIN</div>
     <div class="pup-form">
       <form role="form" method="post" action="">
         {{ form.csrf_token }}
+        <!-- Email -->
         <div class="form-floating">
           {{ form.email(placeholder="email", class="form-control mb-2") }}
           {{ form.email.label }}
           {% if form.email.errors %}
             {% for error in form.email.errors %}
-              <div class="alert alert-danger" role="alert">
+              <div class="alert alert-danger" role="alert" style="font-size: 12px;"> <!-- Adjust the font size as needed -->
                 {{ error }}
               </div>
             {% endfor %}
           {% endif %}
         </div>
-        <div class="form-floating" style="margin-top: 20px;">
+        <!-- Password -->
+        <div class="form-floating" style="margin-top: 10px;">
           {{ form.password(placeholder="password", class="form-control mb-2") }}
           {{ form.password.label }}
           {% if form.password.errors %}
             {% for error in form.password.errors %}
-              <div class="alert alert-danger" role="alert">
+              <div class="alert alert-danger" role="alert" style="font-size: 12px;"> <!-- Adjust the font size as needed -->
                 {{ error }}
               </div>
             {% endfor %}
           {% endif %}
           <!-- eye i tag -->
           <i class="fa-regular fa-eye-slash" id="toggleButton" onclick="togglePasswordVisibility()"
-          style="position: absolute; top: 55%; right: 20px; transform: translateY(-50%); cursor: pointer; width: 25px;">
-          </i>
+          style="position: absolute; top: 50%; right: 10px; transform: translateY(-50%); cursor: pointer; width: 20px;"></i>
         </div>
-        <button class="w-100 btn btn-lg btn-primary" type="submit" style="background-color: #800000; border-radius: 40px; margin-top: 30px; font-family: roboto; font-weight: 550; font-size: 17px; margin-bottom: 30px;">LOGIN</button>
+        <div style="display: flex; justify-content: center; align-items: center; margin-top: 10px; margin-bottom: 10px;">
+          <button class="w-75 btn btn-lg"
+            style="background-color: #800000; border-radius: 40px; margin-top: 10px; margin-bottom: 10px; font-family: 'Roboto'; font-weight: 550; font-size: 17px; color: white;"
+            type="submit">LOGIN</button>
+        </div>
         <hr class="my-2">
-        <p class="text-center mt-3" style="margin-top: 20px;">No existing account? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
+        <p class="text-center mt-3" style="margin-top: 15px; font-size: 12px;">No existing account? <a href="{{ url_for('accounts.register') }}">Register now</a></p>
       </form>
     </div>
   </div>
