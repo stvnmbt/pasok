@@ -111,6 +111,7 @@ def classlist():
 
 @core_bp.route("/export_classlist_attendance_csv/<int:classlist_id>", methods=["GET"])
 @login_required
+@check_is_confirmed
 def export_classlist_attendance_csv(classlist_id):
     # Retrieve attendance records for the classlist
     classlist = ClassList.query.get(classlist_id)
@@ -160,6 +161,11 @@ def export_classlist_attendance_csv(classlist_id):
 
     return response
 
+@core_bp.route('/qrscanner')
+@login_required
+@check_is_confirmed
+def qrscanner():
+    return render_template('core/faculty/qrscanner.html')
 
 @core_bp.route('/get_qr', methods=['POST'])
 def get_qr():
