@@ -1,14 +1,20 @@
-from flask import Blueprint, make_response, render_template, redirect, send_file, url_for, request, flash, jsonify
+from datetime import datetime
+from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response
 from flask_login import login_required, current_user
 from src import db
 from src.utils.decorators import check_is_confirmed
-from src.accounts.models import Attendance, Status, User
-from qrcode import QRCode, ERROR_CORRECT_L
+from src.accounts.models import Attendance, User, ClassList
+import qrcode
+from qrcode.image.styledpil import StyledPilImage
 import io
-from qrcode.constants import ERROR_CORRECT_L
 import os
+import csv 
+from io import StringIO
+from src.utils.scanner import add_attendance
 from qrcode import make
 from PIL import Image
+import pandas as pd
+from collections import defaultdict
 
 core_bp = Blueprint("core", __name__)
 
@@ -24,17 +30,15 @@ def home():
         # Check if the user has a QR code; if not, generate one
         if not user.qr_code:
             # Generate the QR code
-            qr = QRCode(
-                version=1,
-                error_correction=ERROR_CORRECT_L,
+            qr = qrcode.QRCode(
+                version=5,
+                error_correction=qrcode.constants.ERROR_CORRECT_H,
                 box_size=10,
                 border=4,
             )
             qr_data = user.id
-
             qr.add_data(qr_data)
-            qr.make(fit=True)
-            qr_code_image = qr.make_image(fill_color="black", back_color="white")
+            qr_code_image = qr.make_image(image_factory=StyledPilImage, embeded_image_path="src\static\images\PUP logo white bg.png")
 
             # Convert the QR code image to bytes
             qr_code_bytes = io.BytesIO()
@@ -68,8 +72,28 @@ def home():
 @login_required
 @check_is_confirmed
 def realtime():
-    attendance_records = Attendance.query.order_by(Attendance.created.desc()).all()
-    return render_template("core/faculty/realtime.html", attendance_records=attendance_records)
+    attendance_user = db.session.query(Attendance)\
+    .join(User, User.id == Attendance.user_id)\
+    .add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status)\
+    .order_by(Attendance.created.desc())\
+    .all()
+
+    return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip)
+
+''' Di ko pa kayang i-let go haha halos buong araw ko to cinode comment ko muna
+@core_bp.route("/update_table", methods=['GET'])
+@login_required
+@check_is_confirmed
+def update_table():
+    last_attendance = db.session.query(Attendance)\
+    .join(User, User.id == Attendance.user_id)\
+    .add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status)\
+    .order_by(Attendance.created.desc())\
+    .first()
+
+    return json.dumps(last_attendance, default=str)
+    #return jsonify(last_attendance)
+'''
 
 @core_bp.route('/records')
 @login_required
@@ -85,7 +109,83 @@ def records():
 def classlist():
     return render_template('core/faculty/classlist.html')
 
+@core_bp.route("/export_classlist_attendance_csv/<int:classlist_id>", methods=["GET"])
+@login_required
+@check_is_confirmed
+def export_classlist_attendance_csv(classlist_id):
+    # Retrieve attendance records for the classlist
+    classlist = ClassList.query.get(classlist_id)
+    
+    # Check if the user has permission to access this classlist
+    if current_user.is_faculty and current_user != classlist.user_classlist:
+        return jsonify({"error": "You don't have permission to access this classlist"}), 403
 
+    attendance_records = (
+        Attendance.query.join(User)
+        .filter(Attendance.classlist_id == classlist.id)
+        .all()
+    )
+    # Check if there are attendance records for the classlist
+    if not attendance_records:
+        return jsonify({"error": "No attendance records found for the classlist"}), 404
+
+    # Create a dictionary to store overall status count for each student
+    student_status_count = defaultdict(lambda: {"Present": 0, "Late": 0, "Absent": 0})
+
+    for record in attendance_records:
+        student = record.user
+        # Increment the corresponding status count for the student
+        student_status_count[student.id][record.attendance_status.value] += 1
+
+    # Create CSV data
+    csv_data = StringIO()
+    csv_writer = csv.writer(csv_data)
+    
+    # Add subject and section information to the CSV header
+    csv_writer.writerow(['Subject', 'Section', 'Student ID', 'First Name', 'Last Name', 'Present Count', 'Late Count', 'Absent Count'])
+
+    for student_id, status_count in student_status_count.items():
+        student = User.query.get(student_id)
+        # Add subject and section information to each row
+        csv_writer.writerow([classlist.subject_name, classlist.section_code,
+                             student_id, student.first_name, student.last_name,
+                             status_count["Present"], status_count["Late"], status_count["Absent"]])
+
+    # Prepare response
+    response = Response(
+        csv_data.getvalue(),
+        mimetype='text/csv',
+        content_type='text/csv',
+    )
+    response.headers['Content-Disposition'] = f'attachment; filename=classlist_attendance_records.csv'
+
+    return response
+
+@core_bp.route('/qrscanner')
+@login_required
+@check_is_confirmed
+def qrscanner():
+    return render_template('core/faculty/qrscanner.html')
+
+@core_bp.route('/get_qr', methods=['POST'])
+def get_qr():
+    s = request.get_json()
+
+    # anti duplicate measure
+    #last_attendance = Attendance.query.order_by(Attendance.created.desc()).first()
+    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s).order_by(Attendance.created.desc()).first()
+    if last_attendance is None:
+        add_attendance(s)
+        return ('Success!', 200)
+    else:
+        time_now = datetime.now()
+        time_last = (time_now-last_attendance.created).total_seconds()
+        # str(last_attendance.user_id) != s and 
+        if time_last > 60: # ADD: change duration later
+            print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
+            add_attendance(s)
+            return ('Success!', 200)
+    return ('', 204)
 
 #################
 # STUDENT VIEWS
