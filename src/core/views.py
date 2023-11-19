@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response
 from flask_login import login_required, current_user
 from src import db
-from src.utils.decorators import check_is_confirmed
+from src.utils.decorators import admin_required, check_is_confirmed
 from src.accounts.models import Attendance, User, ClassList
 import qrcode
 from qrcode.image.styledpil import StyledPilImage
@@ -71,6 +71,7 @@ def home():
 @core_bp.route("/realtime")
 @login_required
 @check_is_confirmed
+@admin_required
 def realtime():
     attendance_user = db.session.query(Attendance)\
     .join(User, User.id == Attendance.user_id)\
@@ -98,6 +99,7 @@ def update_table():
 @core_bp.route('/records')
 @login_required
 @check_is_confirmed
+@admin_required
 def records():
     students = db.session.query(User).filter(User.is_faculty==False).order_by(User.last_name.asc()).all()
 
@@ -106,12 +108,14 @@ def records():
 @core_bp.route('/classlist')
 @login_required
 @check_is_confirmed
+@admin_required
 def classlist():
     return render_template('core/faculty/classlist.html')
 
 @core_bp.route("/export_classlist_attendance_csv/<int:classlist_id>", methods=["GET"])
 @login_required
 @check_is_confirmed
+@admin_required
 def export_classlist_attendance_csv(classlist_id):
     # Retrieve attendance records for the classlist
     classlist = ClassList.query.get(classlist_id)
@@ -164,9 +168,13 @@ def export_classlist_attendance_csv(classlist_id):
 @core_bp.route('/qrscanner')
 @login_required
 @check_is_confirmed
+@admin_required
 def qrscanner():
     return render_template('core/faculty/qrscanner.html')
 
+@login_required
+@check_is_confirmed
+@admin_required
 @core_bp.route('/get_qr', methods=['POST'])
 def get_qr():
     s = request.get_json()
