@@ -1,4 +1,5 @@
 import os
+from connect_unix import connect_unix_socket
 from flask import Flask, render_template
 from flask_bcrypt import Bcrypt
 from flask_login import LoginManager
@@ -7,12 +8,14 @@ from flask_migrate import Migrate
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.config.from_object(os.environ["APP_SETTINGS"])
 
 login_manager = LoginManager()
 login_manager.init_app(app)
 bcrypt = Bcrypt(app)
 mail = Mail(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ["SQLALCHEMY_DATABASE_URI"]
+app.config['SECRET_KEY'] = os.environ["SECRET_KEY"]
+connect_unix_socket()
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
