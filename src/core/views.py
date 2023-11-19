@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash
 from flask_login import login_required, current_user
-from src import db
+from src import db, app
 from src.utils.decorators import admin_required, check_is_confirmed
 from src.accounts.models import Attendance, User, ClassList
 import qrcode
