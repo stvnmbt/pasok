@@ -1,6 +1,15 @@
 {% extends "core/faculty/sidebar.html" %}
 
 {% block header %}
+<style>
+    .btn-primary {
+        width: 78px; /* Adjust the width as needed */
+    }
+
+    .btn-danger{
+        width: 78px; /* Adjust the width as needed */
+    }
+</style>
 <script src="..\..\..\static\js\loader.js"></script>
 <script>
     google.charts.load('current', { 'packages': ['corechart'] });
@@ -9,16 +18,20 @@
     function drawChart() {
         var data = google.visualization.arrayToDataTable([
             ['Status', 'Count', { role: 'style' }],
-            ['Present', 10, 'green'],
-            ['Late', 5, 'orange'],
-            ['Absent', 3, 'red'],
+            ['Present', 50, 'green'],
+            ['Late', 20, 'orange'],
+            ['Absent', 10, 'red'],
         ]);
 
         var options = {
-            title: ' ',
+            title: '',
+            titleTextStyle: {
+                fontSize: 20, // Set the font size to make it bigger
+            },
+            chartArea: { width: '100%', height: '95%' }, // I-customize ang laki ng chart area
         };
 
-        var chart = new google.visualization.PieChart(document.getElementById('google-pie-chart'));
+        var chart = new google.visualization.PieChart(document.getElementById('attendancePieChart'));
 
         chart.draw(data, options);
     }
@@ -56,7 +69,9 @@
             });
         }
     }
+    
 </script>
+
 {% endblock %}
 
 {% block body %}
@@ -64,16 +79,16 @@
 <hr>
 
 <div class="row">
-    <div class="col-auto">
-        <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <select class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
             <option selected>School Year</option>
             <option value="1">2023</option>
             <option value="2">2024</option>
             <option value="3">2025</option>
         </select>
     </div>
-    <div class="col-auto" style="margin-right: 60px;">
-        <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <select class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
             <option selected>Semester</option>
             <option value="1">First Sem</option>
             <option value="2">Second Sem</option>
@@ -81,31 +96,38 @@
     </div>
 </div>
 
-<div id="google-pie-chart" style="width: 350px; height: 300px;"></div>
 
-<table class="table datatables table-bordered table-condensed table-striped p-0 m-0 dataTable no-footer dtr-inline" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info" style="width: 100%; height: 40%;">
-    <thead>
-        <tr role="row">
-            <th class="sorting_disabled" rowspan="1" colspan="1" style="color: #800000;">Subject</th>
-            <th class="sorting_disabled" rowspan="1" colspan="1" style="color: #800000;">Section</th>
-            <th class="sorting_disabled" rowspan="1" colspan="1" style="color: #800000;">Semester</th>
-            <th class="sorting_disabled" rowspan="1" colspan="1" style="color: #800000;">Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for classlist in classlists %}
-        <tr role="row">
-            <td tabindex="0">{{ classlist.subject_name }}</td>
-            <td>{{ classlist.section_code }}</td>
-            <td>{{ classlist.semester.value }}</td>
-            <td>
-                <button class="btn btn-primary btn-sm" onclick="downloadAction('{{ classlist.subject_name }}', '{{ classlist.section_code }}')">Download</button>
-                <button class="btn btn-danger btn-sm" onclick="deleteAction('{{ classlist.subject_name }}', '{{ classlist.section_code }}')">Delete</button>
-            </td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="row">
+    <div class="col-12">
+        <div id="attendancePieChart" class="mb-4"></div>
+    </div>
+</div>
+
+<div class="table-responsive" style=" overflow: hidden;">
+    <table class="table datatables table-bordered table-condensed table-striped p-0 m-0 dataTable no-footer dtr-inline" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info" style="width: 100%; border: 1px solid #696969; border-radius: 10px;">
+        <thead>
+            <tr role="row">
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Subject</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Semester</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for classlist in classlists %}
+            <tr role="row" style="background-color: #f9f9f9;">
+                <td tabindex="0">{{ classlist.subject_name }}</td>
+                <td>{{ classlist.section_code }}</td>
+                <td>{{ classlist.semester.value }}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm custom-btn" onclick="downloadAction('{{ classlist.subject_name }}', '{{ classlist.section_code }}')">Download </button>
+                    <button class="btn btn-danger btn-sm custom-btn" onclick="deleteAction('{{ classlist.subject_name }}', '{{ classlist.section_code }}')"> Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 <script>
 function addRow(subject, section, semester) {
@@ -126,8 +148,10 @@ function addRow(subject, section, semester) {
                       <button class="btn btn-danger btn-sm" onclick="deleteAction('${subject}', '${section}')">Delete</button>`;
 }
 
+
 // Call addRow with sample data
 addRow("New Subject", "New Section", "New Semester");
 </script>
+
 
 {% endblock %}
