@@ -4,7 +4,7 @@ from flask import Blueprint, make_response, render_template, request, send_file,
 import io
 from flask_login import login_required, current_user
 from src import db, app, bcrypt
-from src.utils.decorators import admin_required, check_is_confirmed
+from src.utils.decorators import admin_required, admin_required, check_is_confirmed
 from src.accounts.models import Attendance, User, ClassList, user_classlist_association
 import qrcode
 from qrcode.image.styledpil import StyledPilImage
@@ -42,6 +42,7 @@ def home():
 @core_bp.route("/realtime")
 @login_required
 @check_is_confirmed
+@admin_required
 @admin_required
 def realtime():
     attendance_user = db.session.query(Attendance)\
