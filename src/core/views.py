@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
 import io
 from flask_login import login_required, current_user
-from src import db, app, bcrypt
+from src import db, app, bcrypt, app
 from src.utils.decorators import admin_required, admin_required, check_is_confirmed
 from src.accounts.models import Attendance, User, ClassList, user_classlist_association
 import qrcode
@@ -20,6 +20,11 @@ from werkzeug.utils import secure_filename
 import json
 import pandas as pd
 
+import uuid
+import bcrypt
+from flask_bcrypt import Bcrypt
+import uuid
+from werkzeug.utils import secure_filename
 
 core_bp = Blueprint("core", __name__)
 

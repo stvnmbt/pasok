@@ -6,6 +6,7 @@ from src import bcrypt, db
 from sqlalchemy import Enum, UniqueConstraint
 import enum
 
+from src.core.views import generate_unique_user_id
 
 class Status(enum.Enum):
     PRESENT = 'PRESENT'
