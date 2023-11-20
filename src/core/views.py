@@ -35,7 +35,8 @@ def home():
 @check_is_confirmed
 @admin_required
 def realtime():
-    attendance_user = db.session.query(Attendance)\
+    #attendance_user = db.session.query(Attendance)\
+    attendance_user = Attendance.query\
     .join(User, User.id == Attendance.user_id)\
     .add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status)\
     .order_by(Attendance.created.desc())\
@@ -48,7 +49,8 @@ def realtime():
 @check_is_confirmed
 @admin_required
 def records():
-    students = db.session.query(User).filter(User.is_faculty==False).order_by(User.last_name.asc()).all()
+    #students = db.session.query(User).filter(User.is_faculty==False).order_by(User.last_name.asc()).all()
+    students = User.query.filter(User.is_faculty==False).order_by(User.last_name.asc()).all()
 
     return render_template('core/faculty/records.html', students=students)
 
@@ -127,7 +129,8 @@ def get_qr():
     s = request.get_json()
 
     # anti duplicate measure
-    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s[0]).order_by(Attendance.created.desc()).first()
+    #last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s[0]).order_by(Attendance.created.desc()).first()
+    last_attendance = Attendance.query.filter(Attendance.user_id==int(s[0])).order_by(Attendance.created.desc()).first()
     if last_attendance is None:
         add_attendance(s[0], s[1])
         return ('Success!', 200)
@@ -135,7 +138,7 @@ def get_qr():
         time_now = datetime.now()
         time_last = (time_now-last_attendance.created).total_seconds()
         # str(last_attendance.user_id) != s and 
-        if time_last > 60: # ADD: change duration later
+        if time_last > 10: # ADD: change duration later
             print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
             add_attendance(s[0], s[1])
             return ('Success!', 200)

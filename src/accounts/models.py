@@ -59,7 +59,7 @@ class User(UserMixin, db.Model):
         self, email, password, first_name, middle_name, last_name, section_code='', present_count=0, late_count=0, absent_count=0, is_confirmed=False, confirmed_on=None, is_faculty=False
     ):  
         self.email = email
-        self.password = bcrypt.generate_password_hash(password)
+        self.password = bcrypt.generate_password_hash(password).decode('utf-8')
         self.first_name = first_name
         self.middle_name = middle_name
         self.last_name = last_name
