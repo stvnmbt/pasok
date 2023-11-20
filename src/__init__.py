@@ -67,6 +67,7 @@ app.register_blueprint(core_bp)
 
 from src.accounts.models import User, Attendance, ClassList, Status, Semester
 with app.app_context():
+    #db.drop_all() # remove later
     db.create_all()
 
 login_manager.login_view = "accounts.login"

@@ -21,4 +21,4 @@ def add_attendance(s, isLate):
     db.session.commit()
 
 def mark_absent():
-    users = db.session.query(Attendance)
+    users = Attendance.query
