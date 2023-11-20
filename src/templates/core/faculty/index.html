@@ -1,7 +1,15 @@
 {% extends "core/faculty/sidebar.html" %}
 
 {% block header %}
-<!--  Google Charts  -->
+<style>
+    .btn-primary {
+        width: 78px; /* Adjust the width as needed */
+    }
+
+    .btn-danger{
+        width: 78px; /* Adjust the width as needed */
+    }
+</style>
 <script src="..\..\..\static\js\loader.js"></script>
 <script>
     google.charts.load('current', { 'packages': ['corechart'] });
@@ -10,102 +18,140 @@
     function drawChart() {
         var data = google.visualization.arrayToDataTable([
             ['Status', 'Count', { role: 'style' }],
-            ['Present', 10, 'green'],
-            ['Late', 5, 'orange'],
-            ['Absent', 3, 'red'],
+            ['Present', 50, 'green'],
+            ['Late', 20, 'orange'],
+            ['Absent', 10, 'red'],
         ]);
 
         var options = {
-            title: ' ',
+            title: '',
+            titleTextStyle: {
+                fontSize: 20, // Set the font size to make it bigger
+            },
+            chartArea: { width: '100%', height: '95%' }, // I-customize ang laki ng chart area
         };
 
-        var chart = new google.visualization.PieChart(document.getElementById('google-pie-chart'));
+        var chart = new google.visualization.PieChart(document.getElementById('attendancePieChart'));
 
         chart.draw(data, options);
     }
 
-    function downloadAction(row) {
-        // Implement download action logic here
-        // You can show a download dialog or perform a download operation.
-        alert('Downloading: Subject ' + row.cells[0].textContent + ', Section ' + row.cells[1].textContent + ', Semester ' + row.cells[2].textContent);
+    function downloadAction(subject, section) {
+        $.ajax({
+            url: `/export_attendance_excel/${subject}/${section}`,
+            method: 'GET',
+            success: function (data) {
+                var blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                var link = document.createElement('a');
+                link.href = window.URL.createObjectURL(blob);
+                link.download = `attendance_records_${subject}_${section}.xlsx`;
+                link.click();
+            },
+            error: function (xhr, status, error) {
+                console.error(`Error downloading attendance records for subject ${subject} and section ${section}:`, error);
+                alert(`Failed to download attendance records for subject ${subject} and section ${section}. Please try again later.`);
+            }
+        });
     }
 
-    function deleteAction(row) {
-        // Implement delete action logic here
-        // You can show a confirmation dialog and delete the selected row.
-        if (confirm('Are you sure you want to delete this record?\nSubject: ' + row.cells[0].textContent + '\nSection: ' + row.cells[1].textContent + '\nSemester: ' + row.cells[2].textContent)) {
-            row.remove();
+    function deleteAction(subject, section) {
+        if (confirm(`Are you sure you want to delete this record?\nSubject: ${subject}\nSection: ${section}`)) {
+            $.ajax({
+                url: `/delete_attendance_record/${subject}/${section}`,
+                method: 'DELETE',
+                success: function () {
+                    location.reload(); // Reload the page after successful deletion
+                },
+                error: function (xhr, status, error) {
+                    console.error(`Error deleting record for subject ${subject} and section ${section}:`, error);
+                    alert(`Failed to delete record for subject ${subject} and section ${section}. Please try again later.`);
+                }
+            });
         }
     }
+    
 </script>
+
 {% endblock %}
 
-
 {% block body %}
-
 <h1 class="h3 mb-4"><strong> Dashboard</strong></h1>
+<hr>
 
 <div class="row">
-    <div class="col-auto">
-        <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <select class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
             <option selected>School Year</option>
             <option value="1">2023</option>
             <option value="2">2024</option>
             <option value="3">2025</option>
         </select>
     </div>
-    <div class="col-auto" style="margin-right: 60px;">
-        <select class="form-select form-select-sm" style="width: 120px; height: 35px;">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <select class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
             <option selected>Semester</option>
             <option value="1">First Sem</option>
             <option value="2">Second Sem</option>
         </select>
     </div>
 </div>
-<!-- Google Pie Chart container -->
-<div id="google-pie-chart" style="width: 30%; height: 300px;"></div>
 
-<!-- ADD: START/STOP ATTENDANCE BUTTON W/FEATURES 1) CUSTOM TIMER FOR LATE/ABSENT 2) SUBJECT LIST DROPDOWN (TAKEN FROM CLASSLIST) -->
 
-<!--Table-->
-<table class="table datatables table-bordered table-condensed table-striped p-0 m-0 dataTable no-footer dtr-inline" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info" style="width: 100%; height: 40%;">
-  <thead>
-      <tr role="row">
-          <th class="sorting_disabled" rowspan="1" colspan="1" style="color: #800000;">Subject</th>
-          <th class="sorting_disabled" rowspan="1" colspan="1" style="color: #800000;">Section</th>
-          <th class="sorting_disabled" rowspan="1" colspan="1" style="color: #800000;">Semester</th>
-          <th class="sorting_disabled" rowspan="1" colspan="1" style="color: #800000;">Actions</th>
-      </tr>
-  </thead>
-  <tbody>
-    <tr role="row" class="odd">
-        <td tabindex="0">Subject 1</td>
-        <td>Section A</td>
-        <td>Sem</td>
-        <td>
-            <button class="btn btn-primary btn-sm" onclick="downloadAction()">Download</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteAction()">Delete</button>
-        </td>
-    </tr>
-    <tr role="row" class="even">
-        <td tabindex="0">Subject 2</td>
-        <td>Section B</td>
-        <td>sem</td>
-        <td>
-            <button class="btn btn-primary btn-sm" onclick="downloadAction()">Download</button>
-            <button class="btn btn-danger btn-sm" onclick="deleteAction()">Delete</button>
-        </td>
-    </tr>
-    <tr role="row" class="even">
-      <td tabindex="0">Subject 2</td>
-      <td>Section B</td>
-      <td>sem</td>
-      <td>
-          <button class="btn btn-primary btn-sm" onclick="downloadAction()">Download</button>
-          <button class="btn btn-danger btn-sm" onclick="deleteAction()">Delete</button>
-      </td>
-    </tr>
-  </tbody>
-</table>
+<div class="row">
+    <div class="col-12">
+        <div id="attendancePieChart" class="mb-4"></div>
+    </div>
+</div>
+
+<div class="table-responsive" style=" overflow: hidden;">
+    <table class="table datatables table-bordered table-condensed table-striped p-0 m-0 dataTable no-footer dtr-inline" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info" style="width: 100%; border: 1px solid #696969; border-radius: 10px;">
+        <thead>
+            <tr role="row">
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Subject</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Semester</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for classlist in classlists %}
+            <tr role="row" style="background-color: #f9f9f9;">
+                <td tabindex="0">{{ classlist.subject_name }}</td>
+                <td>{{ classlist.section_code }}</td>
+                <td>{{ classlist.semester.value }}</td>
+                <td>
+                    <button class="btn btn-primary btn-sm custom-btn" onclick="downloadAction('{{ classlist.subject_name }}', '{{ classlist.section_code }}')">Download </button>
+                    <button class="btn btn-danger btn-sm custom-btn" onclick="deleteAction('{{ classlist.subject_name }}', '{{ classlist.section_code }}')"> Delete</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<script>
+function addRow(subject, section, semester) {
+    var table = document.getElementById("DataTables_Table_0").getElementsByTagName('tbody')[0];
+    var newRow = table.insertRow(table.rows.length);
+
+    var cell1 = newRow.insertCell(0);
+    cell1.innerHTML = subject;
+
+    var cell2 = newRow.insertCell(1);
+    cell2.innerHTML = section;
+
+    var cell3 = newRow.insertCell(2);
+    cell3.innerHTML = semester;
+
+    var cell4 = newRow.insertCell(3);
+    cell4.innerHTML = `<button class="btn btn-primary btn-sm" onclick="downloadAction('${subject}', '${section}')">Download</button>
+                      <button class="btn btn-danger btn-sm" onclick="deleteAction('${subject}', '${section}')">Delete</button>`;
+}
+
+
+// Call addRow with sample data
+addRow("New Subject", "New Section", "New Semester");
+</script>
+
 
 {% endblock %}
