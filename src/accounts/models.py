@@ -1,11 +1,11 @@
-# src/accounts/models.py
+
 
 from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
 from sqlalchemy import Enum
 import enum
-from src.core.views import generate_unique_user_id
+
 
 class Status(enum.Enum):
     PRESENT = 'PRESENT'
@@ -33,9 +33,9 @@ class ClassList(db.Model):
     section_name = db.Column(db.String(100), nullable=False)
     
     students = db.relationship('User', secondary=user_classlist_association, back_populates='classlists')
-
-    user_classlist = db.relationship('User', back_populates='created_classlists')
-    faculty_creator = db.relationship('User', back_populates='created_classlists')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    user_classlist = db.relationship('User', back_populates='classlists')
+    faculty_creator = db.relationship('User', back_populates='created_classlists', overlaps="user_classlist")
 
 class Attendance(db.Model):
     __tablename__ = "attendance"
@@ -48,7 +48,7 @@ class Attendance(db.Model):
     user_attendance = db.relationship('User', back_populates='classlist_attendance')
     
 
-class User(db.Model):
+class User(db.Model,UserMixin):
     __tablename__ = "user"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -67,15 +67,20 @@ class User(db.Model):
     present_count = db.Column(db.Integer, nullable=True)
     late_count = db.Column(db.Integer, nullable=True)
     absent_count = db.Column(db.Integer, nullable=True)
+    is_active = db.Column(db.Boolean, default=True)
 
     # Add this line to initialize the relationships
     classlists = db.relationship('ClassList', secondary='user_classlist_association', back_populates='students')
     classlist_attendance = db.relationship('Attendance', back_populates='user_attendance')
-    created_classlists = db.relationship('ClassList', back_populates='faculty_creator')
+    created_classlists = db.relationship('ClassList', back_populates='faculty_creator', overlaps="user_classlist")
 
+    def get_id(self):
+        return str(self.id)
+    
     def __init__(
         self, email, password, first_name, middle_name, last_name, section_name='', present_count=0, late_count=0, absent_count=0, qr_code=None, is_confirmed=False, confirmed_on=None, is_faculty=False
-    ):    
+    ):   
+        from src.core.views import generate_unique_user_id
         self.email = email
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
         self.first_name = first_name
@@ -91,5 +96,6 @@ class User(db.Model):
         self.late_count = late_count
         self.absent_count = absent_count
         self.user_id = generate_unique_user_id(email, first_name, last_name)
+
     def __repr__(self):
         return f"<email {self.email}>"

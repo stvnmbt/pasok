@@ -1,7 +1,7 @@
 from datetime import datetime
-from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash
+from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash, current_app
 from flask_login import login_required, current_user
-from src import db, app
+from src import db, app, bcrypt
 from src.utils.decorators import admin_required, check_is_confirmed
 from src.accounts.models import Attendance, User, ClassList
 import qrcode
@@ -16,12 +16,11 @@ from PIL import Image
 import pandas as pd
 from collections import defaultdict
 import uuid
-import bcrypt
-from flask_bcrypt import Bcrypt
 import uuid
 from werkzeug.utils import secure_filename
 
 core_bp = Blueprint("core", __name__)
+
 
 @core_bp.route("/")
 @login_required
@@ -260,7 +259,7 @@ def read_and_store_data(file_path, school_year, semester):
                     # Create a new user and associate with the classlist
                     user = User(
                         email=email,
-                        password=bcrypt.generate_password_hash(f'{first_name}{last_name}').decode('utf-8'),
+                        password=f'{first_name}{last_name}',
                         first_name=first_name,
                         middle_name=middle_name,
                         last_name=last_name,
@@ -283,7 +282,7 @@ def read_and_store_data(file_path, school_year, semester):
 
 
 
-@core_bp.route('/upload_classlist', methods=['POST'])
+@core_bp.route('/upload_classlist', methods=['GET', 'POST'])
 @login_required
 @check_is_confirmed
 @admin_required
@@ -301,10 +300,13 @@ def upload_classlist():
                 return redirect(request.url)
 
             # Assuming you have defined your UPLOAD_FOLDER in the Flask app configuration
-            file_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
+            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
             file.save(file_path)
 
             try:
+                # Ensure read_and_store_data is correctly imported
+                from src.core.views import read_and_store_data
+
                 # Call your function here
                 read_and_store_data(file_path, school_year, semester)
                 flash('Data successfully saved to the database.')
@@ -318,30 +320,36 @@ def upload_classlist():
         flash(f"Error: {e}")
         return redirect(request.url)
 
-
 @core_bp.route('/files', methods=['GET'])
 def show_uploaded_files():
-    files = os.listdir(app.config['UPLOAD_FOLDER'])
-    return render_template('files.html', files=files)
+    # Move the access to current_app.config['UPLOAD_FOLDER'] inside the route function
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    files = os.listdir(upload_folder)
+    return jsonify({'files': files})
 
-@core_bp('/data/<filename>', methods=['GET'])
+@core_bp.route('/data/<filename>', methods=['GET'])
 def show_file_data(filename):
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    _, file_extension = os.path.splitext(filename)
+    # Move the upload_folder creation inside the route function
+    upload_folder = current_app.config['UPLOAD_FOLDER']
+    os.makedirs(upload_folder, exist_ok=True)
 
-    if file_extension.lower() == '.csv':
-        data = pd.read_csv(file_path)
-    elif file_extension.lower() in ['.xls', '.xlsx']:
-        data = pd.read_excel(file_path, engine='openpyxl')
-    else:
-        return "Unsupported file format"
+    with current_app.app_context():
+        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+        _, file_extension = os.path.splitext(filename)
 
-    # Process data
-    data = data.loc[:, ~data.columns.str.contains('^Unnamed')]
-    data = data.fillna('')
-    data_html = data.to_html(index=False)
+        if file_extension.lower() == '.csv':
+            data = pd.read_csv(file_path)
+        elif file_extension.lower() in ['.xls', '.xlsx']:
+            data = pd.read_excel(file_path, engine='openpyxl')
+        else:
+            return jsonify({'error': 'Unsupported file format'})
 
-    return render_template('files.html', data=data_html)
+        # Process data
+        data = data.loc[:, ~data.columns.str.contains('^Unnamed')]
+        data = data.fillna('')
+        data_html = data.to_html(index=False)
+
+        return jsonify({'data': data_html})
 
 @core_bp.route('/display_data', methods=['GET'])
 @login_required
@@ -380,7 +388,17 @@ def display_data():
     # Render the template
     return render_template('display_data.html', classlist_with_users=classlist_with_users)
 
+@core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
+@login_required
+@check_is_confirmed
+@admin_required
+def display_classlist(classlist_id):
+    # Fetch detailed information for the specified classlist_id
+    classlist_entry = ClassList.query.get_or_404(classlist_id)
+    users = classlist_entry.students
 
+    # Render the template with detailed information
+    return render_template('core/faculty/classlist_details.html', classlist_entry=classlist_entry, users=users)
 
 
 
