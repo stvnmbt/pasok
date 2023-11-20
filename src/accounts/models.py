@@ -42,7 +42,6 @@ class User(UserMixin, db.Model):
     first_name = db.Column(db.String(150), nullable=False)
     middle_name = db.Column(db.String(150), nullable=True)
     last_name = db.Column(db.String(150), nullable=False)
-    qr_code = db.Column(db.LargeBinary, nullable=True)
     is_faculty = db.Column(db.Boolean, nullable=False, default=False)
     is_confirmed = db.Column(db.Boolean, nullable=False, default=False)
     created_on = db.Column(db.DateTime, nullable=False)
@@ -57,7 +56,7 @@ class User(UserMixin, db.Model):
 
 
     def __init__(
-        self, email, password, first_name, middle_name, last_name, section_code='', present_count=0, late_count=0, absent_count=0, qr_code=None, is_confirmed=False, confirmed_on=None, is_faculty=False
+        self, email, password, first_name, middle_name, last_name, section_code='', present_count=0, late_count=0, absent_count=0, is_confirmed=False, confirmed_on=None, is_faculty=False
     ):  
         self.email = email
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -68,7 +67,6 @@ class User(UserMixin, db.Model):
         self.is_faculty = is_faculty
         self.is_confirmed = is_confirmed
         self.confirmed_on = confirmed_on
-        self.qr_code = qr_code
         self.section_code = section_code
         self.present_count = present_count
         self.late_count = late_count
