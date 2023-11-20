@@ -15,16 +15,15 @@ from io import StringIO
 from src.utils.generate_qr import generate_qr
 from src.utils.scanner import add_attendance
 from collections import defaultdict
-import uuid
-from werkzeug.utils import secure_filename
+
 import json
 import pandas as pd
 
 import uuid
-import bcrypt
-from flask_bcrypt import Bcrypt
-import uuid
 from werkzeug.utils import secure_filename
+
+
+
 
 core_bp = Blueprint("core", __name__)
 
@@ -350,7 +349,7 @@ def read_and_store_data(file, school_year, semester):
 
 
 
-@core_bp.route('/upload_classlist', methods=['POST'])
+@core_bp.route('/upload_classlist', methods=['GET', 'POST'])
 @login_required
 @check_is_confirmed
 @admin_required
