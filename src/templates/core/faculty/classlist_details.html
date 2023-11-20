@@ -1,0 +1,51 @@
+{% extends "core/faculty/sidebar.html" %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+{% block body %}
+
+<h1 class="h3 mb-4"><strong>Class List Details</strong></h1>
+
+<!-- Display class list entry details -->
+<div class="row">
+    <div class="col-auto">
+        <h4>{{ classlist_entry.subject_name }} - {{ classlist_entry.section_name }}</h4>
+        <p>School Year: {{ classlist_entry.school_year }}</p>
+        <p>Semester: {{ classlist_entry.semester }}</p>
+    </div>
+</div>
+
+<!-- Display associated users -->
+<div class="row mt-4">
+    <div class="col-auto">
+        <h4>Associated Users</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>User ID</th>
+                    <th>User First Name</th>
+                    <th>User Last Name</th>
+                    <th>User Email</th>
+                    <!-- Add more columns based on your User model -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                    <tr>
+                        <td>{{ user.id }}</td>
+                        <td>{{ user.first_name }}</td>
+                        <td>{{ user.last_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <!-- Add more columns based on your User model -->
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <!-- Add a button to go back to classlist.html -->
+        <a href="{{ url_for('core_bp.classlist') }}" class="btn btn-primary">Back to Class List</a>
+    </div>
+</div>
+
+<!-- Add additional details as needed -->
+
+{% endblock %}
