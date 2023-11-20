@@ -1,72 +1,88 @@
 {% extends "core/faculty/sidebar.html" %}
 
 {% block body %}
+    <div class="d-flex justify-content-center align-items-center vh-100">
+        <div class="box-qr-scanner mt-5">
+            <h1 class="h3 mb-4"><strong> QR Scanner</strong></h1>
+            <div class="qr-container">
+                <div id="reader" style="display: inline-block; position: relative; padding: 0px; border: 5px solid silver; border-radius: 10px; width: 190px;"></div>
+               
+            </div>
+            
+            <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+            <script>
+                let html5QrcodeScanner = new Html5QrcodeScanner(
+                    "reader",
+                    { fps: 10, qrbox: {width: 250, height: 250} },
+                    verbose=true
+                );
 
-<h1 class="h3 mb-4"><strong> QR Scanner</strong></h1>
-<div id="reader" style="display: inline-block; position: relative; padding: 0px; border: 1px solid silver;"></div>
-<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<script>
-    
-    let html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader",
-        { fps: 10, qrbox: {width: 250, height: 250} },
-        verbose=true);
+                var lastResult = 0;
+                var audio = new Audio('https://audio.jukehost.co.uk/knEZ8zciYnwmdVPG1W72H5SbFDIanomR');
 
-    var lastResult = 0;
-    var audio = new Audio('https://audio.jukehost.co.uk/knEZ8zciYnwmdVPG1W72H5SbFDIanomR');
+                function onScanSuccess(decodedText) {
+                    if (decodedText !== lastResult) {
+                        console.log(`Code matched ${decodedText}`);
+                        get_qr(decodedText);
+                        lastResult = decodedText;
+                        audio.play();
+                        // updateTable();
+                    }
+                }
 
-    function onScanSuccess(decodedText) {
-        if (decodedText !== lastResult) {
-            console.log(`Code matched ${decodedText}`);
-            get_qr(decodedText);
-            lastResult = decodedText;
-            audio.play();
-            // updateTable();
+                function onScanFailure(error) {
+                    console.warn(`Code scan error = ${error}`);
+                }
+
+                function get_qr(decodedText) {
+                    var s = decodedText;
+                    var s_json = JSON.stringify(s);
+                    var xhttp = new XMLHttpRequest();
+                    xhttp.open("POST", "/get_qr", true);
+                    xhttp.setRequestHeader("Content-Type", "application/json");
+                    xhttp.onreadystatechange = function() {
+                        console.log(`Ready State: ${this.readyState}, Status: ${this.status}, ${s}, ${s_json}`);
+                    };
+                    xhttp.send(s_json);
+                }
+
+                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+            </script>
+        </div>
+    </div>
+
+    <style>
+        /* New styles added to center the box */
+        .box-qr-scanner {
+            width: 70%;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;
+            text-align: center;
+            margin-top: 50px; /* Adjust the margin-top value here for the desired vertical position */
         }
-    }
 
-    function onScanFailure(error) {
-        console.warn(`Code scan error = ${error}`);
-    }
+        .box-qr-scanner button {
+            background-color: #800000 !important;
+            color: white !important;
+            padding: 10px 20px !important;
+            border: none !important;
+            border-radius: 5px !important;
+            cursor: pointer !important;
+        }
 
-    function get_qr(decodedText) {
-        var s = decodedText;
-        var s_json = JSON.stringify(s);
-        var xhttp = new XMLHttpRequest();
-        xhttp.open("POST", "/get_qr", true);
-        xhttp.setRequestHeader("Content-Type", "application/json");
-        xhttp.onreadystatechange = function() {
-            console.log(`Ready State: ${this.readyState}, Status: ${this.status}, ${s}, ${s_json}`);
-        };
-        xhttp.send(s_json);
-    }
+        /* Style for the "or" text */
+        .or-text {
+            font-weight: bold;
+            margin-top: 10px;
+        }
 
-    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-
-    /*
-    function updateTable() {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "/update_table", true);
-        xhr.onreadystatechange = function () {
-            console.log(`UPDATE TABLE Ready State: ${this.readyState}, Status: ${this.status}`);
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                var data = JSON.parse(xhr.responseText);
-                $("#rttable").prepend(`
-                    <tr>
-                        <td>${data.last_name}</td>
-                        <td>${data.first_name}</td>
-                        <td>${data.section_code}</td>
-                        <td>${data.created}</td>
-                        <td>${data.attendance_status}</td>
-                    </tr>
-                `);
-                console.log(`UPDATE TABLE ${data}`);
-            }
-        };
-        xhr.send();
-    }
-    */
-
-</script>
-
+        /* Style for the QR container */
+        .qr-container {
+            position: relative;
+            display: inline-block;
+        }
+    </style>
 {% endblock %}
