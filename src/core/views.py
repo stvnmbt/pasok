@@ -2,7 +2,7 @@ from datetime import datetime
 from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response
 from flask_login import login_required, current_user
 from src import db
-from src.utils.decorators import check_is_confirmed
+from src.utils.decorators import admin_required, check_is_confirmed
 from src.accounts.models import Attendance, User, ClassList
 import qrcode
 from qrcode.image.styledpil import StyledPilImage
@@ -11,9 +11,6 @@ import os
 import csv 
 from io import StringIO
 from src.utils.scanner import add_attendance
-from qrcode import make
-from PIL import Image
-import pandas as pd
 from collections import defaultdict
 
 core_bp = Blueprint("core", __name__)
@@ -71,6 +68,7 @@ def home():
 @core_bp.route("/realtime")
 @login_required
 @check_is_confirmed
+@admin_required
 def realtime():
     attendance_user = db.session.query(Attendance)\
     .join(User, User.id == Attendance.user_id)\
@@ -80,24 +78,10 @@ def realtime():
 
     return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip)
 
-''' Di ko pa kayang i-let go haha halos buong araw ko to cinode comment ko muna
-@core_bp.route("/update_table", methods=['GET'])
-@login_required
-@check_is_confirmed
-def update_table():
-    last_attendance = db.session.query(Attendance)\
-    .join(User, User.id == Attendance.user_id)\
-    .add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status)\
-    .order_by(Attendance.created.desc())\
-    .first()
-
-    return json.dumps(last_attendance, default=str)
-    #return jsonify(last_attendance)
-'''
-
 @core_bp.route('/records')
 @login_required
 @check_is_confirmed
+@admin_required
 def records():
     students = db.session.query(User).filter(User.is_faculty==False).order_by(User.last_name.asc()).all()
 
@@ -106,12 +90,14 @@ def records():
 @core_bp.route('/classlist')
 @login_required
 @check_is_confirmed
+@admin_required
 def classlist():
     return render_template('core/faculty/classlist.html')
 
 @core_bp.route("/export_classlist_attendance_csv/<int:classlist_id>", methods=["GET"])
 @login_required
 @check_is_confirmed
+@admin_required
 def export_classlist_attendance_csv(classlist_id):
     # Retrieve attendance records for the classlist
     classlist = ClassList.query.get(classlist_id)
@@ -164,18 +150,21 @@ def export_classlist_attendance_csv(classlist_id):
 @core_bp.route('/qrscanner')
 @login_required
 @check_is_confirmed
+@admin_required
 def qrscanner():
     return render_template('core/faculty/qrscanner.html')
 
+@login_required
+@check_is_confirmed
+@admin_required
 @core_bp.route('/get_qr', methods=['POST'])
 def get_qr():
     s = request.get_json()
 
     # anti duplicate measure
-    #last_attendance = Attendance.query.order_by(Attendance.created.desc()).first()
-    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s).order_by(Attendance.created.desc()).first()
+    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s[0]).order_by(Attendance.created.desc()).first()
     if last_attendance is None:
-        add_attendance(s)
+        add_attendance(s[0], s[1])
         return ('Success!', 200)
     else:
         time_now = datetime.now()
@@ -183,7 +172,7 @@ def get_qr():
         # str(last_attendance.user_id) != s and 
         if time_last > 60: # ADD: change duration later
             print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
-            add_attendance(s)
+            add_attendance(s[0], s[1])
             return ('Success!', 200)
     return ('', 204)
 

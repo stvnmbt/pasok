@@ -4,11 +4,12 @@
 {% block body %}
 
 <h1 class="h3 mb-4"><strong>Class List</strong></h1>
-<hr>
 
 <div class="row">
     <div class="col-auto">
-        
+        <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple>
+        <button class="btn btn btn-sm" onclick="uploadClassList()" style="background-color:#800000; color: white;">Upload Class List</button>
+        <div id="uploadedFilesList" style="margin-top: 20px;">
             
         </div>
     </div>
@@ -16,7 +17,142 @@
 
 
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 
+<script>
+    // Declare uploadedFileNameElement and uploadedFiles array in the global scope
+    var uploadedFileNameElement;
+    var uploadedFiles = [];
 
+    function uploadClassList() {
+        // Get the file input element
+        var fileInput = document.getElementById('classListFile');
+
+        
+        fileInput.click();
+
+        // Add an event listener to handle file selection
+        fileInput.addEventListener('change', function () {
+            var newFiles = fileInput.files;
+
+            // Add the uploaded files to the array
+            for (var i = 0; i < newFiles.length; i++) {
+                uploadedFiles.push(newFiles[i]);
+            }
+
+            updateUploadedFilesList();
+
+            fileInput.value = null;
+        });
+    }
+
+    function updateUploadedFilesList() {
+        var uploadedFilesList = document.getElementById('uploadedFilesList');
+        uploadedFilesList.innerHTML = ''; 
+
+        uploadedFiles.forEach(function (file, index) {
+        var fileItem = document.createElement('div');
+        fileItem.style.border = '2px solid #ccc'; 
+        fileItem.style.padding = '10px'; 
+        fileItem.style.borderRadius = '10px';
+        fileItem.style.marginBottom = '10px'; 
+        fileItem.style.cursor = 'pointer';
+
+            fileItem.innerHTML = '<u><i class="fa-regular fa-file" style="margin-right:7px font size: 25px"></i> ' + file.name + '</u';
+            
+            //  open the data in a new window
+            fileItem.onclick = function () {
+                processUploadedFile(file);
+            };
+
+            uploadedFilesList.appendChild(fileItem);
+        });
+    }
+
+    function processUploadedFile(uploadedFile) {
+     
+        var fileName = uploadedFile.name;
+        if (fileName.endsWith('.csv')) {
+           
+            parseAndDisplayCSVData(uploadedFile);
+        } else if (fileName.endsWith('.xlsx')) {
+           
+            parseAndDisplayExcelData(uploadedFile);
+        } else {
+            alert('Unsupported file format. Please upload a CSV or Excel file.');
+        }
+    }
+    function parseAndDisplayCSVData(uploadedFile) {
+        // PapaParse library for CSV parsing
+        Papa.parse(uploadedFile, {
+            complete: function (results) {
+                var data = results.data; // Parsed CSV data
+
+                // HTML table to display the data
+                var table = document.createElement('table');
+                table.className = 'table';
+
+                // Open a new window to display the data 
+                var newWindow = window.open('', '', 'width=600,height=400,top=' + (window.innerHeight / 2 - 200) + ',left=' + (window.innerWidth / 2 - 300));
+                newWindow.document.write('<html><body><h1>' + uploadedFile.name + '</h1>');
+               
+                newWindow.document.write('</body></html>');
+            
+            
+            }
+        });
+    }
+
+    function parseAndDisplayExcelData(uploadedFile) {
+        // SheetJS library for Excel parsing
+        var reader = new FileReader();
+
+        reader.onload = function (e) {
+            var data = new Uint8Array(e.target.result);
+            var workbook = XLSX.read(data, { type: 'array' });
+
+            
+            var sheetName = workbook.SheetNames[0];
+            var sheet = workbook.Sheets[sheetName];
+
+            // Convert the sheet to an array of objects (each object represents a row)
+            var jsonData = XLSX.utils.sheet_to_json(sheet);
+
+            // Create an HTML table to display the data
+            var table = document.createElement('table');
+            table.className = 'table';
+
+            // Create table header from the first row of the data
+            var thead = document.createElement('thead');
+            var headerRow = thead.insertRow(0);
+            for (var key in jsonData[0]) {
+                var th = document.createElement('th');
+                th.textContent = key;
+                headerRow.appendChild(th);
+            }
+            table.appendChild(thead);
+
+            // Create table body
+            var tbody = document.createElement('tbody');
+            for (var row of jsonData) {
+                var newRow = tbody.insertRow();
+                for (var key in row) {
+                    var cell = newRow.insertCell();
+                    cell.textContent = row[key];
+                }
+            }
+            table.appendChild(tbody);
+
+            //  new window to display the data 
+            var newWindow = window.open('', '', 'width=600,height=400,top=' + (window.innerHeight / 2 - 200) + ',left=' + (window.innerWidth / 2 - 300));
+            newWindow.document.write('<html><body><h1>' + uploadedFile.name + '</h1>');
+            newWindow.document.write('<div>' + table.outerHTML + '</div>'); // Display the table in the new window
+            newWindow.document.write('</body></html>');
+        };
+
+        reader.readAsArrayBuffer(uploadedFile);
+    }
+</script>
 
 {% endblock %}

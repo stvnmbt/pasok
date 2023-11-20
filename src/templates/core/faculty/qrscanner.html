@@ -1,88 +1,93 @@
 {% extends "core/faculty/sidebar.html" %}
 
 {% block body %}
-    <div class="d-flex justify-content-center align-items-center vh-100">
-        <div class="box-qr-scanner mt-5">
-            <h1 class="h3 mb-4"><strong> QR Scanner</strong></h1>
-            <div class="qr-container">
-                <div id="reader" style="display: inline-block; position: relative; padding: 0px; border: 5px solid silver; border-radius: 10px; width: 190px;"></div>
-               
-            </div>
-            
-            <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-            <script>
-                let html5QrcodeScanner = new Html5QrcodeScanner(
-                    "reader",
-                    { fps: 10, qrbox: {width: 250, height: 250} },
-                    verbose=true
-                );
+
+<h1 class="h3 mb-4"><strong> QR Scanner</strong></h1>
+
+<div id="reader" style="display: inline-block; position: relative; padding: 0px; border: 1px solid silver;"></div>
+
+<br><br><br>
+<div class="btn-group" role="group" aria-label="Basic radio toggle button group" style="outline: 1px #800000; margin-bottom: 30px;">
+    <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+    <label class="btn btn-outline-primary" for="btnradio1" style="background-color: #800000; color: white; outline: 2px solid #800000; padding: 7px 60px; font-family: roboto;">PRESENT</label>
+
+    <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+    <label class="btn btn-outline-primary" for="btnradio2" style="background-color: white; color: #800000; outline: 2px solid #800000; padding: 7px 60px; font-family: roboto;">LATE</label>
+</div>
+
+<br>
+<input type="button" onclick="absentButton()" class="btn-check" id="absent-btn" autocomplete="off">
+<label class="btn btn-outline-primary" for="absent-btn" style="background-color: white; color: #800000; outline: 2px solid #800000; padding: 7px 60px; font-family: roboto;">MARK ALL MISSING AS ABSENT</label>
+
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script>
+    function absentButton() {
+        const response = confirm("Are you sure you want to mark all remaining students as ABSENT?");
+
+        if (response) {
+            //
+        } else {
+            alert("Cancel was pressed");
+        }
+    }
+
+    let html5QrcodeScanner = new Html5QrcodeScanner(
+        "reader",
+        { fps: 10, qrbox: {width: 250, height: 250} },
+        verbose=true);
 
                 var lastResult = 0;
                 var audio = new Audio('https://audio.jukehost.co.uk/knEZ8zciYnwmdVPG1W72H5SbFDIanomR');
 
-                function onScanSuccess(decodedText) {
-                    if (decodedText !== lastResult) {
-                        console.log(`Code matched ${decodedText}`);
-                        get_qr(decodedText);
-                        lastResult = decodedText;
-                        audio.play();
-                        // updateTable();
-                    }
+    function onScanSuccess(decodedText) {
+        if (decodedText !== lastResult) {
+            console.log(`Code matched ${decodedText}`);
+            get_qr(decodedText);
+            lastResult = decodedText;
+            audio.play();
+        }
+    }
+
+    function onScanFailure(error) {
+        console.warn(`Code scan error = ${error}`);
+    }
+
+    var isLate = 0;
+
+    function get_qr(decodedText) {
+        var s = [decodedText, isLate];
+        var s_json = JSON.stringify(s);
+        var xhttp = new XMLHttpRequest();
+        xhttp.open("POST", "/get_qr", true);
+        xhttp.setRequestHeader("Content-Type", "application/json");
+        xhttp.onreadystatechange = function() {
+            console.log(`Ready State: ${this.readyState}, Status: ${this.status}, s: ${s}, s_json: ${s_json}, isLate: ${isLate}`);
+        };
+        xhttp.send(s_json);
+    }
+
+    html5QrcodeScanner.render(onScanSuccess, onScanFailure);
+
+    const buttons = document.querySelectorAll('.btn-check');
+    const labels = document.querySelectorAll('.btn-outline-primary');
+    buttons.forEach((button, index) => {
+        button.addEventListener('change', () => {
+            labels.forEach((label, labelIndex) => {
+                if (index === labelIndex) {
+                    label.style.backgroundColor = '#800000';
+                    label.style.color = 'white';
+                    label.style.outline = '2px solid #800000';
+                    isLate = index;
+                    console.log("Ready State" + index + isLate)
+                } else {
+                    label.style.backgroundColor = 'white';
+                    label.style.color = '#800000';
+                    label.style.outline = '2px solid #800000';
                 }
+            });
+        });
+    });
 
-                function onScanFailure(error) {
-                    console.warn(`Code scan error = ${error}`);
-                }
+</script>
 
-                function get_qr(decodedText) {
-                    var s = decodedText;
-                    var s_json = JSON.stringify(s);
-                    var xhttp = new XMLHttpRequest();
-                    xhttp.open("POST", "/get_qr", true);
-                    xhttp.setRequestHeader("Content-Type", "application/json");
-                    xhttp.onreadystatechange = function() {
-                        console.log(`Ready State: ${this.readyState}, Status: ${this.status}, ${s}, ${s_json}`);
-                    };
-                    xhttp.send(s_json);
-                }
-
-                html5QrcodeScanner.render(onScanSuccess, onScanFailure);
-            </script>
-        </div>
-    </div>
-
-    <style>
-        /* New styles added to center the box */
-        .box-qr-scanner {
-            width: 70%;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;
-            text-align: center;
-            margin-top: 50px; /* Adjust the margin-top value here for the desired vertical position */
-        }
-
-        .box-qr-scanner button {
-            background-color: #800000 !important;
-            color: white !important;
-            padding: 10px 20px !important;
-            border: none !important;
-            border-radius: 5px !important;
-            cursor: pointer !important;
-        }
-
-        /* Style for the "or" text */
-        .or-text {
-            font-weight: bold;
-            margin-top: 10px;
-        }
-
-        /* Style for the QR container */
-        .qr-container {
-            position: relative;
-            display: inline-block;
-        }
-    </style>
 {% endblock %}

@@ -22,9 +22,6 @@ class ClassList(db.Model):
     subject_name = db.Column(db.String(100), nullable=False)
     school_year = db.Column(db.Integer, nullable=False)
     semester = db.Column(Enum(Semester, values_callable=lambda x: [str(e.value) for e in Semester]), nullable=False)
-    
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    user_classlist = db.relationship('User', foreign_keys=user_id, backref='user_classlist')
 
 class Attendance(db.Model):
     __tablename__ = "attendance"
@@ -56,7 +53,7 @@ class User(UserMixin, db.Model):
     absent_count = db.Column(db.Integer, nullable=True)
 
     classlist_id = db.Column(db.Integer, db.ForeignKey('classlist.id'))
-    classlist = db.relationship('ClassList', foreign_keys=classlist_id)
+    classlist = db.relationship('ClassList', foreign_keys=classlist_id, backref='classlist')
 
 
     def __init__(
