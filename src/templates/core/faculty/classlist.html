@@ -26,56 +26,38 @@
         <div class="col-auto">
             <!-- File upload section -->
             <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple>
-            <button class="btn btn btn-sm" onclick="uploadClassList()" style="background-color:#800000; color: white;">Upload Class List</button>
-            <div id="uploadedFilesList" style="margin-top: 20px;">
-                <!-- Display uploaded files and their data -->
-                {% for filename in files %}
-                    <div class="file-entry">
-                        <p>{{ filename }}</p>
-                        <a href="{{ url_for('core.show_file_data', filename=filename) }}" target="_blank">View Data</a>
-                        
-                        {% if filename in classlists_by_user[current_user.id] %}
-                            <a href="{{ url_for('core.view_classlist', filename=filename) }}" target="_blank">View Classlist</a>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-            </div>
+            <button class="btn btn-sm" onclick="uploadClassList()" style="background-color:#800000; color: white;">Upload Class List</button>
+            
         </div>
     </div>
-
-    <div class="row mt-4">
-        <div class="col-auto">
-            <!-- Display saved classlists -->
-            {% for item in classlist_with_users %}
-                {% if item.creator_id == current_user.id %} {# Assuming the creator_id is stored in your ClassList model #}
-                    <div class="row">
-                        <div class="col-auto">
-                            <h4>{{ item.classlist_entry.subject_name }} - {{ item.classlist_entry.section_name }}</h4>
-                            <ul>
-                                {% for user in item.users %}
-                                    <li>{{ user.first_name }} {{ user.last_name }} - {{ user.email }}</li>
-                                {% endfor %}
-                            </ul>
-                        </div>
-                    </div>
-                {% endif %}
-            {% endfor %}
-        </div>
-    </div>
-
+    
+    <a href="{{ url_for('core.classlist_collection') }}" class="btn btn-primary">View Class List Collection</a>
+    <script src="core.classlist.html" data-classlist-id="{{ classlistId|default(0) }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
-
+    
     <script>
-        function createFileEntry(filename, hasClasslist) {
+    var classlistIdJson = '{{ classlistId_json|safe }}';
+    var classlistId;
+
+    if (classlistIdJson) {
+        classlistId = JSON.parse(classlistIdJson);
+        console.log('Classlist ID:', classlistId);
+    } else {
+        console.log('Classlist ID is undefined or null.');
+    }
+      // Now you can use the classlistId variable in your JavaScript logic
+
+  
+        function createFileEntry(filename, hasClasslist, classlistId) {
             var filesList = document.getElementById('uploadedFilesList');
             var fileEntry = document.createElement('div');
             fileEntry.className = 'file-entry';
             fileEntry.innerHTML = '<p>' + filename + '</p>' +
                 '<button onclick="viewFileData(\'' + filename + '\')">View Data</button>';
-    
+            
             if (hasClasslist) {
-                var viewClasslistUrl = '{{ url_for("core.display_classlist", classlist_id=classlist_entry.id) }}';
+                var viewClasslistUrl = '{{ url_for("core.classlist_collection", classlist_id=classlistId) }}';
                 fileEntry.innerHTML += '<a href="' + viewClasslistUrl + '" target="_blank">View Classlist</a>';
             }
     
@@ -90,6 +72,9 @@
         // Update this function to handle the file upload and trigger the Flask route
         function handleFileUpload() {
             var fileInput = document.getElementById('classListFile');
+            var schoolYear = document.getElementById('school_year').value;
+            var semester = document.getElementById('semester').value;
+    
             var formData = new FormData();
     
             // Add the selected files to the FormData object
@@ -98,8 +83,8 @@
             }
     
             // Add school_year and semester to the FormData object
-            formData.append('school_year', document.getElementById('school_year').value);
-            formData.append('semester', document.getElementById('semester').value);
+            formData.append('school_year', schoolYear);
+            formData.append('semester', semester);
     
             // Use fetch to send a POST request to the Flask route
             fetch('/upload_classlist', {
@@ -113,7 +98,8 @@
                     // Display uploaded files
                     data.files.forEach(function(filename) {
                         var hasClasslist = '{{ filename in classlists_by_user[current_user.id] }}' === 'True';
-                        createFileEntry(filename, hasClasslist);
+                        var classlistId = classlists_by_user[current_user.id][filename];
+                        createFileEntry(filename, hasClasslist, classlistId);
                     });
                 } else if ('error' in data) {
                     console.error('Error:', data.error);
@@ -144,6 +130,5 @@
             });
         }
     </script>
-    
-    
+
 {% endblock %}

@@ -25,17 +25,18 @@ user_classlist_association = db.Table(
 
 class ClassList(db.Model):
     __tablename__ = "classlist"
-
+    
     id = db.Column(db.Integer, primary_key=True)
     subject_name = db.Column(db.String(100), nullable=False)
     school_year = db.Column(db.Integer, nullable=False)
     semester = db.Column(Enum(Semester, values_callable=lambda x: [str(e.value) for e in Semester]), nullable=False)
     section_name = db.Column(db.String(100), nullable=False)
-    
+
     students = db.relationship('User', secondary=user_classlist_association, back_populates='classlists')
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user_classlist = db.relationship('User', back_populates='classlists')
     faculty_creator = db.relationship('User', back_populates='created_classlists', overlaps="user_classlist")
+
 
 class Attendance(db.Model):
     __tablename__ = "attendance"
