@@ -1,5 +1,6 @@
 import base64
 from datetime import datetime
+from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
 import io
 from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash, current_app
 from flask_login import login_required, current_user
@@ -13,8 +14,8 @@ from src.utils.generate_qr import generate_qr
 from src.utils.scanner import add_attendance
 from collections import defaultdict
 import uuid
-import uuid
 from werkzeug.utils import secure_filename
+import json
 import pandas as pd
 import io
 core_bp = Blueprint("core", __name__)
@@ -57,12 +58,78 @@ def records():
 
     return render_template('core/faculty/records.html', students=students)
 
+@core_bp.route('/classlist_collection', methods=['GET'])
+@login_required
+@check_is_confirmed
+@admin_required
+def classlist_collection():
+    # Fetch a list of class lists created by the current faculty user
+    classlist_data = ClassList.query.filter_by(faculty_creator=current_user).all()
+
+    return render_template('core/faculty/classlist_collection.html', classlist_data=classlist_data)
+
+@core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
+@login_required
+@check_is_confirmed
+@admin_required
+def display_classlist(classlist_id):
+    # Fetch detailed information for the specified classlist_id
+    classlist_entry = ClassList.query.get_or_404(classlist_id)
+    users = classlist_entry.students
+
+    # Render the template with detailed information
+    return render_template('core/faculty/classlist_details.html', classlist_entry=classlist_entry, users=users)
+
+@core_bp.route('/delete_classlist/<int:classlist_id>', methods=['GET', 'POST'])
+@login_required
+@check_is_confirmed
+@admin_required
+def delete_classlist(classlist_id):
+    # Fetch the class list entry from the database
+    classlist_entry = ClassList.query.get(classlist_id)
+
+    if classlist_entry:
+        # Assuming you have a proper relationship set up between ClassList and associated users, 
+        # you may want to handle the deletion of associated users as well
+        for user in classlist_entry.students:
+            db.session.delete(user)
+
+        # Delete the class list entry
+        db.session.delete(classlist_entry)
+        db.session.commit()
+    else:
+        flash("Class list not found.", "error")
+
+    # Redirect back to the class list collection
+    return redirect(url_for('core.classlist_collection'))
+
+
+
 @core_bp.route('/classlist')
 @login_required
 @check_is_confirmed
 @admin_required
 def classlist():
-    return render_template('core/faculty/classlist.html')
+    # Fetch data and prepare it to be passed to the template
+    classlist_entries = ClassList.query.filter_by(faculty_creator=current_user).all()
+    classlistId = classlist_entries[0].id if classlist_entries else None
+
+    # Manually convert to JSON format, handle None case
+    classlistId_json = json.dumps(classlistId) if classlistId is not None else None
+
+    # Example of creating classlists_by_user dynamically
+    classlists_by_user = {current_user.id: [entry.subject_name for entry in classlist_entries]}
+
+    return render_template('core/faculty/classlist.html', classlistId_json=classlistId_json, classlists_by_user=classlists_by_user)
+
+
+
+
+
+
+    
+
+
 
 @core_bp.route("/export_classlist_attendance_csv/<int:classlist_id>", methods=["GET"])
 @login_required
@@ -142,12 +209,13 @@ def read_and_store_data(file_path, school_year, semester):
             if not all([subject_name, section_name]):
                 raise ValueError("Missing values in subject or section information.")
 
-            # Create a ClassList object if it doesn't exist
+            # Check if a ClassList with the same attributes already exists
             classlist_entry = ClassList.query.filter_by(
                 subject_name=subject_name,
                 section_name=section_name,
                 school_year=school_year,
-                semester=semester
+                semester=semester,
+                faculty_creator=current_user,
             ).first()
 
             if not classlist_entry:
@@ -156,15 +224,19 @@ def read_and_store_data(file_path, school_year, semester):
                     section_name=section_name,
                     school_year=school_year,
                     semester=semester,
+                    faculty_creator=current_user,
                 )
-                
+
                 # Associate the classlist with the current faculty user
                 classlist_entry.faculty_creator = current_user
-                
+
                 db.session.add(classlist_entry)
 
-            # Commit changes to the database to get the ID for classlist_entry
-            db.session.commit()
+                # Commit changes to the database to get the ID for classlist_entry
+                db.session.commit()
+            else:
+                # If a ClassList with the same attributes already exists, you can choose to update it or skip
+                print("ClassList with the same attributes already exists. You may want to update it or skip.")
 
             for index, row in data.iloc[1:].iterrows():
                 # Debugging: Print row information
@@ -202,6 +274,8 @@ def read_and_store_data(file_path, school_year, semester):
                     existing_user.middle_name = middle_name
                     existing_user.last_name = last_name
                     existing_user.section_name = section_name
+                    
+                    classlist_entry.students.append(existing_user)
                     # ... (update other fields as needed)
                 else:
                     # Create a new user and associate with the classlist
@@ -214,6 +288,8 @@ def read_and_store_data(file_path, school_year, semester):
                         section_name=section_name,
                     )
                     db.session.add(user)
+
+                # Associate the user with the classlist (moved outside the else block)
                     classlist_entry.students.append(user)
 
             # Commit changes to the database after processing all rows
@@ -222,12 +298,12 @@ def read_and_store_data(file_path, school_year, semester):
             print("Data successfully committed to the database.")
 
         except Exception as e:
+            db.session.rollback()  # Rollback changes in case of an exception
             print(f"Error processing CSV file: {e}")
             raise ValueError("Error processing CSV file.")
 
     else:
         raise ValueError('Invalid file format. Please upload a CSV file.')
-
 
 
 @core_bp.route('/upload_classlist', methods=['GET', 'POST'])
@@ -267,6 +343,7 @@ def upload_classlist():
         # Handle other exceptions or errors
         flash(f"Error: {e}")
         return redirect(request.url)
+
 
 @core_bp.route('/files', methods=['GET'])
 def show_uploaded_files():
@@ -336,17 +413,6 @@ def display_data():
     # Render the template
     return render_template('display_data.html', classlist_with_users=classlist_with_users)
 
-@core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
-@login_required
-@check_is_confirmed
-@admin_required
-def display_classlist(classlist_id):
-    # Fetch detailed information for the specified classlist_id
-    classlist_entry = ClassList.query.get_or_404(classlist_id)
-    users = classlist_entry.students
-
-    # Render the template with detailed information
-    return render_template('core/faculty/classlist_details.html', classlist_entry=classlist_entry, users=users)
 
 
 

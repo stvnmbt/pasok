@@ -1,0 +1,21 @@
+{% extends "core/faculty/sidebar.html" %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+{% block body %}
+    <h1 class="h3 mb-4"><strong>Class List Collection</strong></h1>
+
+    <!-- Display a list of class lists with links to view details -->
+    <ul>
+        {% for classlist_entry in classlist_data %}
+            <li>
+                {{ classlist_entry.subject_name }} - {{ classlist_entry.section_name }}
+                <a href="{{ url_for('core.display_classlist', classlist_id=classlist_entry.id) }}">View Details</a>
+                <a href="{{ url_for('core.delete_classlist', classlist_id=classlist_entry.id) }}" class="btn btn-danger">Delete</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <!-- Add a button to go back to classlist.html -->
+    <a href="{{ url_for('core.classlist') }}" class="btn btn-primary">Back to Class List</a>
+
+{% endblock %}
