@@ -5,34 +5,52 @@
 {% endblock %}
 
 {% block body %}
+
+<style>
+    
+    @media (max-width: 767px) {
+        .table-responsive {
+            overflow-x: auto;
+        }
+
+        .table thead {
+            display: none;
+        }
+
+        .table tbody tr {
+            display: block;
+            margin-bottom: 20px;
+            border: 3px solid #800000;
+            border-radius: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+
+        .table tbody td {
+            display: block;
+            text-align: left; 
+        }
+    }
+</style>
+
 <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3"><strong> Real Time Attendance</strong></h1>
+    <h1 class="h3"><strong>Real Time Attendance</strong></h1>
     <div class="input-group" style="width: 25%;">
         <input type="text" class="form-control" id="search-input" placeholder="Search.." aria-label="Search" aria-describedby="search-button" 
-        style="margin-top: 15px;  
-        border-color: black;" >
+        style="margin-top: 15px; border-color: black;">
     </div>
 </div>
 
-<div class="table-responsive" style="overflow-x: auto;">
-    <table class="table datatables table-bordered table-condensed table-striped p-0 m-0" style="width: 100%; border: 1px solid #696969; border-radius: 10px;">
-        <thead>
-            <tr role="row">
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Surname</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Given Name</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Date & Time</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Status</th>
-            </tr>
-        </thead>
+<div class="table-responsive">
+    <table class="table table-bordered table-striped p-0 m-0">
         <tbody>
             {% for au in attendance_user %}
-            <tr role="row" style="background-color: #f9f9f9;">
-                <td>{{ au.last_name }}</td>
-                <td>{{ au.first_name }}</td>
-                <td>{{ au.section_code }}</td>
-                <td>{{ au.created }}</td>
-                <td>{{ au.attendance_status }}</td>
+            <tr role="row" class="row-to-filter" data-filter="{{ au.last_name }} {{ au.first_name }} {{ au.section_code }} {{ au.created }} {{ au.attendance_status }}">
+                <td><strong>Surname:</strong> {{ au.last_name }}</td>
+                <td><strong>Given Name:</strong> {{ au.first_name }}</td>
+                <td><strong>Section:</strong> {{ au.section_code }}</td>
+                <td><strong>Date & Time:</strong> {{ au.created }}</td>
+                <td><strong>Status:</strong> {{ au.attendance_status }}</td>
             </tr>
             {% endfor %}
         </tbody>
