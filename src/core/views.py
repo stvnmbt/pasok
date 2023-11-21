@@ -119,10 +119,10 @@ def export_classlist_attendance_csv(classlist_id):
 def qrscanner():
     return render_template('core/faculty/qrscanner.html')
 
+@core_bp.route('/get_qr', methods=['POST'])
 @login_required
 @check_is_confirmed
 @admin_required
-@core_bp.route('/get_qr', methods=['POST'])
 def get_qr():
     s = request.get_json()
 
