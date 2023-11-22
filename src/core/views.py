@@ -1,22 +1,32 @@
+import base64
 from datetime import datetime
-from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response
+from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
+import io
 from flask_login import login_required, current_user
-from src import db
-from src.utils.decorators import check_is_confirmed
-from src.accounts.models import Attendance, User, ClassList
+from src import db, app, bcrypt, app
+from src.utils.decorators import admin_required, admin_required, check_is_confirmed
+from src.accounts.models import Attendance, User, ClassList, user_classlist_association
 import qrcode
 from qrcode.image.styledpil import StyledPilImage
 import io
 import os
 import csv 
 from io import StringIO
+from src.utils.generate_qr import generate_qr
 from src.utils.scanner import add_attendance
-from qrcode import make
-from PIL import Image
-import pandas as pd
 from collections import defaultdict
 
+import json
+import pandas as pd
+
+import uuid
+from werkzeug.utils import secure_filename
+
+
+
+
 core_bp = Blueprint("core", __name__)
+
 
 @core_bp.route("/")
 @login_required
@@ -27,41 +37,6 @@ def home():
     if user.is_faculty:
         return render_template("core/faculty/index.html")
     else:
-        # Check if the user has a QR code; if not, generate one
-        if not user.qr_code:
-            # Generate the QR code
-            qr = qrcode.QRCode(
-                version=5,
-                error_correction=qrcode.constants.ERROR_CORRECT_H,
-                box_size=10,
-                border=4,
-            )
-            qr_data = user.id
-            qr.add_data(qr_data)
-            qr_code_image = qr.make_image(image_factory=StyledPilImage, embeded_image_path="src\static\images\PUP logo white bg.png")
-
-            # Convert the QR code image to bytes
-            qr_code_bytes = io.BytesIO()
-            qr_code_image.save(qr_code_bytes, format='PNG')
-            qr_code_bytes = qr_code_bytes.getvalue()
-
-            # Store the QR code bytes in the user's record
-            user.qr_code = qr_code_bytes
-            db.session.commit()
-
-            # Determine the folder where you want to save the QR code
-            save_folder = 'student_qrcode'
-
-            # Create the folder if it doesn't exist
-            if not os.path.exists(save_folder):
-                os.makedirs(save_folder)
-
-            # Define the file path for the QR code image
-            file_path = os.path.join(save_folder, f"{user.id}_qr_code.png")
-
-            # Save the QR code image as a file
-            qr_code_image.save(file_path, format='PNG')
-
         return render_template("core/student/index.html")
     
 #################
@@ -71,6 +46,8 @@ def home():
 @core_bp.route("/realtime")
 @login_required
 @check_is_confirmed
+@admin_required
+@admin_required
 def realtime():
     attendance_user = db.session.query(Attendance)\
     .join(User, User.id == Attendance.user_id)\
@@ -80,38 +57,106 @@ def realtime():
 
     return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip)
 
-''' Di ko pa kayang i-let go haha halos buong araw ko to cinode comment ko muna
-@core_bp.route("/update_table", methods=['GET'])
-@login_required
-@check_is_confirmed
-def update_table():
-    last_attendance = db.session.query(Attendance)\
-    .join(User, User.id == Attendance.user_id)\
-    .add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status)\
-    .order_by(Attendance.created.desc())\
-    .first()
-
-    return json.dumps(last_attendance, default=str)
-    #return jsonify(last_attendance)
-'''
-
 @core_bp.route('/records')
 @login_required
 @check_is_confirmed
+@admin_required
 def records():
     students = db.session.query(User).filter(User.is_faculty==False).order_by(User.last_name.asc()).all()
 
     return render_template('core/faculty/records.html', students=students)
 
-@core_bp.route('/classlist')
+
+@core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
 @login_required
 @check_is_confirmed
+@admin_required
+def display_classlist(classlist_id):
+    # Fetch detailed information for the specified classlist_id
+    classlist_entry = ClassList.query.get_or_404(classlist_id)
+    users = classlist_entry.students
+
+    # Render the template with detailed information
+    return render_template('core/faculty/classlist_details.html', classlist_entry=classlist_entry, users=users)
+
+
+
+@core_bp.route('/delete_classlist/<int:classlist_id>', methods=['GET', 'POST'])
+@login_required
+@check_is_confirmed
+@admin_required
+def delete_classlist(classlist_id):
+    # Fetch the class list entry from the database
+    classlist_entry = ClassList.query.get(classlist_id)
+
+    if classlist_entry:
+        try:
+            # Manually remove students from the classlist
+            for student in classlist_entry.students:
+                print(f"Removing student {student.id} from classlist {classlist_entry.id}")
+
+                # Manually delete association from user_classlist_association table
+                db.session.query(user_classlist_association).filter_by(
+                    user_id=student.id,
+                    classlist_id=classlist_entry.id
+                ).delete()
+
+                db.session.commit()
+
+            # Delete the class list entry
+            db.session.delete(classlist_entry)
+            db.session.commit()
+
+            flash('Class list deleted successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash('Error deleting class list', 'error')
+            current_app.logger.error(f"Error deleting class list: {str(e)}")
+
+    # Redirect back to the class list collection
+    return redirect(url_for('core.classlist'))
+
+
+
+
+
+
+
+
+@core_bp.route('/classlist', methods=['GET'])
+@login_required
+@check_is_confirmed
+@admin_required
 def classlist():
-    return render_template('core/faculty/classlist.html')
+    # Fetch data and prepare it to be passed to the template
+    classlist_entries = ClassList.query.filter_by(faculty_creator=current_user).all()
+    classlistId = classlist_entries[0].id if classlist_entries else None
+
+    # Fetch a list of class lists created by the current faculty user
+    classlist_data = ClassList.query.filter_by(faculty_creator=current_user).all()
+
+    # Manually convert to JSON format, handle None case
+    classlistId_json = json.dumps(classlistId) if classlistId is not None else None
+
+    # Example of creating classlists_by_user dynamically
+    classlists_by_user = {current_user.id: [entry.subject_name for entry in classlist_entries]}
+
+    return render_template('core/faculty/classlist.html', classlistId_json=classlistId_json, classlists_by_user=classlists_by_user, classlist_data=classlist_data)
+
+
+
+
+
+
+
+    
+
+
 
 @core_bp.route("/export_classlist_attendance_csv/<int:classlist_id>", methods=["GET"])
 @login_required
 @check_is_confirmed
+@admin_required
 def export_classlist_attendance_csv(classlist_id):
     # Retrieve attendance records for the classlist
     classlist = ClassList.query.get(classlist_id)
@@ -161,21 +206,244 @@ def export_classlist_attendance_csv(classlist_id):
 
     return response
 
+
+
+def generate_unique_user_id(email, first_name, last_name):
+    user_id = str(uuid.uuid4())
+    print(f"Generated user_id: {user_id} for {first_name} {last_name}")
+    return user_id
+
+def read_and_store_data(file, school_year, semester):
+    try:
+        # Read CSV file and decode it using latin1 encoding, treat the first row as headers
+        data = pd.read_csv(file, encoding='latin1', header=None)
+
+        print(data.iloc[0])
+
+        subject_name = str(data.iloc[0, 1]).strip()
+        section_name = str(data.iloc[0, 5]).strip()
+        print(f"Subject Name: {subject_name}, Section Name: {section_name}")
+
+        try:
+            # Check if any required field is missing
+            if not all([subject_name, section_name]):
+                raise ValueError("Missing values in subject or section information.")
+
+            # Check if a ClassList with the same attributes already exists
+            classlist_entry = ClassList.query.filter_by(
+                subject_name=subject_name,
+                section_name=section_name,
+                school_year=school_year,
+                semester=semester,
+                faculty_creator=current_user,
+            ).first()
+
+            if not classlist_entry:
+                classlist_entry = ClassList(
+                    subject_name=subject_name,
+                    section_name=section_name,
+                    school_year=school_year,
+                    semester=semester,
+                    faculty_creator=current_user,
+                )
+
+                # Associate the classlist with the current faculty user
+                classlist_entry.faculty_creator = current_user
+
+                db.session.add(classlist_entry)
+
+                # Commit changes to the database to get the ID for classlist_entry
+                db.session.commit()
+            else:
+                # If a ClassList with the same attributes already exists, you can choose to update it or skip
+                print("ClassList with the same attributes already exists. You may want to update it or skip.")
+
+            for index, row in data.iloc[3:].iterrows():
+                # Debugging: Print row information
+                print(f"Processing row {index} - {row}")
+
+                # Skip the rows with missing or invalid values
+                if pd.isnull(row[0]) or pd.isnull(row[4]) or pd.isnull(row[5]) or pd.isnull(row[6]):
+                    print(f"Skipping row {index} due to missing values.")
+                    continue
+
+                # Extract student information from each row
+                student_number = str(row[0]).strip()
+                last_name = str(row[1]).strip()
+                first_name = str(row[2]).strip()
+                middle_name = str(row[3]).strip()
+                email = str(row[4]).strip()
+                mobile_number = str(row[5]).strip()
+                delivery_mode = str(row[6]).strip()
+                remarks = str(row[7]).strip()
+
+                # Check if any required field is missing
+                if not all([student_number, last_name, first_name, email]):
+                    print(f"Skipping row {index} due to missing values.")
+                    continue  # Skip to the next iteration if there are missing values
+
+                # Generate a unique user ID using the function
+                user_id = generate_unique_user_id(email, first_name, last_name)
+
+                # Check if the user already exists
+                existing_user = User.query.filter_by(email=email).first()
+
+                if existing_user:
+                    # Update existing user information
+                    existing_user.first_name = first_name
+                    existing_user.middle_name = middle_name
+                    existing_user.last_name = last_name
+
+                    # Check if the association already exists before adding the user to the classlist
+                    if not any(assoc.user_id == existing_user.id for assoc in classlist_entry.students):
+                        # Check if the user is already associated with the classlist
+                        if not classlist_entry.students.filter_by(id=existing_user.id).first():
+                            # Use a new transaction for each association
+                            with db.session.begin_nested():
+                                classlist_entry.students.append(existing_user)
+                            print("User already exists. Adding the user to the classlist.")
+                        else:
+                            print("User is already associated with the classlist.")
+                    else:
+                        print("Classlist students:", classlist_entry.students)
+                        print("Existing user:", existing_user)
+                        print("User is already associated with the classlist.")
+                    # ... (update other fields as needed)
+                else:
+                    # Create a new user and associate with the classlist
+                    user = User(
+                        email=email,
+                        password=f'{first_name}{last_name}',
+                        first_name=first_name,
+                        middle_name=middle_name,
+                        last_name=last_name,
+                    )
+                    db.session.add(user)
+
+                    # Associate the user with the classlist (moved outside the else block)
+                    # Check if the association already exists before adding the user to the classlist
+                    if not any(assoc.user_id == user.id for assoc in classlist_entry.students):
+                        # Use a new transaction for each association
+                        with db.session.begin_nested():
+                            classlist_entry.students.append(user)
+                        print("New user. Adding the user to the classlist.")
+                    else:
+                        print("User is already associated with the classlist.")
+
+            # Commit changes to the database after processing all rows
+            db.session.commit()
+
+            print("Data successfully committed to the database.")
+
+        except Exception as e:
+            db.session.rollback()  # Rollback changes in case of an exception
+            print(f"Error processing CSV file: {e}")
+            raise ValueError("Error processing CSV file.")
+
+    except ValueError as e:
+        raise ValueError('Invalid file format. Please upload a CSV file.')
+
+    except Exception as e:
+        print(f"Error: {e}")
+        raise  # Re-raise the exception for further handling
+
+
+
+@core_bp.route('/upload_classlist', methods=['POST'])
+@login_required
+@check_is_confirmed
+@admin_required
+def upload_classlist():
+    try:
+        school_year = request.form.get('school_year')
+        semester = request.form.get('semester')
+
+        # Assuming 'files[]' is the name attribute of your file input in the form
+        uploaded_files = request.files.getlist('files[]')
+
+        for file in uploaded_files:
+            if file.filename == '':
+                flash('No selected file')
+                return redirect(request.url)
+
+            try:
+                # Call your function here without saving to the local file system
+                read_and_store_data(file, school_year, semester)
+                flash('Data successfully saved to the database.')
+            except ValueError as e:
+                flash(f'Error processing file: {str(e)}')
+
+        return redirect(request.url)
+
+    except Exception as e:
+        # Handle other exceptions or errors
+        flash(f"Error: {e}")
+        return redirect(request.url)
+    
+
+
+
+@core_bp.route('/display_data', methods=['GET'])
+@login_required
+@check_is_confirmed
+@admin_required
+def display_data():
+    # Query all data from the ClassList table
+    classlist_data = ClassList.query.filter_by(creator_id=current_user.id).all()
+    
+    # Print the number of ClassList entries retrieved
+    print(f"Number of ClassList entries: {len(classlist_data)}")
+
+    # Create a list to store dictionaries with classlist and user information
+    classlist_with_users = []
+
+    # Iterate through each ClassList object and find the corresponding User objects
+    for classlist_entry in classlist_data:
+        users = classlist_entry.students  # Use the relationship attribute
+        users_info = [{'first_name': user.first_name, 'last_name': user.last_name, 'email': user.email} for user in users]
+
+        # Append a dictionary with classlist and user information to the list
+        classlist_with_users.append({
+            'classlist_entry': {'subject_name': classlist_entry.subject_name, 'section_name': classlist_entry.section_name},
+            'users': users_info
+        })
+
+    # Debugging print statements (move this outside the loop)
+    for item in classlist_with_users:
+        print(f"Classlist Entry: {item['classlist_entry']['subject_name']} - {item['classlist_entry']['section_name']}")
+        print(f"Number of Users: {len(item['users'])}")
+
+    for item in classlist_with_users:
+        for user in item['users']:
+            print(f"User: {user['first_name']} {user['last_name']} ({user['email']})")
+
+    # Render the template
+    return render_template('display_data.html', classlist_with_users=classlist_with_users)
+
+
+
+
+
+
+
 @core_bp.route('/qrscanner')
 @login_required
 @check_is_confirmed
+@admin_required
 def qrscanner():
     return render_template('core/faculty/qrscanner.html')
 
+@login_required
+@check_is_confirmed
+@admin_required
 @core_bp.route('/get_qr', methods=['POST'])
 def get_qr():
     s = request.get_json()
 
     # anti duplicate measure
-    #last_attendance = Attendance.query.order_by(Attendance.created.desc()).first()
-    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s).order_by(Attendance.created.desc()).first()
+    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s[0]).order_by(Attendance.created.desc()).first()
     if last_attendance is None:
-        add_attendance(s)
+        add_attendance(s[0], s[1])
         return ('Success!', 200)
     else:
         time_now = datetime.now()
@@ -183,7 +451,7 @@ def get_qr():
         # str(last_attendance.user_id) != s and 
         if time_last > 60: # ADD: change duration later
             print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
-            add_attendance(s)
+            add_attendance(s[0], s[1])
             return ('Success!', 200)
     return ('', 204)
 
@@ -195,7 +463,8 @@ def get_qr():
 @login_required
 @check_is_confirmed
 def show_qrcode():
-    return render_template("core/student/qrcode.html")
+    qr_image = generate_qr(current_user.id)
+    return render_template("core/student/qrcode.html", qr_image=qr_image)
 
 @core_bp.route('/view_qr_code')
 @login_required
@@ -225,24 +494,13 @@ def view_qr_code():
 @login_required
 @check_is_confirmed
 def download_qr_code():
-    user = current_user
+    base64_encoded_image = generate_qr(current_user.id)
 
-    # Check if the user has a QR code
-    if user.qr_code:
-        # Get the QR code bytes from the user object
-        qr_code_bytes = user.qr_code
+    # Convert base64 to bytes
+    qr_image_bytes = base64.b64decode(base64_encoded_image)
 
-        # Create a response object with the QR code data
-        response = make_response(qr_code_bytes)
+    # Create a BytesIO object
+    image_io = io.BytesIO(qr_image_bytes)
 
-        # Set the appropriate headers for the response
-        response.headers.set('Content-Type', 'image/png')
-
-        # Set the filename as the first name and last name of the user
-        filename = f"{user.first_name}_{user.last_name}_qr_code.png"
-        response.headers.set('Content-Disposition', 'attachment', filename=filename)
-
-        return response
-        
-    # Handle the case where the user doesn't have a QR code
-    return "QR code not found", 404
+    # Send the file for download
+    return send_file(image_io, mimetype='image/png', as_attachment=True, download_name=f'{current_user.last_name}, {current_user.first_name}_qr_code.png')
