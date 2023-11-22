@@ -3,11 +3,9 @@ from datetime import datetime
 from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
 import io
 from flask_login import login_required, current_user
-from src import db, app, bcrypt, app
+from src import db
 from src.utils.decorators import admin_required, admin_required, check_is_confirmed
-from src.accounts.models import Attendance, User, ClassList, user_classlist_association
-import qrcode
-from qrcode.image.styledpil import StyledPilImage
+from src.accounts.models import Attendance, User, ClassList, assoc
 import io
 import os
 import csv 
@@ -19,8 +17,6 @@ from collections import defaultdict
 import json
 import pandas as pd
 
-import uuid
-from werkzeug.utils import secure_filename
 
 
 
@@ -86,6 +82,7 @@ def display_classlist(classlist_id):
 @check_is_confirmed
 @admin_required
 def delete_classlist(classlist_id):
+
     # Fetch the class list entry from the database
     classlist_entry = ClassList.query.get(classlist_id)
 
@@ -96,7 +93,7 @@ def delete_classlist(classlist_id):
                 print(f"Removing student {student.id} from classlist {classlist_entry.id}")
 
                 # Manually delete association from user_classlist_association table
-                db.session.query(user_classlist_association).filter_by(
+                db.session.query(assoc).filter_by(
                     user_id=student.id,
                     classlist_id=classlist_entry.id
                 ).delete()
@@ -208,17 +205,13 @@ def export_classlist_attendance_csv(classlist_id):
 
 
 
-def generate_unique_user_id(email, first_name, last_name):
-    user_id = str(uuid.uuid4())
-    print(f"Generated user_id: {user_id} for {first_name} {last_name}")
-    return user_id
 
 def read_and_store_data(file, school_year, semester):
     try:
         # Read CSV file and decode it using latin1 encoding, treat the first row as headers
         data = pd.read_csv(file, encoding='latin1', header=None)
 
-        print(data.iloc[0])
+        #print(data.iloc[0])
 
         subject_name = str(data.iloc[0, 1]).strip()
         section_name = str(data.iloc[0, 5]).strip()
@@ -261,6 +254,7 @@ def read_and_store_data(file, school_year, semester):
             for index, row in data.iloc[3:].iterrows():
                 # Debugging: Print row information
                 print(f"Processing row {index} - {row}")
+                
 
                 # Skip the rows with missing or invalid values
                 if pd.isnull(row[0]) or pd.isnull(row[4]) or pd.isnull(row[5]) or pd.isnull(row[6]):
@@ -283,11 +277,10 @@ def read_and_store_data(file, school_year, semester):
                     continue  # Skip to the next iteration if there are missing values
 
                 # Generate a unique user ID using the function
-                user_id = generate_unique_user_id(email, first_name, last_name)
 
                 # Check if the user already exists
-                existing_user = User.query.filter_by(email=email).first()
-
+                existing_user = User.query.filter(User.email==email).all()
+                print(f'gfjdas;lkdfj {existing_user}')
                 if existing_user:
                     # Update existing user information
                     existing_user.first_name = first_name
@@ -297,18 +290,15 @@ def read_and_store_data(file, school_year, semester):
                     # Check if the association already exists before adding the user to the classlist
                     if not any(assoc.user_id == existing_user.id for assoc in classlist_entry.students):
                         # Check if the user is already associated with the classlist
-                        if not classlist_entry.students.filter_by(id=existing_user.id).first():
+
                             # Use a new transaction for each association
-                            with db.session.begin_nested():
-                                classlist_entry.students.append(existing_user)
+                        with db.session.begin_nested():
+                            classlist_entry.students.append(existing_user)
                             print("User already exists. Adding the user to the classlist.")
-                        else:
-                            print("User is already associated with the classlist.")
                     else:
                         print("Classlist students:", classlist_entry.students)
                         print("Existing user:", existing_user)
                         print("User is already associated with the classlist.")
-                    # ... (update other fields as needed)
                 else:
                     # Create a new user and associate with the classlist
                     user = User(
@@ -318,7 +308,9 @@ def read_and_store_data(file, school_year, semester):
                         middle_name=middle_name,
                         last_name=last_name,
                     )
+
                     db.session.add(user)
+                    db.session.commit()
 
                     # Associate the user with the classlist (moved outside the else block)
                     # Check if the association already exists before adding the user to the classlist

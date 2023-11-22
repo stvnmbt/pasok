@@ -3,10 +3,9 @@
 from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
-from sqlalchemy import Enum, UniqueConstraint
+from sqlalchemy import Enum 
 import enum
 
-from src.core.views import generate_unique_user_id
 
 class Status(enum.Enum):
     PRESENT = 'PRESENT'
@@ -18,11 +17,10 @@ class Semester(enum.Enum):
     SECOND = 'SECOND'
     SUMMER = 'SUMMER'
 
-user_classlist_association = db.Table(
-    'user_classlist_association',
+assoc = db.Table(
+    'assoc',
     db.Column('user_id', db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')),
     db.Column('classlist_id', db.Integer, db.ForeignKey('classlist.id', ondelete='CASCADE')),
-    UniqueConstraint('user_id', 'classlist_id', name='unique_user_classlist')
 )
 
 class ClassList(db.Model):
@@ -36,7 +34,7 @@ class ClassList(db.Model):
 
     students = db.relationship(
         'User',
-        secondary=user_classlist_association,
+        secondary=assoc,
         back_populates='classlists',
         lazy='dynamic'  # Set the relationship to be dynamic
     )
@@ -66,7 +64,6 @@ class User(db.Model,UserMixin):
     __tablename__ = "user"
 
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.String(256), unique=True, nullable=False)
     email = db.Column(db.String(150), unique=True, nullable=False)
     password = db.Column(db.String(150), nullable=False)
     first_name = db.Column(db.String(150), nullable=False)
@@ -85,7 +82,7 @@ class User(db.Model,UserMixin):
     # Add this line to initialize the relationships
     classlists = db.relationship(
         'ClassList',
-        secondary='user_classlist_association',
+        secondary='assoc',
         back_populates='students',
         cascade='all, delete-orphan',
         single_parent=True,
@@ -95,13 +92,11 @@ class User(db.Model,UserMixin):
     classlist_attendance = db.relationship('Attendance', back_populates='user_attendance')
     created_classlists = db.relationship('ClassList', back_populates='faculty_creator', overlaps="user_classlist")
 
-    def get_id(self):
-        return str(self.id)
+
     
     def __init__(
         self, email, password, first_name, middle_name, last_name, present_count=0, late_count=0, absent_count=0, qr_code=None, is_confirmed=False, confirmed_on=None, is_faculty=False
     ):   
-        from src.core.views import generate_unique_user_id
         self.email = email
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
         self.first_name = first_name
@@ -115,7 +110,6 @@ class User(db.Model,UserMixin):
         self.present_count = present_count
         self.late_count = late_count
         self.absent_count = absent_count
-        self.user_id = generate_unique_user_id(email, first_name, last_name)
 
     def __repr__(self):
         return f"<email {self.email}>"
