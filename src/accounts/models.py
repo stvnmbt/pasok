@@ -3,7 +3,7 @@
 from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
-from sqlalchemy import Enum
+from sqlalchemy import Enum, UniqueConstraint
 import enum
 
 
@@ -19,8 +19,9 @@ class Semester(enum.Enum):
 
 user_classlist_association = db.Table(
     'user_classlist_association',
-    db.Column('user_id', db.Integer, db.ForeignKey('user.id')),
-    db.Column('classlist_id', db.Integer, db.ForeignKey('classlist.id'))
+    db.Column('user_id', db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')),
+    db.Column('classlist_id', db.Integer, db.ForeignKey('classlist.id', ondelete='CASCADE')),
+    UniqueConstraint('user_id', 'classlist_id', name='unique_user_classlist')
 )
 
 class ClassList(db.Model):
@@ -32,11 +33,19 @@ class ClassList(db.Model):
     semester = db.Column(Enum(Semester, values_callable=lambda x: [str(e.value) for e in Semester]), nullable=False)
     section_name = db.Column(db.String(100), nullable=False)
 
-    students = db.relationship('User', secondary=user_classlist_association, back_populates='classlists')
+    students = db.relationship(
+        'User',
+        secondary=user_classlist_association,
+        back_populates='classlists',
+        lazy='dynamic'  # Set the relationship to be dynamic
+    )
+
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user_classlist = db.relationship('User', back_populates='classlists')
     faculty_creator = db.relationship('User', back_populates='created_classlists', overlaps="user_classlist")
 
+    # Define the relationship with Attendance
+    attendance_records = db.relationship('Attendance', back_populates='classlist')
 
 class Attendance(db.Model):
     __tablename__ = "attendance"
@@ -47,8 +56,11 @@ class Attendance(db.Model):
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user_attendance = db.relationship('User', back_populates='classlist_attendance')
-    
 
+    classlist_id = db.Column(db.Integer, db.ForeignKey('classlist.id'), nullable=False)
+    classlist = db.relationship('ClassList', back_populates='attendance_records')
+
+    
 class User(db.Model,UserMixin):
     __tablename__ = "user"
 
@@ -63,14 +75,22 @@ class User(db.Model,UserMixin):
     is_confirmed = db.Column(db.Boolean, nullable=False, default=False)
     created_on = db.Column(db.DateTime, nullable=False)
     confirmed_on = db.Column(db.DateTime, nullable=True)
-    section_name = db.Column(db.String(20))
+
     present_count = db.Column(db.Integer, nullable=True)
     late_count = db.Column(db.Integer, nullable=True)
     absent_count = db.Column(db.Integer, nullable=True)
     is_active = db.Column(db.Boolean, default=True)
 
     # Add this line to initialize the relationships
-    classlists = db.relationship('ClassList', secondary='user_classlist_association', back_populates='students')
+    classlists = db.relationship(
+        'ClassList',
+        secondary='user_classlist_association',
+        back_populates='students',
+        cascade='all, delete-orphan',
+        single_parent=True,
+        lazy='dynamic'  # Set the relationship to be dynamic
+    )
+
     classlist_attendance = db.relationship('Attendance', back_populates='user_attendance')
     created_classlists = db.relationship('ClassList', back_populates='faculty_creator', overlaps="user_classlist")
 
@@ -78,7 +98,7 @@ class User(db.Model,UserMixin):
         return str(self.id)
     
     def __init__(
-        self, email, password, first_name, middle_name, last_name, section_name='', present_count=0, late_count=0, absent_count=0, qr_code=None, is_confirmed=False, confirmed_on=None, is_faculty=False
+        self, email, password, first_name, middle_name, last_name, present_count=0, late_count=0, absent_count=0, qr_code=None, is_confirmed=False, confirmed_on=None, is_faculty=False
     ):   
         from src.core.views import generate_unique_user_id
         self.email = email
@@ -89,7 +109,8 @@ class User(db.Model,UserMixin):
         self.created_on = datetime.now()
         self.is_faculty = is_faculty
         self.is_confirmed = is_confirmed
-
+        self.confirmed_on = confirmed_on
+        self.qr_code = qr_code
         self.present_count = present_count
         self.late_count = late_count
         self.absent_count = absent_count
