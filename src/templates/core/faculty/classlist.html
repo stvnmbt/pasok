@@ -27,28 +27,37 @@
             <!-- File upload section -->
             <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple>
             <button class="btn btn-sm" onclick="uploadClassList()" style="background-color:#800000; color: white;">Upload Class List</button>
-            
         </div>
     </div>
-    
-    <a href="{{ url_for('core.classlist_collection') }}" class="btn btn-primary">View Class List Collection</a>
+
+    <!-- Display a list of class lists with links to view details -->
+    <h2 class="h4 mb-4"><strong>Class List Collection</strong></h2>
+    <ul>
+        {% for classlist_entry in classlist_data %}
+            <li>
+                {{ classlist_entry.subject_name }} - {{ classlist_entry.section_name }}
+                <a href="{{ url_for('core.display_classlist', classlist_id=classlist_entry.id) }}">View Details</a>
+                <a href="{{ url_for('core.delete_classlist', classlist_id=classlist_entry.id) }}" class="btn btn-danger">Delete</a>
+            </li>
+        {% endfor %}
+    </ul>
+
+
     <script src="core.classlist.html" data-classlist-id="{{ classlistId|default(0) }}"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
     
     <script>
-    var classlistIdJson = '{{ classlistId_json|safe }}';
-    var classlistId;
+        var classlistIdJson = '{{ classlistId_json|safe }}';
+        var classlistId;
 
-    if (classlistIdJson) {
-        classlistId = JSON.parse(classlistIdJson);
-        console.log('Classlist ID:', classlistId);
-    } else {
-        console.log('Classlist ID is undefined or null.');
-    }
-      // Now you can use the classlistId variable in your JavaScript logic
+        if (classlistIdJson) {
+            classlistId = JSON.parse(classlistIdJson);
+            console.log('Classlist ID:', classlistId);
+        } else {
+            console.log('Classlist ID is undefined or null.');
+        }
 
-  
         function createFileEntry(filename, hasClasslist, classlistId) {
             var filesList = document.getElementById('uploadedFilesList');
             var fileEntry = document.createElement('div');
@@ -57,7 +66,7 @@
                 '<button onclick="viewFileData(\'' + filename + '\')">View Data</button>';
             
             if (hasClasslist) {
-                var viewClasslistUrl = '{{ url_for("core.classlist_collection", classlist_id=classlistId) }}';
+                var viewClasslistUrl = '{{ url_for("core.classlist", classlist_id=classlistId) }}';
                 fileEntry.innerHTML += '<a href="' + viewClasslistUrl + '" target="_blank">View Classlist</a>';
             }
     

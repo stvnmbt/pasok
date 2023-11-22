@@ -3,7 +3,7 @@ from flask import Blueprint, make_response, render_template, request, send_file,
 from flask_login import login_required, current_user
 from src import db, app, bcrypt
 from src.utils.decorators import admin_required, check_is_confirmed
-from src.accounts.models import Attendance, User, ClassList
+from src.accounts.models import Attendance, User, ClassList, user_classlist_association
 import qrcode
 from qrcode.image.styledpil import StyledPilImage
 import io
@@ -18,6 +18,7 @@ from collections import defaultdict
 import uuid
 from werkzeug.utils import secure_filename
 import json
+from sqlalchemy.orm import aliased
 
 core_bp = Blueprint("core", __name__)
 
@@ -109,15 +110,6 @@ def records():
 
     return render_template('core/faculty/records.html', students=students)
 
-@core_bp.route('/classlist_collection', methods=['GET'])
-@login_required
-@check_is_confirmed
-@admin_required
-def classlist_collection():
-    # Fetch a list of class lists created by the current faculty user
-    classlist_data = ClassList.query.filter_by(faculty_creator=current_user).all()
-
-    return render_template('core/faculty/classlist_collection.html', classlist_data=classlist_data)
 
 @core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
 @login_required
@@ -131,6 +123,8 @@ def display_classlist(classlist_id):
     # Render the template with detailed information
     return render_template('core/faculty/classlist_details.html', classlist_entry=classlist_entry, users=users)
 
+
+
 @core_bp.route('/delete_classlist/<int:classlist_id>', methods=['GET', 'POST'])
 @login_required
 @check_is_confirmed
@@ -140,23 +134,40 @@ def delete_classlist(classlist_id):
     classlist_entry = ClassList.query.get(classlist_id)
 
     if classlist_entry:
-        # Assuming you have a proper relationship set up between ClassList and associated users, 
-        # you may want to handle the deletion of associated users as well
-        for user in classlist_entry.students:
-            db.session.delete(user)
+        try:
+            # Manually remove students from the classlist
+            for student in classlist_entry.students:
+                print(f"Removing student {student.id} from classlist {classlist_entry.id}")
 
-        # Delete the class list entry
-        db.session.delete(classlist_entry)
-        db.session.commit()
-    else:
-        flash("Class list not found.", "error")
+                # Manually delete association from user_classlist_association table
+                db.session.query(user_classlist_association).filter_by(
+                    user_id=student.id,
+                    classlist_id=classlist_entry.id
+                ).delete()
+
+                db.session.commit()
+
+            # Delete the class list entry
+            db.session.delete(classlist_entry)
+            db.session.commit()
+
+            flash('Class list deleted successfully', 'success')
+        except Exception as e:
+            db.session.rollback()
+            flash('Error deleting class list', 'error')
+            current_app.logger.error(f"Error deleting class list: {str(e)}")
 
     # Redirect back to the class list collection
-    return redirect(url_for('core.classlist_collection'))
+    return redirect(url_for('core.classlist'))
 
 
 
-@core_bp.route('/classlist')
+
+
+
+
+
+@core_bp.route('/classlist', methods=['GET'])
 @login_required
 @check_is_confirmed
 @admin_required
@@ -165,13 +176,17 @@ def classlist():
     classlist_entries = ClassList.query.filter_by(faculty_creator=current_user).all()
     classlistId = classlist_entries[0].id if classlist_entries else None
 
+    # Fetch a list of class lists created by the current faculty user
+    classlist_data = ClassList.query.filter_by(faculty_creator=current_user).all()
+
     # Manually convert to JSON format, handle None case
     classlistId_json = json.dumps(classlistId) if classlistId is not None else None
 
     # Example of creating classlists_by_user dynamically
     classlists_by_user = {current_user.id: [entry.subject_name for entry in classlist_entries]}
 
-    return render_template('core/faculty/classlist.html', classlistId_json=classlistId_json, classlists_by_user=classlists_by_user)
+    return render_template('core/faculty/classlist.html', classlistId_json=classlistId_json, classlists_by_user=classlists_by_user, classlist_data=classlist_data)
+
 
 
 
@@ -242,12 +257,10 @@ def generate_unique_user_id(email, first_name, last_name):
     print(f"Generated user_id: {user_id} for {first_name} {last_name}")
     return user_id
 
-def read_and_store_data(file_path, school_year, semester):
-    _, file_extension = os.path.splitext(file_path)
-
-    if file_extension.lower() == '.csv':
+def read_and_store_data(file, school_year, semester):
+    try:
         # Read CSV file and decode it using latin1 encoding, treat the first row as headers
-        data = pd.read_csv(file_path, encoding='latin1', header=None)
+        data = pd.read_csv(file, encoding='latin1', header=None)
 
         print(data.iloc[0])
 
@@ -289,7 +302,7 @@ def read_and_store_data(file_path, school_year, semester):
                 # If a ClassList with the same attributes already exists, you can choose to update it or skip
                 print("ClassList with the same attributes already exists. You may want to update it or skip.")
 
-            for index, row in data.iloc[1:].iterrows():
+            for index, row in data.iloc[3:].iterrows():
                 # Debugging: Print row information
                 print(f"Processing row {index} - {row}")
 
@@ -324,9 +337,21 @@ def read_and_store_data(file_path, school_year, semester):
                     existing_user.first_name = first_name
                     existing_user.middle_name = middle_name
                     existing_user.last_name = last_name
-                    existing_user.section_name = section_name
-                    
-                    classlist_entry.students.append(existing_user)
+
+                    # Check if the association already exists before adding the user to the classlist
+                    if not any(assoc.user_id == existing_user.id for assoc in classlist_entry.students):
+                        # Check if the user is already associated with the classlist
+                        if not classlist_entry.students.filter_by(id=existing_user.id).first():
+                            # Use a new transaction for each association
+                            with db.session.begin_nested():
+                                classlist_entry.students.append(existing_user)
+                            print("User already exists. Adding the user to the classlist.")
+                        else:
+                            print("User is already associated with the classlist.")
+                    else:
+                        print("Classlist students:", classlist_entry.students)
+                        print("Existing user:", existing_user)
+                        print("User is already associated with the classlist.")
                     # ... (update other fields as needed)
                 else:
                     # Create a new user and associate with the classlist
@@ -336,12 +361,18 @@ def read_and_store_data(file_path, school_year, semester):
                         first_name=first_name,
                         middle_name=middle_name,
                         last_name=last_name,
-                        section_name=section_name,
                     )
                     db.session.add(user)
 
-                # Associate the user with the classlist (moved outside the else block)
-                    classlist_entry.students.append(user)
+                    # Associate the user with the classlist (moved outside the else block)
+                    # Check if the association already exists before adding the user to the classlist
+                    if not any(assoc.user_id == user.id for assoc in classlist_entry.students):
+                        # Use a new transaction for each association
+                        with db.session.begin_nested():
+                            classlist_entry.students.append(user)
+                        print("New user. Adding the user to the classlist.")
+                    else:
+                        print("User is already associated with the classlist.")
 
             # Commit changes to the database after processing all rows
             db.session.commit()
@@ -353,11 +384,16 @@ def read_and_store_data(file_path, school_year, semester):
             print(f"Error processing CSV file: {e}")
             raise ValueError("Error processing CSV file.")
 
-    else:
+    except ValueError as e:
         raise ValueError('Invalid file format. Please upload a CSV file.')
 
+    except Exception as e:
+        print(f"Error: {e}")
+        raise  # Re-raise the exception for further handling
 
-@core_bp.route('/upload_classlist', methods=['GET', 'POST'])
+
+
+@core_bp.route('/upload_classlist', methods=['POST'])
 @login_required
 @check_is_confirmed
 @admin_required
@@ -374,16 +410,9 @@ def upload_classlist():
                 flash('No selected file')
                 return redirect(request.url)
 
-            # Assuming you have defined your UPLOAD_FOLDER in the Flask app configuration
-            file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-            file.save(file_path)
-
             try:
-                # Ensure read_and_store_data is correctly imported
-                from src.core.views import read_and_store_data
-
-                # Call your function here
-                read_and_store_data(file_path, school_year, semester)
+                # Call your function here without saving to the local file system
+                read_and_store_data(file, school_year, semester)
                 flash('Data successfully saved to the database.')
             except ValueError as e:
                 flash(f'Error processing file: {str(e)}')
@@ -394,38 +423,9 @@ def upload_classlist():
         # Handle other exceptions or errors
         flash(f"Error: {e}")
         return redirect(request.url)
+    
 
 
-@core_bp.route('/files', methods=['GET'])
-def show_uploaded_files():
-    # Move the access to current_app.config['UPLOAD_FOLDER'] inside the route function
-    upload_folder = current_app.config['UPLOAD_FOLDER']
-    files = os.listdir(upload_folder)
-    return jsonify({'files': files})
-
-@core_bp.route('/data/<filename>', methods=['GET'])
-def show_file_data(filename):
-    # Move the upload_folder creation inside the route function
-    upload_folder = current_app.config['UPLOAD_FOLDER']
-    os.makedirs(upload_folder, exist_ok=True)
-
-    with current_app.app_context():
-        file_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
-        _, file_extension = os.path.splitext(filename)
-
-        if file_extension.lower() == '.csv':
-            data = pd.read_csv(file_path)
-        elif file_extension.lower() in ['.xls', '.xlsx']:
-            data = pd.read_excel(file_path, engine='openpyxl')
-        else:
-            return jsonify({'error': 'Unsupported file format'})
-
-        # Process data
-        data = data.loc[:, ~data.columns.str.contains('^Unnamed')]
-        data = data.fillna('')
-        data_html = data.to_html(index=False)
-
-        return jsonify({'data': data_html})
 
 @core_bp.route('/display_data', methods=['GET'])
 @login_required
