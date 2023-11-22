@@ -2,15 +2,48 @@
 
 {% block body %}
 
-<h1 class="h3 mb-4"><strong> QR Scanner</strong></h1>
-<div id="reader" style="display: inline-block; position: relative; padding: 0px; border: 1px solid silver;"></div>
+<div class="text-center">
+    <h1 class="h3 mb-4"><strong> QR Scanner</strong></h1>
+
+    <div id="reader" style="display: inline-block; position: relative; padding: 0px; border: 1px solid silver; border-radius: 10px; width: 190px;">
+    </div>
+    
+    <br><br><br>
+    <div class="btn-group" role="group" aria-label="Basic radio toggle button group" style="outline: 1px #800000; margin-bottom: 30px;">
+        <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
+        <label class="btn" for="btnradio1" style="background-color: #800000; color: white; outline: 2px solid #800000; padding: 0.5rem 1rem; font-family: roboto; width: 158px;">PRESENT</label>
+
+        <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
+        <label class="btn" for="btnradio2" style="background-color: white; color: #800000; outline: 2px solid #800000; padding: 0.5rem 1rem; font-family: roboto; width: 158px;">LATE</label>
+    </div>
+
+    <br>
+    <div class="d-flex justify-content-center">
+        <input type="button" onclick="absentButton()" class="btn-check" id="absent-btn" autocomplete="off">
+        <label class="btn" for="absent-btn" style="background-color: white; color: #800000; outline: 2px solid #808080; padding: 7px 40px; font-family: roboto;">MARK ALL MISSING AS ABSENT</label>
+    </div>
+</div>
+
+    
+
+
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
-    
+    function absentButton() {
+        const response = confirm("Are you sure you want to mark all remaining students as ABSENT?");
+
+        if (response) {
+            //
+        } else {
+            alert("Cancel was pressed");
+        }
+    }
+
     let html5QrcodeScanner = new Html5QrcodeScanner(
         "reader",
-        { fps: 10, qrbox: {width: 250, height: 250} },
-        verbose=true);
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        verbose=true
+    );
 
     var lastResult = 0;
     var audio = new Audio('https://audio.jukehost.co.uk/knEZ8zciYnwmdVPG1W72H5SbFDIanomR');
@@ -21,7 +54,6 @@
             get_qr(decodedText);
             lastResult = decodedText;
             audio.play();
-            // updateTable();
         }
     }
 
@@ -29,44 +61,78 @@
         console.warn(`Code scan error = ${error}`);
     }
 
+    var isLate = 0;
+
     function get_qr(decodedText) {
-        var s = decodedText;
+        var s = [decodedText, isLate];
         var s_json = JSON.stringify(s);
         var xhttp = new XMLHttpRequest();
         xhttp.open("POST", "/get_qr", true);
         xhttp.setRequestHeader("Content-Type", "application/json");
-        xhttp.onreadystatechange = function() {
-            console.log(`Ready State: ${this.readyState}, Status: ${this.status}, ${s}, ${s_json}`);
+        xhttp.onreadystatechange = function () {
+            console.log(`Ready State: ${this.readyState}, Status: ${this.status}, s: ${s}, s_json: ${s_json}, isLate: ${isLate}`);
         };
         xhttp.send(s_json);
     }
 
     html5QrcodeScanner.render(onScanSuccess, onScanFailure);
 
-    /*
-    function updateTable() {
-        var xhr = new XMLHttpRequest();
-        xhr.open("GET", "/update_table", true);
-        xhr.onreadystatechange = function () {
-            console.log(`UPDATE TABLE Ready State: ${this.readyState}, Status: ${this.status}`);
-            if (xhr.readyState == 4 && xhr.status == 200) {
-                var data = JSON.parse(xhr.responseText);
-                $("#rttable").prepend(`
-                    <tr>
-                        <td>${data.last_name}</td>
-                        <td>${data.first_name}</td>
-                        <td>${data.section_code}</td>
-                        <td>${data.created}</td>
-                        <td>${data.attendance_status}</td>
-                    </tr>
-                `);
-                console.log(`UPDATE TABLE ${data}`);
-            }
-        };
-        xhr.send();
-    }
-    */
+    const buttons = document.querySelectorAll('.btn-check');
+    const labels = document.querySelectorAll('.btn');
+    buttons.forEach((button, index) => {
+        button.addEventListener('change', () => {
+            labels.forEach((label, labelIndex) => {
+                if (index === labelIndex) {
+                    label.style.backgroundColor = '#800000';
+                    label.style.color = 'white';
+                    label.style.outline = '2px solid #800000';
+                    isLate = index;
+                    console.log("Ready State " + index + " " + isLate);
+                } else {
+                    label.style.backgroundColor = 'white';
+                    label.style.color = '#800000';
+                    label.style.outline = '2px solid #800000';  
+                }
+            });
+        });
+    });
 
 </script>
+
+<style>
+    /* Style for the Start Scanning button */
+    #html5-qrcode-button-camera-start {
+        background-color: #800000;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        /* Add any other styles you want to apply */
+    }
+    #html5-qrcode-button-camera-stop {
+        background-color: #800000;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    #html5-qrcode-anchor-scan-type-change{
+        margin-top: 10px;
+        font-size: 15px;
+    }
+    #html5-qrcode-button-camera-permission{
+    background-color: #800000;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        width: 150px;
+    }
+    
+    
+</style>
+
 
 {% endblock %}

@@ -71,7 +71,6 @@ class User(db.Model,UserMixin):
     first_name = db.Column(db.String(150), nullable=False)
     middle_name = db.Column(db.String(150), nullable=True)
     last_name = db.Column(db.String(150), nullable=False)
-    qr_code = db.Column(db.LargeBinary, nullable=True)
     is_faculty = db.Column(db.Boolean, nullable=False, default=False)
     is_confirmed = db.Column(db.Boolean, nullable=False, default=False)
     created_on = db.Column(db.DateTime, nullable=False)

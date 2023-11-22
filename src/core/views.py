@@ -1,24 +1,22 @@
+import base64
 from datetime import datetime
+import io
 from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
 from flask_login import login_required, current_user
 from src import db, app, bcrypt
 from src.utils.decorators import admin_required, check_is_confirmed
 from src.accounts.models import Attendance, User, ClassList, user_classlist_association
-import qrcode
-from qrcode.image.styledpil import StyledPilImage
-import io
 import os
 import csv 
 from io import StringIO
+from src.utils.generate_qr import generate_qr
 from src.utils.scanner import add_attendance
-from qrcode import make
-from PIL import Image
-import pandas as pd
 from collections import defaultdict
 import uuid
 from werkzeug.utils import secure_filename
 import json
 from sqlalchemy.orm import aliased
+import pandas as pd
 
 core_bp = Blueprint("core", __name__)
 
@@ -32,41 +30,6 @@ def home():
     if user.is_faculty:
         return render_template("core/faculty/index.html")
     else:
-        # Check if the user has a QR code; if not, generate one
-        if not user.qr_code:
-            # Generate the QR code
-            qr = qrcode.QRCode(
-                version=5,
-                error_correction=qrcode.constants.ERROR_CORRECT_H,
-                box_size=10,
-                border=4,
-            )
-            qr_data = user.id
-            qr.add_data(qr_data)
-            qr_code_image = qr.make_image(image_factory=StyledPilImage, embeded_image_path="src\static\images\PUP logo white bg.png")
-
-            # Convert the QR code image to bytes
-            qr_code_bytes = io.BytesIO()
-            qr_code_image.save(qr_code_bytes, format='PNG')
-            qr_code_bytes = qr_code_bytes.getvalue()
-
-            # Store the QR code bytes in the user's record
-            user.qr_code = qr_code_bytes
-            db.session.commit()
-
-            # Determine the folder where you want to save the QR code
-            save_folder = 'student_qrcode'
-
-            # Create the folder if it doesn't exist
-            if not os.path.exists(save_folder):
-                os.makedirs(save_folder)
-
-            # Define the file path for the QR code image
-            file_path = os.path.join(save_folder, f"{user.id}_qr_code.png")
-
-            # Save the QR code image as a file
-            qr_code_image.save(file_path, format='PNG')
-
         return render_template("core/student/index.html")
     
 #################
@@ -85,21 +48,6 @@ def realtime():
     .all()
 
     return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip)
-
-''' Di ko pa kayang i-let go haha halos buong araw ko to cinode comment ko muna
-@core_bp.route("/update_table", methods=['GET'])
-@login_required
-@check_is_confirmed
-def update_table():
-    last_attendance = db.session.query(Attendance)\
-    .join(User, User.id == Attendance.user_id)\
-    .add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status)\
-    .order_by(Attendance.created.desc())\
-    .first()
-
-    return json.dumps(last_attendance, default=str)
-    #return jsonify(last_attendance)
-'''
 
 @core_bp.route('/records')
 @login_required
@@ -485,10 +433,9 @@ def get_qr():
     s = request.get_json()
 
     # anti duplicate measure
-    #last_attendance = Attendance.query.order_by(Attendance.created.desc()).first()
-    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s).order_by(Attendance.created.desc()).first()
+    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s[0]).order_by(Attendance.created.desc()).first()
     if last_attendance is None:
-        add_attendance(s)
+        add_attendance(s[0], s[1])
         return ('Success!', 200)
     else:
         time_now = datetime.now()
@@ -496,7 +443,7 @@ def get_qr():
         # str(last_attendance.user_id) != s and 
         if time_last > 60: # ADD: change duration later
             print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
-            add_attendance(s)
+            add_attendance(s[0], s[1])
             return ('Success!', 200)
     return ('', 204)
 
@@ -508,7 +455,8 @@ def get_qr():
 @login_required
 @check_is_confirmed
 def show_qrcode():
-    return render_template("core/student/qrcode.html")
+    qr_image = generate_qr(current_user.id)
+    return render_template("core/student/qrcode.html", qr_image=qr_image)
 
 @core_bp.route('/view_qr_code')
 @login_required
@@ -538,24 +486,13 @@ def view_qr_code():
 @login_required
 @check_is_confirmed
 def download_qr_code():
-    user = current_user
+    base64_encoded_image = generate_qr(current_user.id)
 
-    # Check if the user has a QR code
-    if user.qr_code:
-        # Get the QR code bytes from the user object
-        qr_code_bytes = user.qr_code
+    # Convert base64 to bytes
+    qr_image_bytes = base64.b64decode(base64_encoded_image)
 
-        # Create a response object with the QR code data
-        response = make_response(qr_code_bytes)
+    # Create a BytesIO object
+    image_io = io.BytesIO(qr_image_bytes)
 
-        # Set the appropriate headers for the response
-        response.headers.set('Content-Type', 'image/png')
-
-        # Set the filename as the first name and last name of the user
-        filename = f"{user.first_name}_{user.last_name}_qr_code.png"
-        response.headers.set('Content-Disposition', 'attachment', filename=filename)
-
-        return response
-        
-    # Handle the case where the user doesn't have a QR code
-    return "QR code not found", 404
+    # Send the file for download
+    return send_file(image_io, mimetype='image/png', as_attachment=True, download_name=f'{current_user.last_name}, {current_user.first_name}_qr_code.png')
