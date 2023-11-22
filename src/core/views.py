@@ -349,7 +349,7 @@ def read_and_store_data(file, school_year, semester):
 
 
 
-@core_bp.route('/upload_classlist', methods=['GET', 'POST'])
+@core_bp.route('/upload_classlist', methods=['POST'])
 @login_required
 @check_is_confirmed
 @admin_required
