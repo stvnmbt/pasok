@@ -1,8 +1,6 @@
 from flask.cli import FlaskGroup
-
 from src import app, db
 from src.accounts.models import User
-from flask_migrate import Migrate
 import unittest
 import getpass
 from datetime import datetime
