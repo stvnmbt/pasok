@@ -6,6 +6,7 @@ if DATABASE_URI.startswith("postgres://"):
     DATABASE_URI = DATABASE_URI.replace("postgres://", "postgresql://", 1)
 
 
+
 class Config(object):
     DEBUG = False
     TESTING = False
@@ -19,6 +20,7 @@ class Config(object):
     DEBUG_TB_INTERCEPT_REDIRECTS = False
     SECURITY_PASSWORD_SALT = config("SECURITY_PASSWORD_SALT", default="very-important")
 
+    UPLOAD_FOLDER = 'csv_files'
     # Mail Settings
     MAIL_DEFAULT_SENDER = "noreply@flask.com"
     MAIL_SERVER = "smtp.gmail.com"
