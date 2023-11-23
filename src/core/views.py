@@ -16,9 +16,11 @@ from collections import defaultdict
 
 import json
 import pandas as pd
+import random
+import string
+from flask_bcrypt import Bcrypt
 
-
-
+bcrypt = Bcrypt()
 
 
 core_bp = Blueprint("core", __name__)
@@ -205,6 +207,11 @@ def export_classlist_attendance_csv(classlist_id):
 
 
 
+def generate_random_password():
+    characters = string.ascii_letters + string.digits + string.punctuation
+    password = ''.join(random.choice(characters) for _ in range(8))
+    return password
+
 
 def read_and_store_data(file, school_year, semester):
     try:
@@ -290,7 +297,7 @@ def read_and_store_data(file, school_year, semester):
                     # Create a new user and associate with the classlist
                     user = User(
                         email=email,
-                        password=f'{first_name}{last_name}',
+                        password=generate_random_password(), 
                         first_name=first_name,
                         middle_name=middle_name,
                         last_name=last_name,
@@ -300,7 +307,7 @@ def read_and_store_data(file, school_year, semester):
                     # Associate the user with the classlist
                     # SQLAlchemy will automatically handle the association in the database
                     classlist_entry.students.append(user)
-                    print("New user. Adding the user to the classlist.")
+                    print(f"New user. Adding the user to the classlist with password: {user.password}")
 
             # Commit changes to the database after processing all rows
             db.session.commit()
