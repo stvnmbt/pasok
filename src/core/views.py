@@ -211,7 +211,7 @@ def read_and_store_data(file, school_year, semester):
         # Read CSV file and decode it using latin1 encoding, treat the first row as headers
         data = pd.read_csv(file, encoding='latin1', header=None)
 
-        #print(data.iloc[0])
+        # print(data.iloc[0])
 
         subject_name = str(data.iloc[0, 1]).strip()
         section_name = str(data.iloc[0, 5]).strip()
@@ -254,7 +254,6 @@ def read_and_store_data(file, school_year, semester):
             for index, row in data.iloc[3:].iterrows():
                 # Debugging: Print row information
                 print(f"Processing row {index} - {row}")
-                
 
                 # Skip the rows with missing or invalid values
                 if pd.isnull(row[0]) or pd.isnull(row[4]) or pd.isnull(row[5]) or pd.isnull(row[6]):
@@ -276,28 +275,16 @@ def read_and_store_data(file, school_year, semester):
                     print(f"Skipping row {index} due to missing values.")
                     continue  # Skip to the next iteration if there are missing values
 
-                # Generate a unique user ID using the function
+                # Query or create the user based on the email
+                existing_user = User.query.filter_by(email=email).first()
 
-                # Check if the user already exists
-                existing_user = User.query.filter(User.email==email).all()
-                print(f'gfjdas;lkdfj {existing_user}')
                 if existing_user:
-                    # Update existing user information
-                    existing_user.first_name = first_name
-                    existing_user.middle_name = middle_name
-                    existing_user.last_name = last_name
-
                     # Check if the association already exists before adding the user to the classlist
-                    if not any(assoc.user_id == existing_user.id for assoc in classlist_entry.students):
-                        # Check if the user is already associated with the classlist
-
-                            # Use a new transaction for each association
-                        with db.session.begin_nested():
-                            classlist_entry.students.append(existing_user)
-                            print("User already exists. Adding the user to the classlist.")
+                    if existing_user not in classlist_entry.students:
+                        # SQLAlchemy will automatically handle the association in the database
+                        classlist_entry.students.append(existing_user)
+                        print("User already exists. Adding the user to the classlist.")
                     else:
-                        print("Classlist students:", classlist_entry.students)
-                        print("Existing user:", existing_user)
                         print("User is already associated with the classlist.")
                 else:
                     # Create a new user and associate with the classlist
@@ -310,17 +297,10 @@ def read_and_store_data(file, school_year, semester):
                     )
 
                     db.session.add(user)
-                    db.session.commit()
-
-                    # Associate the user with the classlist (moved outside the else block)
-                    # Check if the association already exists before adding the user to the classlist
-                    if not any(assoc.user_id == user.id for assoc in classlist_entry.students):
-                        # Use a new transaction for each association
-                        with db.session.begin_nested():
-                            classlist_entry.students.append(user)
-                        print("New user. Adding the user to the classlist.")
-                    else:
-                        print("User is already associated with the classlist.")
+                    # Associate the user with the classlist
+                    # SQLAlchemy will automatically handle the association in the database
+                    classlist_entry.students.append(user)
+                    print("New user. Adding the user to the classlist.")
 
             # Commit changes to the database after processing all rows
             db.session.commit()
@@ -338,6 +318,7 @@ def read_and_store_data(file, school_year, semester):
     except Exception as e:
         print(f"Error: {e}")
         raise  # Re-raise the exception for further handling
+
 
 
 
