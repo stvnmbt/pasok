@@ -4,14 +4,22 @@
 {% block body %}
 <h1 class="h3 mb-4"><strong>Class List</strong></h1>
 
+<div class="row">
+    <div class="col-auto">
+        <!-- File upload section -->
+        <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple>
+        <button class="btn btn-sm" onclick="uploadClassList()" style="background-color:#800000; color: white;">Upload Class List</button>
+    </div>
+</div>
+
 <!-- Form for school year and semester -->
 <form id="classlistForm" style="margin-bottom: 20px;">
     <label for="school_year">Select School Year:</label>
     <select id="school_year" name="school_year">
-        {% for year in range(2023, 2030) %}
-            <option value="{{ year }}">{{ year }}</option>
-        {% endfor %}
+        <option value='2324'>2324</option>
+        <option value='2425'>2425</option>
     </select>
+    <br>
     <label for="semester">Select Semester:</label>
     <select id="semester" name="semester">
         <option value="FIRST">First</option>
@@ -22,21 +30,12 @@
     <input type="button" value="Submit" onclick="handleFileUpload()">
 </form>
 
-    <div class="row">
-        <div class="col-auto">
-            <!-- File upload section -->
-            <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple>
-            <button class="btn btn-sm" onclick="uploadClassList()" style="background-color:#800000; color: white;">Upload Class List</button>
-        </div>
-    </div>
-
-
     <!-- Display a list of class lists with links to view details -->
     <h2 class="h4 mb-4"><strong>Class List Collection</strong></h2>
     <ul>
         {% for classlist_entry in classlist_data %}
             <li>
-                {{ classlist_entry.subject_name }} - {{ classlist_entry.section_name }}
+                {{ classlist_entry.subject_name }} - {{ classlist_entry.section_code }}
                 <a href="{{ url_for('core.display_classlist', classlist_id=classlist_entry.id) }}">View Details</a>
                 <a href="{{ url_for('core.delete_classlist', classlist_id=classlist_entry.id) }}" class="btn btn-danger">Delete</a>
             </li>
