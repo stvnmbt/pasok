@@ -1,6 +1,6 @@
 import base64
 from datetime import datetime
-from flask import Blueprint, make_response, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
+from flask import Blueprint, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
 import io
 from flask_login import login_required, current_user
 from src import db
@@ -13,7 +13,6 @@ from io import StringIO
 from src.utils.generate_qr import generate_qr
 from src.utils.scanner import add_attendance
 from collections import defaultdict
-
 import json
 import pandas as pd
 import random
@@ -21,19 +20,16 @@ import string
 from flask_bcrypt import Bcrypt
 
 bcrypt = Bcrypt()
-
-
 core_bp = Blueprint("core", __name__)
-
 
 @core_bp.route("/")
 @login_required
 @check_is_confirmed
 def home():
     user = current_user
-
     if user.is_faculty:
-        return render_template("core/faculty/index.html")
+        classlists = ClassList.query.all()
+        return render_template("core/faculty/index.html", classlists=classlists)
     else:
         return render_template("core/student/index.html")
     
@@ -41,15 +37,36 @@ def home():
 # FACULTY VIEWS
 #################
 
+@core_bp.route("/get_attendance_data")
+@login_required
+@check_is_confirmed
+@admin_required
+def get_attendance_data():
+    # Query the database to get the attendance data
+    attendance_data = db.session.query(
+        db.func.sum(User.present_count).label('present_count'),
+        db.func.sum(User.late_count).label('late_count'),
+        db.func.sum(User.absent_count).label('absent_count')
+    ).first()
+
+    # Map the data to a format suitable for the frontend
+    result = [
+        {'status': 'Present', 'count': attendance_data.present_count, 'color': 'green'},
+        {'status': 'Late', 'count': attendance_data.late_count, 'color': 'orange'},
+        {'status': 'Absent', 'count': attendance_data.absent_count, 'color': 'red'},
+    ]
+
+    return jsonify(result)
+
 @core_bp.route("/realtime")
 @login_required
 @check_is_confirmed
 @admin_required
-@admin_required
 def realtime():
-    attendance_user = db.session.query(Attendance)\
+    attendance_user = db.session.query(Attendance, User, ClassList.section_code)\
     .join(User, User.id == Attendance.user_id)\
-    .add_columns(User.first_name, User.last_name, User.section_code, Attendance.created, Attendance.attendance_status)\
+    .join(ClassList, Attendance.classlist_id == ClassList.id)\
+    .add_columns(User.first_name, User.last_name, ClassList.section_code, Attendance.created, Attendance.attendance_status)\
     .order_by(Attendance.created.desc())\
     .all()
 
@@ -60,10 +77,15 @@ def realtime():
 @check_is_confirmed
 @admin_required
 def records():
-    students = db.session.query(User).filter(User.is_faculty==False).order_by(User.last_name.asc()).all()
+    students = db.session.query(User)\
+    .join(assoc, User.id == assoc.c.user_id)\
+    .join(ClassList, ClassList.id == assoc.c.classlist_id)\
+    .add_columns(User.first_name, User.last_name, User.middle_name, ClassList.section_code, User.present_count, User.late_count, User.absent_count)\
+    .filter(User.is_faculty == False)\
+    .order_by(User.last_name.asc())\
+    .all()
 
     return render_template('core/faculty/records.html', students=students)
-
 
 @core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
 @login_required
@@ -76,8 +98,6 @@ def display_classlist(classlist_id):
 
     # Render the template with detailed information
     return render_template('core/faculty/classlist_details.html', classlist_entry=classlist_entry, users=users)
-
-
 
 @core_bp.route('/delete_classlist/<int:classlist_id>', methods=['GET', 'POST'])
 @login_required
@@ -115,13 +135,6 @@ def delete_classlist(classlist_id):
     # Redirect back to the class list collection
     return redirect(url_for('core.classlist'))
 
-
-
-
-
-
-
-
 @core_bp.route('/classlist', methods=['GET'])
 @login_required
 @check_is_confirmed
@@ -141,16 +154,6 @@ def classlist():
     classlists_by_user = {current_user.id: [entry.subject_name for entry in classlist_entries]}
 
     return render_template('core/faculty/classlist.html', classlistId_json=classlistId_json, classlists_by_user=classlists_by_user, classlist_data=classlist_data)
-
-
-
-
-
-
-
-    
-
-
 
 @core_bp.route("/export_classlist_attendance_csv/<int:classlist_id>", methods=["GET"])
 @login_required
@@ -205,13 +208,10 @@ def export_classlist_attendance_csv(classlist_id):
 
     return response
 
-
-
 def generate_random_password():
     characters = string.ascii_letters + string.digits + string.punctuation
     password = ''.join(random.choice(characters) for _ in range(8))
     return password
-
 
 def read_and_store_data(file, school_year, semester):
     try:
@@ -221,18 +221,18 @@ def read_and_store_data(file, school_year, semester):
         # print(data.iloc[0])
 
         subject_name = str(data.iloc[0, 1]).strip()
-        section_name = str(data.iloc[0, 5]).strip()
-        print(f"Subject Name: {subject_name}, Section Name: {section_name}")
+        section_code = str(data.iloc[0, 5]).strip()
+        print(f"Subject Name: {subject_name}, Section Name: {section_code}")
 
         try:
             # Check if any required field is missing
-            if not all([subject_name, section_name]):
+            if not all([subject_name, section_code]):
                 raise ValueError("Missing values in subject or section information.")
 
             # Check if a ClassList with the same attributes already exists
             classlist_entry = ClassList.query.filter_by(
                 subject_name=subject_name,
-                section_name=section_name,
+                section_code=section_code,
                 school_year=school_year,
                 semester=semester,
                 faculty_creator=current_user,
@@ -241,7 +241,7 @@ def read_and_store_data(file, school_year, semester):
             if not classlist_entry:
                 classlist_entry = ClassList(
                     subject_name=subject_name,
-                    section_name=section_name,
+                    section_code=section_code,
                     school_year=school_year,
                     semester=semester,
                     faculty_creator=current_user,
@@ -326,9 +326,6 @@ def read_and_store_data(file, school_year, semester):
         print(f"Error: {e}")
         raise  # Re-raise the exception for further handling
 
-
-
-
 @core_bp.route('/upload_classlist', methods=['POST'])
 @login_required
 @check_is_confirmed
@@ -359,9 +356,6 @@ def upload_classlist():
         # Handle other exceptions or errors
         flash(f"Error: {e}")
         return redirect(request.url)
-    
-
-
 
 @core_bp.route('/display_data', methods=['GET'])
 @login_required
@@ -384,13 +378,13 @@ def display_data():
 
         # Append a dictionary with classlist and user information to the list
         classlist_with_users.append({
-            'classlist_entry': {'subject_name': classlist_entry.subject_name, 'section_name': classlist_entry.section_name},
+            'classlist_entry': {'subject_name': classlist_entry.subject_name, 'section_code': classlist_entry.section_code},
             'users': users_info
         })
 
     # Debugging print statements (move this outside the loop)
     for item in classlist_with_users:
-        print(f"Classlist Entry: {item['classlist_entry']['subject_name']} - {item['classlist_entry']['section_name']}")
+        print(f"Classlist Entry: {item['classlist_entry']['subject_name']} - {item['classlist_entry']['section_code']}")
         print(f"Number of Users: {len(item['users'])}")
 
     for item in classlist_with_users:
@@ -399,12 +393,6 @@ def display_data():
 
     # Render the template
     return render_template('display_data.html', classlist_with_users=classlist_with_users)
-
-
-
-
-
-
 
 @core_bp.route('/qrscanner')
 @login_required
@@ -429,7 +417,7 @@ def get_qr():
         time_now = datetime.now()
         time_last = (time_now-last_attendance.created).total_seconds()
         # str(last_attendance.user_id) != s and 
-        if time_last > 60: # ADD: change duration later
+        if time_last > 10: # ADD: change duration later
             print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
             add_attendance(s[0], s[1])
             return ('Success!', 200)
