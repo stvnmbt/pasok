@@ -34,14 +34,15 @@
 </style>
 
 <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3"><strong>Real Time Attendance</strong></h1>
+    <h1 class="h3" style="margin-top: 15px;"><strong>Real Time Attendance</strong></h1>
+    <hr>
     <div class="input-group" style="width: 25%;">
         <input type="text" class="form-control" id="search-input" placeholder="Search.." aria-label="Search" aria-describedby="search-button" 
         style="margin-top: 15px; border-color: black;">
     </div>
 </div>
 
-<div class="table-responsive">
+<div class="table-responsive" style="margin-top: 10px;">
     <table class="table table-bordered table-striped p-0 m-0">
         <tbody>
             {% for au in attendance_user %}
