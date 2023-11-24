@@ -16,7 +16,7 @@
               {{current_user.first_name}} {{current_user.last_name}}
             </a>
             <div class="dropdown-menu" aria-labelledby="myAccountDropdown">
-              <a class="dropdown-item" href="#">Account Settings</a>
+              <a href="{{ url_for('core.account_settings') }}">Account Settings</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{{ url_for('accounts.logout') }}">Log Out</a>
             </div>
