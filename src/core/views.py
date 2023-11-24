@@ -15,7 +15,7 @@ import json
 import pandas as pd
 import random
 import string
-from flask_bcrypt import Bcrypt
+from flask_bcrypt import Bcrypt, check_password_hash, generate_password_hash
 
 bcrypt = Bcrypt()
 core_bp = Blueprint("core", __name__)
@@ -30,7 +30,57 @@ def home():
         return render_template("core/faculty/index.html", classlists=classlists)
     else:
         return render_template("core/student/index.html")
-    
+
+
+@core_bp.route('/account_settings', methods=['GET', 'POST'])
+@login_required
+@check_is_confirmed
+def account_settings():
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+
+        # Check if the current password is correct
+        if not check_password_hash(current_user.password, current_password):
+            flash('Incorrect current password', 'danger')
+        elif new_password != confirm_password:
+            flash('New password and confirm password do not match', 'danger')
+        elif not is_password_complex(new_password):
+            flash('Password does not meet complexity requirements', 'danger')
+        else:
+            # Update the user's password
+            current_user.password = generate_password_hash(new_password).decode('utf-8')
+
+            # Check if new names are provided
+            new_first_name = request.form.get('new_first_name')
+            new_middle_name = request.form.get('new_middle_name')
+            new_last_name = request.form.get('new_last_name')
+
+            if new_first_name:
+                current_user.first_name = new_first_name
+            if new_middle_name:
+                current_user.middle_name = new_middle_name
+            if new_last_name:
+                current_user.last_name = new_last_name
+
+            db.session.commit()
+            flash('Account updated successfully', 'success')
+            return redirect(url_for('core.home'))
+
+    return render_template('core/account_settings.html', user=current_user)
+
+
+def is_password_complex(password):
+    # Add your password complexity requirements here
+    return (
+        len(password) >= 8 and
+        any(c.islower() for c in password) and
+        any(c.isupper() for c in password) and
+        any(c.isdigit() for c in password) and
+        any(c in "!@#$%^&*()-_=+{};:,<.>/?'" for c in password)
+    )
+
 #################
 # FACULTY VIEWS
 #################
@@ -193,6 +243,12 @@ def export_classlist_attendance_csv():
     response.headers['Content-Disposition'] = f'attachment; filename=classlist_attendance_records.csv'
 
     return response
+
+
+
+
+
+
 
 def generate_random_password():
     characters = string.ascii_letters + string.digits + string.punctuation
