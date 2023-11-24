@@ -46,12 +46,12 @@
     <table class="table table-bordered table-striped p-0 m-0">
         <tbody>
             {% for au in attendance_user %}
-            <tr role="row" class="row-to-filter" data-filter="{{ au.last_name }} {{ au.first_name }} {{ au.section_code }} {{ au.created }} {{ au.attendance_status }}">
-                <td><strong>Surname:</strong> {{ au.last_name }}</td>
-                <td><strong>Given Name:</strong> {{ au.first_name }}</td>
-                <td><strong>Section:</strong> {{ au.section_code }}</td>
-                <td><strong>Date & Time:</strong> {{ au.created }}</td>
-                <td><strong>Status:</strong> {{ au.attendance_status }}</td>
+            <tr role="row" style="background-color: #f9f9f9;">
+                <td>{{ au.last_name }}</td>
+                <td>{{ au.first_name }}</td>
+                <td>{{ au.section_code }}</td>
+                <td>{{ au.created }}</td>
+                <td>{{ au.attendance_status.value }}</td>
             </tr>
             {% endfor %}
         </tbody>
