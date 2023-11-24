@@ -42,7 +42,7 @@ def register():
 
         # Assign faculty role if email domain is valid
         email_domain = re.search(r"@(.*)$", user.email)
-        if email_domain.group(0) == "@inboxkitten.com": # change to "@pup.edu.ph" in production
+        if email_domain.group(0) == "@inboxkitten.com": # prod: "@pup.edu.ph" | testing: "@inboxkitten.com"
             user.is_faculty = True
         
         db.session.commit()

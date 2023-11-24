@@ -1,11 +1,8 @@
-
-
 from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
 from sqlalchemy import Enum 
 import enum
-
 
 class Status(enum.Enum):
     PRESENT = 'PRESENT'
@@ -30,13 +27,13 @@ class ClassList(db.Model):
     subject_name = db.Column(db.String(100), nullable=False)
     school_year = db.Column(db.Integer, nullable=False)
     semester = db.Column(Enum(Semester, values_callable=lambda x: [str(e.value) for e in Semester]), nullable=False)
-    section_name = db.Column(db.String(100), nullable=False)
+    section_code = db.Column(db.String(100), nullable=False)
 
     students = db.relationship(
         'User',
         secondary=assoc,
         back_populates='classlists',
-        lazy='dynamic'  # Set the relationship to be dynamic
+        lazy='dynamic'
     )
 
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -73,29 +70,24 @@ class User(db.Model,UserMixin):
     is_confirmed = db.Column(db.Boolean, nullable=False, default=False)
     created_on = db.Column(db.DateTime, nullable=False)
     confirmed_on = db.Column(db.DateTime, nullable=True)
-
     present_count = db.Column(db.Integer, nullable=True)
     late_count = db.Column(db.Integer, nullable=True)
     absent_count = db.Column(db.Integer, nullable=True)
-    is_active = db.Column(db.Boolean, default=True)
 
-    # Add this line to initialize the relationships
     classlists = db.relationship(
         'ClassList',
         secondary='assoc',
         back_populates='students',
         cascade='all, delete-orphan',
         single_parent=True,
-        lazy='dynamic'  # Set the relationship to be dynamic
+        lazy='dynamic'
     )
 
     classlist_attendance = db.relationship('Attendance', back_populates='user_attendance')
     created_classlists = db.relationship('ClassList', back_populates='faculty_creator', overlaps="user_classlist")
-
-
     
     def __init__(
-        self, email, password, first_name, middle_name, last_name, present_count=0, late_count=0, absent_count=0, qr_code=None, is_confirmed=False, confirmed_on=None, is_faculty=False
+        self, email, password, first_name, middle_name, last_name, present_count=0, late_count=0, absent_count=0, is_confirmed=False, confirmed_on=None, is_faculty=False
     ):   
         self.email = email
         self.password = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -106,7 +98,6 @@ class User(db.Model,UserMixin):
         self.is_faculty = is_faculty
         self.is_confirmed = is_confirmed
         self.confirmed_on = confirmed_on
-        self.qr_code = qr_code
         self.present_count = present_count
         self.late_count = late_count
         self.absent_count = absent_count
