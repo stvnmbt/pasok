@@ -6,16 +6,14 @@
 
 {% block body %}
 <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3"><strong> Real Time Attendance</strong></h1>
+    <h1 class="h3"><strong>Real Time Attendance</strong></h1>
     <div class="input-group" style="width: 25%;">
-        <input type="text" class="form-control" id="search-input" placeholder="Search.." aria-label="Search" aria-describedby="search-button" 
-        style="margin-top: 15px;  
-        border-color: black;" >
+        <input type="text" class="form-control" id="search-input" placeholder="Search.." aria-label="Search" aria-describedby="search-button" style="margin-top: 15px; border-color: black;">
     </div>
 </div>
 
 <div class="table-responsive" style="overflow-x: auto;">
-    <table class="table datatables table-bordered table-condensed table-striped p-0 m-0" style="width: 100%; border: 1px solid #696969; border-radius: 10px;">
+    <table class="table datatables table-bordered table-condensed table-striped p-0 m-0 d-none d-md-table" style="border-color: #800000;">
         <thead>
             <tr role="row">
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Surname</th>
@@ -37,6 +35,20 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <div class="card-columns d-md-none my-custom-card-columns" >
+        {% for au in attendance_user %}
+        <div class="card mb-3 my-custom-card" style="border: 3px solid #800000;">
+            <div class="card-body">
+                <p class="card-text"><strong>Surname:</strong> {{ au.last_name }}</p>
+                <p class="card-text"><strong>Given Name:</strong> {{ au.first_name }}</p>
+                <p class="card-text"><strong>Section:</strong> {{ au.section_code }}</p>
+                <p class="card-text"><strong>Date & Time:</strong> {{ au.created }}</p>
+                <p class="card-text"><strong>Status:</strong> {{ au.attendance_status.value }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
 </div>
 
 <script>
