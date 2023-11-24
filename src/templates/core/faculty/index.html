@@ -16,73 +16,60 @@
     google.charts.setOnLoadCallback(drawChart);
 
     function drawChart() {
-    // Make an AJAX request to the Flask route to get actual data
-    $.ajax({
-        url: '/get_attendance_data',  // Replace with the actual route for your Flask view
-        method: 'GET',
-        dataType: 'json',
-        success: function (data) {
-            // Use the returned data to populate the chart
-            var chartData = [['Status', 'Count', { role: 'style' }]];
-            $.each(data, function (index, item) {
-                chartData.push([item.status, item.count, item.color]);
-            });
-
-            var chartData = google.visualization.arrayToDataTable(chartData);
-
-            var options = {
-                title: '',
-                titleTextStyle: {
-                    fontSize: 20,
-                },
-                chartArea: { width: '100%', height: '95%' },
-            };
-
-            var chart = new google.visualization.PieChart(document.getElementById('attendancePieChart'));
-            chart.draw(chartData, options);
-        },
-        error: function (error) {
-            console.error('Error fetching data:', error);
-        }
-    });
-}
-
-    $(document).ready(function () {
-        drawChart();
-    });
-
-    function downloadAction(subject, section) {
+        // Make an AJAX request to the Flask route to get actual data
         $.ajax({
-            url: `/export_attendance_excel/${subject}/${section}`,
+            url: '/get_attendance_data',  // Replace with the actual route for your Flask view
             method: 'GET',
+            dataType: 'json',
             success: function (data) {
-                var blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-                var link = document.createElement('a');
-                link.href = window.URL.createObjectURL(blob);
-                link.download = `attendance_records_${subject}_${section}.xlsx`;
-                link.click();
+                // Use the returned data to populate the chart
+                var chartData = [['Status', 'Count', { role: 'style' }]];
+                $.each(data, function (index, item) {
+                    chartData.push([item.status, item.count, item.color]);
+                });
+
+                var chartData = google.visualization.arrayToDataTable(chartData);
+
+                var options = {
+                    title: '',
+                    titleTextStyle: {
+                        fontSize: 20,
+                    },
+                    chartArea: { width: '100%', height: '95%' },
+                };
+
+                var chart = new google.visualization.PieChart(document.getElementById('attendancePieChart'));
+                chart.draw(chartData, options);
+            },
+            error: function (error) {
+                console.error('Error fetching data:', error);
+            }
+        });
+    }
+
+    function downloadAction(classlist_id, subject, section) {
+        console.log(classlist_id);  
+        $.ajax({
+            url: `/export_attendance_csv?classlist_id=${classlist_id}`,
+            method: 'GET',
+            xhrFields: {
+                responseType: 'blob' // Set the expected response type to blob
+            },
+            success: function (data) {
+                var a = document.createElement('a');
+                var url = window.URL.createObjectURL(data);
+                a.href = url;
+                a.download = `attendance_records_${subject}_${section}.csv`;
+                document.body.append(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
             },
             error: function (xhr, status, error) {
                 console.error(`Error downloading attendance records for subject ${subject} and section ${section}:`, error);
                 alert(`Failed to download attendance records for subject ${subject} and section ${section}. Please try again later.`);
             }
         });
-    }
-
-    function deleteAction(subject, section) {
-        if (confirm(`Are you sure you want to delete this record?\nSubject: ${subject}\nSection: ${section}`)) {
-            $.ajax({
-                url: `/delete_attendance_record/${subject}/${section}`,
-                method: 'DELETE',
-                success: function () {
-                    location.reload(); // Reload the page after successful deletion
-                },
-                error: function (xhr, status, error) {
-                    console.error(`Error deleting record for subject ${subject} and section ${section}:`, error);
-                    alert(`Failed to delete record for subject ${subject} and section ${section}. Please try again later.`);
-                }
-            });
-        }
     }
     
 </script>
@@ -140,8 +127,7 @@
                 <td>{{ classlist.section_code }}</td>
                 <td>{{ classlist.subject_name }}</td>
                 <td>
-                    <button class="btn btn-primary btn-sm custom-btn" onclick="downloadAction('{{ classlist.subject_name }}', '{{ classlist.section_code }}')">Download </button>
-                    <button class="btn btn-danger btn-sm custom-btn" onclick="deleteAction('{{ classlist.subject_name }}', '{{ classlist.section_code }}')"> Delete</button>
+                    <button class="btn btn-primary btn-sm custom-btn" onclick="downloadAction('{{ classlist.id }}', '{{ classlist.subject }}', '{{ classlist.section }}')">Download </button>
                 </td>
             </tr>
             {% endfor %}
