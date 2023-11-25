@@ -9,7 +9,8 @@ from src.accounts.models import Attendance, Status, User, ClassList, assoc
 import io
 import os
 import csv
-from src.utils.generate_qr import generate_qr
+from src.utils.email import send_qr_email
+from src.utils.generate_qr import generate_qr, generate_qr_path
 from src.utils.scanner import add_attendance
 import json
 import pandas as pd
@@ -352,9 +353,17 @@ def read_and_store_data(file, school_year, semester):
                     classlist_entry.students.append(user)
                     print(f"New user. Adding the user to the classlist with password: {user.password}")
 
-            # Commit changes to the database after processing all rows
-            db.session.commit()
+                # db flush to get user_id
+                db.session.flush()
 
+                # send QR code to student email
+                user_id = (db.session.query(User).filter(User.email == email).first()).get_id()
+                subject = f'You have been enrolled to {subject_name} {section_code} classlist of PASOK attendance system'
+                body = 'Welcome! You can now use the QR code image attached to use PASOK attendance system as a student.'
+                name = f'{last_name}, {first_name}'
+                send_qr_email(email, subject, body, generate_qr_path(user_id, name))
+
+            db.session.commit()
             print("Data successfully committed to the database.")
 
         except Exception as e:
