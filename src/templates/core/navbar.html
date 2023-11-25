@@ -1,9 +1,9 @@
 <!-- NavBar -->
 {% if current_user.is_authenticated %}
 <div class="container">
-  <nav class="navbar navbar-expand-sm bg-light navbar-light">
+  <nav class="navbar navbar-expand-sm navbar-light">
     <div class="container-fluid">
-      <a class="navbar-brand" href="#" style="color: #800000; font-weight: 500;">
+      <a class="navbar-brand" href="{{ url_for('core.home') }}" style="color: #800000; font-weight: 500;">
         <img src="..\static\images\PUP logo.png"  style="width:40px; height: 40px; margin-right: 10px;"> PASOK</a>
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
@@ -16,7 +16,7 @@
               {{current_user.first_name}} {{current_user.last_name}}
             </a>
             <div class="dropdown-menu" aria-labelledby="myAccountDropdown">
-              <a href="{{ url_for('core.account_settings') }}">Account Settings</a>
+              <a class="dropdown-item" href="{{ url_for('core.account_settings') }}">Account Settings</a>
               <div class="dropdown-divider"></div>
               <a class="dropdown-item" href="{{ url_for('accounts.logout') }}">Log Out</a>
             </div>
