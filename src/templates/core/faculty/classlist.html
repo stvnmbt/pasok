@@ -2,157 +2,169 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
 {% block body %}
-
-<h1 class="h3 mb-4"><strong>Class List</strong></h1>
-
-<div class="row">
-    <div class="col-auto">
-        <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple>
-        <button class="btn btn btn-sm" onclick="uploadClassList()" style="background-color:#800000; color: white;">Upload Class List</button>
-        <div id="uploadedFilesList" style="margin-top: 20px;">
-            
+<div class="container mt-0">
+    <h2 class="h3 mt-1"><strong>Class List</strong></h2>
+    <br>
+ 
+    <form id="classlistForm">
+        <div class="mb-3">
+            <label for="school_year" class="form-label">Select School Year:</label>
+            <select id="school_year" name="school_year" class="form-select">
+                <option value='2324'>2324</option>
+                <option value='2425'>2425</option>
+            </select>
         </div>
-    </div>
-</div>
+        <div class="mb-3">
+            <label for="semester" class="form-label">Select Semester:</label>
+            <select id="semester" name="semester" class="form-select">
+                <option value="FIRST">First</option>
+                <option value="SECOND">Second</option>
+                <option value="SUMMER">Summer</option>
+            </select>
+        </div>
+        <!-- Add the submit button -->
+        <div class="row mb-3">
+            <div class="col-auto">
+                <!-- File upload section -->
+                <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple onchange="displaySelectedFile()">
+                <label class="btn btn-link" for="classListFile" style="background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">
+                    <i class="fas fa-upload"></i> Upload Class List </label>
+                <button type="button" class="btn btn-link" onclick="handleFileUpload()" style="margin-left:20px; background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">Submit</button>
+                <p id="selectedFile" class="mt-2"></p> <!-- Display the selected file name -->
+            </div>
+        </div>
+        
+    </form>
 
+    <!-- Display a list of class lists with links to view details -->
+    <h2 class="h4 mt-4"><strong>Class List Collection</strong></h2>
+    <ul class="list-group">
+        {% for classlist_entry in classlist_data %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                S.Y. {{ classlist_entry.school_year }} | {{ classlist_entry.semester.value }} Semester | {{ classlist_entry.subject_name }} | {{ classlist_entry.section_code }} 
+                <div>
+                    <a href="{{ url_for('core.display_classlist', classlist_id=classlist_entry.id) }}" class="btn btn-link me-2" style="background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 15px; font-family: roboto; ">View Details</a>
+                    <a href="{{ url_for('core.delete_classlist', classlist_id=classlist_entry.id) }}" class="btn btn-link" style="background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 15px; font-family: roboto; ">Delete</a>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+<div>
 
-
+<script src="core.classlist.html" data-classlist-id="{{ classlistId|default(0) }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
 
 <script>
-    // Declare uploadedFileNameElement and uploadedFiles array in the global scope
-    var uploadedFileNameElement;
-    var uploadedFiles = [];
+    var classlistIdJson = '{{ classlistId_json|safe }}';
+    var classlistId;
+
+    if (classlistIdJson) {
+        classlistId = JSON.parse(classlistIdJson);
+        console.log('Classlist ID:', classlistId);
+    } else {
+        console.log('Classlist ID is undefined or null.');
+    }
+
+    function createFileEntry(filename, hasClasslist, classlistId) {
+        var filesList = document.getElementById('uploadedFilesList');
+        var fileEntry = document.createElement('div');
+        fileEntry.className = 'file-entry';
+        fileEntry.innerHTML = '<p>' + filename + '</p>' +
+            '<button onclick="viewFileData(\'' + filename + '\')">View Data</button>';
+
+        if (hasClasslist) {
+            var viewClasslistUrl = '{{ url_for("core.classlist", classlist_id=classlistId) }}';
+            fileEntry.innerHTML += '<a href="' + viewClasslistUrl + '" target="_blank">View Classlist</a>';
+        }
+
+        filesList.appendChild(fileEntry);
+    }
 
     function uploadClassList() {
-        // Get the file input element
-        var fileInput = document.getElementById('classListFile');
+        // Trigger the click event on the hidden file input
+        document.getElementById('classListFile').click();
+    }
 
-        
-        fileInput.click();
+    // Update this function to handle the file upload and trigger the Flask route
+    function handleFileUpload() {
+    var fileInput = document.getElementById('classListFile');
+    var schoolYear = document.getElementById('school_year').value;
+    var semester = document.getElementById('semester').value;
 
-        // Add an event listener to handle file selection
-        fileInput.addEventListener('change', function () {
-            var newFiles = fileInput.files;
+    // Check if a file is selected
+    if (fileInput.files.length === 0) {
+        alert('Please select a file before submitting.');
+        return;
+    }
 
-            // Add the uploaded files to the array
-            for (var i = 0; i < newFiles.length; i++) {
-                uploadedFiles.push(newFiles[i]);
+    // Display the selected file name
+    document.getElementById('selectedFile').innerText = 'Selected File: ' + fileInput.files[0].name;
+
+    var formData = new FormData();
+
+    // Add the selected files to the FormData object
+    for (var i = 0; i < fileInput.files.length; i++) {
+        formData.append('files[]', fileInput.files[i]);
+    }
+
+    // Add school_year and semester to the FormData object
+    formData.append('school_year', schoolYear);
+    formData.append('semester', semester);
+
+    // Use fetch to send a POST request to the Flask route
+    fetch('/upload_classlist', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        // Handle the response
+        if ('files' in data) {
+            // Display uploaded files
+            data.files.forEach(function(filename) {
+                var hasClasslist = '{{ filename in classlists_by_user[current_user.id] }}' === 'True';
+                var classlistId = classlists_by_user[current_user.id][filename];
+                createFileEntry(filename, hasClasslist, classlistId);
+            });
+
+        } else if ('error' in data) {
+            console.error('Error:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+    function viewFileData(filename) {
+        // Use fetch to get the file data
+        fetch('/data/' + filename, {
+            method: 'GET'
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response
+            if ('data' in data) {
+                // Display the file data
+                console.log(data.data);  // Replace with your logic to display the data
+            } else if ('error' in data) {
+                console.error('Error:', data.error);
             }
-
-            updateUploadedFilesList();
-
-            fileInput.value = null;
+        })
+        .catch(error => {
+            console.error('Error:', error);
         });
     }
 
-    function updateUploadedFilesList() {
-        var uploadedFilesList = document.getElementById('uploadedFilesList');
-        uploadedFilesList.innerHTML = ''; 
-
-        uploadedFiles.forEach(function (file, index) {
-        var fileItem = document.createElement('div');
-        fileItem.style.border = '2px solid #ccc'; 
-        fileItem.style.padding = '10px'; 
-        fileItem.style.borderRadius = '10px';
-        fileItem.style.marginBottom = '10px'; 
-        fileItem.style.cursor = 'pointer';
-
-            fileItem.innerHTML = '<u><i class="fa-regular fa-file" style="margin-right:7px font size: 25px"></i> ' + file.name + '</u';
-            
-            //  open the data in a new window
-            fileItem.onclick = function () {
-                processUploadedFile(file);
-            };
-
-            uploadedFilesList.appendChild(fileItem);
-        });
-    }
-
-    function processUploadedFile(uploadedFile) {
-     
-        var fileName = uploadedFile.name;
-        if (fileName.endsWith('.csv')) {
-           
-            parseAndDisplayCSVData(uploadedFile);
-        } else if (fileName.endsWith('.xlsx')) {
-           
-            parseAndDisplayExcelData(uploadedFile);
+    // Function to display the selected file name
+    function displaySelectedFile() {
+        var fileInput = document.getElementById('classListFile');
+        if (fileInput.files.length > 0) {
+            document.getElementById('selectedFile').innerText = 'Selected File: ' + fileInput.files[0].name;
         } else {
-            alert('Unsupported file format. Please upload a CSV or Excel file.');
+            document.getElementById('selectedFile').innerText = '';
         }
     }
-    function parseAndDisplayCSVData(uploadedFile) {
-        // PapaParse library for CSV parsing
-        Papa.parse(uploadedFile, {
-            complete: function (results) {
-                var data = results.data; // Parsed CSV data
-
-                // HTML table to display the data
-                var table = document.createElement('table');
-                table.className = 'table';
-
-                // Open a new window to display the data 
-                var newWindow = window.open('', '', 'width=600,height=400,top=' + (window.innerHeight / 2 - 200) + ',left=' + (window.innerWidth / 2 - 300));
-                newWindow.document.write('<html><body><h1>' + uploadedFile.name + '</h1>');
-               
-                newWindow.document.write('</body></html>');
-            
-            
-            }
-        });
-    }
-
-    function parseAndDisplayExcelData(uploadedFile) {
-        // SheetJS library for Excel parsing
-        var reader = new FileReader();
-
-        reader.onload = function (e) {
-            var data = new Uint8Array(e.target.result);
-            var workbook = XLSX.read(data, { type: 'array' });
-
-            
-            var sheetName = workbook.SheetNames[0];
-            var sheet = workbook.Sheets[sheetName];
-
-            // Convert the sheet to an array of objects (each object represents a row)
-            var jsonData = XLSX.utils.sheet_to_json(sheet);
-
-            // Create an HTML table to display the data
-            var table = document.createElement('table');
-            table.className = 'table';
-
-            // Create table header from the first row of the data
-            var thead = document.createElement('thead');
-            var headerRow = thead.insertRow(0);
-            for (var key in jsonData[0]) {
-                var th = document.createElement('th');
-                th.textContent = key;
-                headerRow.appendChild(th);
-            }
-            table.appendChild(thead);
-
-            // Create table body
-            var tbody = document.createElement('tbody');
-            for (var row of jsonData) {
-                var newRow = tbody.insertRow();
-                for (var key in row) {
-                    var cell = newRow.insertCell();
-                    cell.textContent = row[key];
-                }
-            }
-            table.appendChild(tbody);
-
-            //  new window to display the data 
-            var newWindow = window.open('', '', 'width=600,height=400,top=' + (window.innerHeight / 2 - 200) + ',left=' + (window.innerWidth / 2 - 300));
-            newWindow.document.write('<html><body><h1>' + uploadedFile.name + '</h1>');
-            newWindow.document.write('<div>' + table.outerHTML + '</div>'); // Display the table in the new window
-            newWindow.document.write('</body></html>');
-        };
-
-        reader.readAsArrayBuffer(uploadedFile);
-    }
 </script>
-
 {% endblock %}

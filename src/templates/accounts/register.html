@@ -192,9 +192,7 @@
             </div>
           </div>
         </div>
-        <div class="text-muted">
-          Password must be at least 8 characters long and include at least one uppercase letter, one lowercase
-          letter, one number, and one special character.
+        <div class="text-muted" style="white-space: pre-wrap;">To make a faculty account, please use an email with the PUP domain (@pup.edu.ph) during registration.&#10;&#10;Password must be at least 8 characters long and include at least one uppercase letter, one lowercase letter, one number, and one special character.
         </div>
         <div class="text-center">
           <button class="w-75 btn btn-lg"
@@ -229,7 +227,7 @@
       var confirmToggle = document.getElementById("confirm-toggleButton");
 
       if (confirmPasswordField.type === "password") {
-        confirmPasswordField.type = "text";
+        confirmPasswordField.type = "text"; 
         confirmToggle.classList.remove("fa-eye-slash");
         confirmToggle.classList.add("fa-eye");
       } else {

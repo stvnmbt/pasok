@@ -3,24 +3,10 @@
 {% block header %}{% endblock %}
 
 {% block content %}
-
-<style>
-    .box {
-     -ms-flex: 1 1 auto;
-     flex: 1 1 auto;
-     margin-top: 17px;
-     padding: 1.25rem;
-     border: 0.001px solid rgba(0, 0, 0, 0.16);
-     border-top: 5px solid maroon;
-     border-radius: 10px;
-     box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;
- }
-
-</style>
 <!-- Sidebar -->
-<div class="container-fluid overflow-hidden">
-    <div class="row vh-100 overflow-auto">
-        <div class="col-12 col-sm-3 col-xl-2 px-sm-2 px-0 bg-light d-flex sticky-top">
+<div class="container-fluid ">
+    <div class="row vh-100 ">
+        <div class="col-12 col-sm-3 col-xl-2 px-sm-2 px-0 d-flex sticky-top">
             <div class="d-flex flex-sm-column flex-row flex-grow-1 align-items-center align-items-sm-start px-3 pt-2 text-white">
                 <ul class="nav flex-sm-column flex-row flex-nowrap flex-shrink-1 flex-sm-grow-0 flex-grow-1 mb-sm-auto mb-0 justify-content-center align-items-center align-items-sm-start" id="menu">
                     <li class="nav-item ">
@@ -45,19 +31,28 @@
                     </li>
                     <li class="nav-item ">
                         <a href=" {{ url_for('core.qrscanner') }}" class="nav-link px-sm-0 px-2 ms-2">
-                        <i class="fa-solid fa-qrcode" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">QR Scanner</span>
+                        <i class="fa-solid fa-qrcode" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">    QR Scanner</span>
                         </a>
                     </li>
                 </ul>
             </div>
         </div>
-        <div class="col d-flex flex-column h-100" >
+        <div class="col d-flex flex-column h-100" style="margin-left: 2px; margin-right: 2px;">
             <div class="container-fluid p-0">
-                <div class="box">
+                <div class="row" style="-ms-flex: 1 1 auto;
+                flex: 1 1 auto;
+                margin-top: 15px;
+                padding-bottom: 10px;
+                padding-top: 30px;
+                border: 0.001px solid rgba(0, 0, 0, 0.16);
+                border-top: 5px solid maroon;
+                border-radius: 10px;
+                box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;">
                 {% block body %}{% endblock %}
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}

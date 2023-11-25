@@ -42,7 +42,7 @@ def register():
 
         # Assign faculty role if email domain is valid
         email_domain = re.search(r"@(.*)$", user.email)
-        if email_domain.group(0) == "@inboxkitten.com": # change to "@pup.edu.ph" in production
+        if email_domain.group(0) == "@inboxkitten.com": # prod: "@pup.edu.ph" | testing: "@inboxkitten.com"
             user.is_faculty = True
         
         db.session.commit()
@@ -62,10 +62,10 @@ def register():
 
     return render_template("accounts/register.html", form=form)
 
-# Helper function to check password complexity
 def is_password_complex(password):
     # Add your password complexity requirements here
     return (
+        len(password) >= 8 and
         any(c.islower() for c in password) and
         any(c.isupper() for c in password) and
         any(c.isdigit() for c in password) and

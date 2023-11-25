@@ -23,13 +23,11 @@ class Config(object):
     MAIL_USERNAME = os.environ["EMAIL_USER"]
     MAIL_PASSWORD = os.environ["EMAIL_PASSWORD"]
 
-
 class DevelopmentConfig(Config):
     DEVELOPMENT = True
     DEBUG = True
     WTF_CSRF_ENABLED = False
     DEBUG_TB_ENABLED = True
-
 
 class TestingConfig(Config):
     TESTING = True
@@ -37,7 +35,6 @@ class TestingConfig(Config):
     SQLALCHEMY_DATABASE_URI = "sqlite:///testdb.sqlite"
     BCRYPT_LOG_ROUNDS = 1
     WTF_CSRF_ENABLED = False
-
 
 class ProductionConfig(Config):
     DEBUG = False
