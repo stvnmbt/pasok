@@ -29,7 +29,8 @@ def home():
         classlists = ClassList.query.all()
         return render_template("core/faculty/index.html", classlists=classlists)
     else:
-        return render_template("core/student/index.html")
+
+        return show_qrcode()
 
 
 @core_bp.route('/account_settings', methods=['GET', 'POST'])
