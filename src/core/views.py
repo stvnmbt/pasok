@@ -258,6 +258,8 @@ def export_classlist_attendance_csv():
     csv_writer = csv.writer(csv_data)
 
     # Add subject and section information to the CSV header
+    csv_writer.writerow(['School Year:', classlist.school_year])
+    csv_writer.writerow(['Semester:', classlist.semester.value])
     csv_writer.writerow(['Subject:', classlist.subject_name])
     csv_writer.writerow(['Section:', classlist.section_code])
     csv_writer.writerow([])  # Add an empty row for better readability
