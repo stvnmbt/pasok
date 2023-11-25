@@ -116,7 +116,7 @@ def realtime():
     attendance_user = db.session.query(Attendance, User)\
     .join(User, User.id == Attendance.user_id)\
     .join(ClassList, Attendance.classlist_id == ClassList.id)\
-    .add_columns(User.first_name, User.last_name, ClassList.section_code, Attendance.created, Attendance.attendance_status)\
+    .add_columns(User.first_name, User.last_name, User.middle_name, ClassList.section_code, Attendance.created, Attendance.attendance_status)\
     .order_by(Attendance.created.desc())\
     .all()
 

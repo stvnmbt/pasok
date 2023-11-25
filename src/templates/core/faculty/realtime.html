@@ -6,18 +6,19 @@
 
 {% block body %}
 <div class="d-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3"><strong>Real Time Attendance</strong></h1>
+    <h1 class="h3"><strong> Real Time Attendance</strong></h1>
     <div class="input-group" style="width: 25%;">
-        <input type="text" class="form-control" id="search-input" placeholder="Search.." aria-label="Search" aria-describedby="search-button" style="margin-top: 15px; border-color: black;">
+        <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search.." aria-label="Search" aria-describedby="search-button" style="margin-top: 15px; border-color: black;">
     </div>
 </div>
 
 <div class="table-responsive" style="overflow-x: auto;">
-    <table class="table datatables table-bordered table-condensed table-striped p-0 m-0 d-none d-md-table" style="border-color: #800000;">
+    <table id="realtimetable" class="table datatables table-bordered table-condensed table-striped p-0 m-0 d-none d-md-table" style="border-color: #800000;">
         <thead>
             <tr role="row">
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Surname</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Given Name</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Middle Name</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Date & Time</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Status</th>
@@ -28,6 +29,7 @@
             <tr role="row" style="background-color: #f9f9f9;">
                 <td>{{ au.last_name }}</td>
                 <td>{{ au.first_name }}</td>
+                <td>{{ au.middle_name }}</td>
                 <td>{{ au.section_code }}</td>
                 <td>{{ au.created }}</td>
                 <td>{{ au.attendance_status.value }}</td>
@@ -36,12 +38,13 @@
         </tbody>
     </table>
 
-    <div class="card-columns d-md-none my-custom-card-columns" >
+    <div id="realtimeCard" class="card-columns d-md-none my-custom-card-columns" >
         {% for au in attendance_user %}
         <div class="card mb-3 my-custom-card" style="border: 3px solid #800000;">
             <div class="card-body">
                 <p class="card-text"><strong>Surname:</strong> {{ au.last_name }}</p>
                 <p class="card-text"><strong>Given Name:</strong> {{ au.first_name }}</p>
+                <p class="card-text"><strong>Middle Name:</strong> {{ au.middle_name }}</p>
                 <p class="card-text"><strong>Section:</strong> {{ au.section_code }}</p>
                 <p class="card-text"><strong>Date & Time:</strong> {{ au.created }}</p>
                 <p class="card-text"><strong>Status:</strong> {{ au.attendance_status.value }}</p>
@@ -52,23 +55,47 @@
 </div>
 
 <script>
-    document.getElementById("search-input").addEventListener("input", function () {
-        filterTable();
-    });
+    function searchFunction() {
+        // Declare variables
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("search-input");
+        filter = input.value.toUpperCase();
 
-    function filterTable() {
-        const input = document.getElementById("search-input");
-        const filter = input.value.toUpperCase();
-        const rows = document.querySelectorAll(".row-to-filter");
-
-        rows.forEach((row) => {
-            const text = row.getAttribute("data-filter");
-            if (text.toUpperCase().indexOf(filter) > -1) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
+        // Search in the table
+        table = document.getElementById("realtimetable");
+        tr = table.getElementsByTagName("tr");
+        for (i = 1; i < tr.length; i++) {
+            var found = false;
+            // Loop through only the relevant columns (1st, 2nd, and 3rd columns)
+            for (var j = 0; j < 3; j++) {
+                td = tr[i].getElementsByTagName("td")[j];
+                if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
             }
-        });
+            tr[i].style.display = found ? "" : "none";
+        }
+
+        // Search in the card container
+        var cardsContainer = document.getElementById("realtimeCard");
+        var cards = cardsContainer.getElementsByClassName("card");
+        for (i = 0; i < cards.length; i++) {
+            var cardBody = cards[i].getElementsByClassName("card-body")[0];
+            // Combine text content of relevant fields in the card
+            var cardText = cards[i].getElementsByClassName("card-text")[0].textContent +
+                            cards[i].getElementsByClassName("card-text")[1].textContent +
+                            cards[i].getElementsByClassName("card-text")[2].textContent;
+
+            if (cardText.toUpperCase().indexOf(filter) > -1) {
+                cards[i].style.display = "";
+            } else {
+                cards[i].style.display = "none";
+            }
+        }
     }
 </script>
 {% endblock %}

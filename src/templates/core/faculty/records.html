@@ -2,10 +2,11 @@
 
 {% block body %}
 
-<h1 class="h3 mb-4" style="margin-top: 20px;"><strong> Student Records</strong></h1>
-
-<div class="input-group mb-3" style="width: 25%;">
-    <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search for surnames" aria-label="Search" aria-describedby="search-button">
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3"><strong> Student Records</strong></h1>
+    <div class="input-group" style="width: 25%;">
+        <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search.." aria-label="Search" aria-describedby="search-button" style="margin-top: 15px; border-color: black;">
+    </div>
 </div>
 
 <div class="table-responsive" style="overflow-x: auto;">
@@ -37,14 +38,13 @@
     </table>
 </div>
 
-<div class="cards-container d-md-none">
+<div id="studentTableCard" class="cards-container d-md-none">
     {% for s in students %}
     <div class="card mb-3">
         <div class="card-header" onclick="toggleCard(this)">
-            <h5 class="mb-0">{{ s.last_name }}, {{ s.first_name }}</h5>
+            <h5 class="mb-0">{{ s.last_name }}, {{ s.first_name }} {{ s.middle_name }}</h5>
         </div>
         <div class="card-body" style="display: none;">
-            <p><strong>Middle Name:</strong> {{ s.middle_name }}</p>
             <p><strong>Section:</strong> {{ s.section_code }}</p>
             <p><strong>Present:</strong> {{ s.present_count }}</p>
             <p><strong>Late:</strong> {{ s.late_count }}</p>
@@ -60,22 +60,40 @@
         var input, filter, table, tr, td, i, txtValue;
         input = document.getElementById("search-input");
         filter = input.value.toUpperCase();
+
+        // Search in the table
         table = document.getElementById("studentTable");
         tr = table.getElementsByTagName("tr");
-
-        // Loop through all table rows, and hide those who don't match the search query
-        for (i = 0; i < tr.length; i++) {
-            td = tr[i].getElementsByTagName("td")[0];
-            if (td) {
-                txtValue = td.textContent || td.innerText;
-                if (txtValue.toUpperCase().indexOf(filter) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
+        for (i = 1; i < tr.length; i++) {
+            var found = false;
+            // Loop through only the relevant columns (1st, 2nd, and 3rd columns)
+            for (var j = 0; j < 3; j++) {
+                td = tr[i].getElementsByTagName("td")[j];
+                if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        found = true;
+                        break;
+                    }
                 }
+            }
+            tr[i].style.display = found ? "" : "none";
+        }
+
+        // Search in the card container
+        var cardsContainer = document.getElementById("studentTableCard");
+        var cards = cardsContainer.getElementsByClassName("card");
+        for (i = 0; i < cards.length; i++) {
+            var cardBody = cards[i].getElementsByClassName("card-header")[0];
+            var cardText = cardBody.textContent || cardBody.innerText;
+            if (cardText.toUpperCase().indexOf(filter) > -1) {
+                cards[i].style.display = "";
+            } else {
+                cards[i].style.display = "none";
             }
         }
     }
+
 
     function toggleCard(element) {
         var cardBody = element.nextElementSibling;
