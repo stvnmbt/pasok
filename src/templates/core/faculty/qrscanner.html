@@ -23,26 +23,49 @@
         <input type="radio" class="btn-check" name="btnradio" id="btnradio2" autocomplete="off">
         <label class="btn" for="btnradio2" style="background-color: white; color: #800000; outline: 2px solid #800000; padding: 10px 5px; font-family: roboto; ">LATE</label>
     </div>
-
-    <br>
+    <br><br>
+    <p>Note: This will mark all students from the selected classlist with no logged attendance for the past hour an ABSENT.</p>
+    <div class="d-flex justify-content-center">
+        <div class="col-md-6 col-lg-3 mb-3">
+            <select id="classlistDropdown" class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
+                <option selected>Select Classlist</option>
+                {% for classlist in classlists %}
+                    <option value="{{ classlist.id }}">{{ classlist.subject_name }} {{ classlist.section_code }}</option>
+                {% endfor %}
+            </select>
+        </div> 
+    </div>
     <div class="d-flex justify-content-center">
         <input type="button" onclick="absentButton()" class="btn-check" id="absent-btn" autocomplete="off">
-        <label class="btn" for="absent-btn" style="background-color: white; color: #800000; outline: 2px solid #808080; padding: 7px 40px; font-family: roboto;">MARK ALL MISSING AS ABSENT</label>
+        <label class="btn" for="absent-btn" style="background-color: white; color: #800000; outline: 2px solid #808080; padding: 7px 40px; font-family: roboto;">MARK AS ABSENT</label>
     </div>
 </div>
-
-    
-
 
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script>
     function absentButton() {
+        // Get the selected value from the dropdown
+        var selectedValue = $('#classlistDropdown').val();
         const response = confirm("Are you sure you want to mark all remaining students as ABSENT?");
 
-        if (response) {
-            //
+        // Check if a valid option is selected
+        if (selectedValue !== "Select Classlist" && response) {
+            // Make an AJAX request to the route function with the selected value
+            $.ajax({
+                type: "POST",
+                url: "/send_absents",  // Replace with the actual route URL
+                data: { classlistId: selectedValue },
+                success: function(response) {
+                    // Handle the success response
+                    console.log('Response:', response);
+                },
+                error: function(error) {
+                    // Handle the error
+                    console.error('Error:', error);
+                }
+            });
         } else {
-            alert("Cancel was pressed");
+            alert('Please select a valid classlist');
         }
     }
 
