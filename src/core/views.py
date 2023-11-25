@@ -519,7 +519,8 @@ def get_qr():
     s = request.get_json()
 
     # anti duplicate measure
-    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s[0]).order_by(Attendance.created.desc()).first()
+    #last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s[0]).order_by(Attendance.created.desc()).first()
+    last_attendance = Attendance.query.filter(Attendance.user_id==int(s[0])).order_by(Attendance.created.desc()).first()
     if last_attendance is None:
         add_attendance(s[0], s[1])
         return ('Success!', 200)
