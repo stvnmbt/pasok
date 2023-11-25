@@ -9,7 +9,8 @@ from src.accounts.models import Attendance, Status, User, ClassList, assoc
 import io
 import os
 import csv
-from src.utils.generate_qr import generate_qr
+from src.utils.email import send_qr_email
+from src.utils.generate_qr import generate_qr, generate_qr_path
 from src.utils.scanner import add_attendance
 import json
 import pandas as pd
@@ -26,10 +27,10 @@ core_bp = Blueprint("core", __name__)
 def home():
     user = current_user
     if user.is_faculty:
-        classlists = ClassList.query.all()
+        classlists = db.session.query(ClassList).filter(ClassList.faculty_creator==user).all()
         return render_template("core/faculty/index.html", classlists=classlists)
     else:
-        return render_template("core/student/index.html")
+        return show_qrcode()
 
 
 @core_bp.route('/account_settings', methods=['GET', 'POST'])
@@ -90,12 +91,17 @@ def is_password_complex(password):
 @check_is_confirmed
 @admin_required
 def get_attendance_data():
-    # Query the database to get the attendance data
+    classlists = ClassList.query.filter_by(faculty_creator=current_user).all()
+
+    # Extract class list IDs
+    classlist_ids = [classlist.id for classlist in classlists]
+
+    # Query the database to get the attendance data for the specific class lists
     attendance_data = db.session.query(
         db.func.sum(User.present_count).label('present_count'),
         db.func.sum(User.late_count).label('late_count'),
         db.func.sum(User.absent_count).label('absent_count')
-    ).first()
+    ).filter(User.classlists.any(ClassList.id.in_(classlist_ids))).first()
 
     # Map the data to a format suitable for the frontend
     result = [
@@ -111,12 +117,22 @@ def get_attendance_data():
 @check_is_confirmed
 @admin_required
 def realtime():
-    attendance_user = db.session.query(Attendance, User)\
-    .join(User, User.id == Attendance.user_id)\
-    .join(ClassList, Attendance.classlist_id == ClassList.id)\
-    .add_columns(User.first_name, User.last_name, ClassList.section_code, Attendance.created, Attendance.attendance_status)\
-    .order_by(Attendance.created.desc())\
-    .all()
+    attendance_user = (
+        db.session.query(Attendance, User)
+        .join(User, User.id == Attendance.user_id)
+        .join(ClassList, Attendance.classlist_id == ClassList.id)
+        .filter(ClassList.faculty_creator == current_user)  # Filter by the current faculty user
+        .add_columns(
+            User.first_name,
+            User.last_name,
+            User.middle_name,
+            ClassList.section_code,
+            Attendance.created,
+            Attendance.attendance_status,
+        )
+        .order_by(Attendance.created.desc())
+        .all()
+    )
 
     return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip)
 
@@ -125,14 +141,24 @@ def realtime():
 @check_is_confirmed
 @admin_required
 def records():
-    students = db.session.query(User, assoc)\
-    .join(User, User.id == assoc.c.user_id)\
-    .join(ClassList, ClassList.id == assoc.c.classlist_id)\
-    .add_columns(User.first_name, User.last_name, User.middle_name, ClassList.section_code, User.present_count, User.late_count, User.absent_count)\
-    .filter(User.is_faculty == False)\
-    .order_by(User.last_name.asc())\
-    .all()
-    #students = db.session.query(User).filter(User.is_faculty == False).all()
+    students = (
+        db.session.query(User, assoc)
+        .join(User, User.id == assoc.c.user_id)
+        .join(ClassList, ClassList.id == assoc.c.classlist_id)
+        .add_columns(
+            User.first_name,
+            User.last_name,
+            User.middle_name,
+            ClassList.section_code,
+            User.present_count,
+            User.late_count,
+            User.absent_count,
+        )
+        .filter(User.is_faculty == False)  # Filter only non-faculty students
+        .filter(ClassList.faculty_creator == current_user)  # Filter by the current faculty user
+        .order_by(User.last_name.asc())
+        .all()
+    )
 
     return render_template('core/faculty/records.html', students=students)
 
@@ -232,6 +258,8 @@ def export_classlist_attendance_csv():
     csv_writer = csv.writer(csv_data)
 
     # Add subject and section information to the CSV header
+    csv_writer.writerow(['School Year:', classlist.school_year])
+    csv_writer.writerow(['Semester:', classlist.semester.value])
     csv_writer.writerow(['Subject:', classlist.subject_name])
     csv_writer.writerow(['Section:', classlist.section_code])
     csv_writer.writerow([])  # Add an empty row for better readability
@@ -339,7 +367,7 @@ def read_and_store_data(file, school_year, semester):
                     # Create a new user and associate with the classlist
                     user = User(
                         email=email,
-                        password=generate_random_password(),
+                        password=f'{first_name}{last_name}',
                         first_name=first_name,
                         middle_name=middle_name,
                         last_name=last_name,
@@ -351,9 +379,17 @@ def read_and_store_data(file, school_year, semester):
                     classlist_entry.students.append(user)
                     print(f"New user. Adding the user to the classlist with password: {user.password}")
 
-            # Commit changes to the database after processing all rows
-            db.session.commit()
+                # db flush to get user_id
+                db.session.flush()
 
+                # send QR code to student email
+                user_id = (db.session.query(User).filter(User.email == email).first()).get_id()
+                subject = f'You have been enrolled to {subject_name} {section_code} classlist of PASOK attendance system'
+                body = 'Welcome! You can now use the QR code image attached to use PASOK attendance system as a student.'
+                name = f'{last_name}, {first_name}'
+                send_qr_email(email, subject, body, generate_qr_path(user_id, name))
+
+            db.session.commit()
             print("Data successfully committed to the database.")
 
         except Exception as e:

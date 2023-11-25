@@ -1,64 +1,155 @@
-{% extends "core/faculty/sidebar.html" %}
+{% extends "core/sidebar.html" %}
 
 {% block body %}
 
-<h1 class="h3 mb-4"><strong> Student Records</strong></h1>
-
-<div class="input-group mb-3" style="width: 25%; ">
-    <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search for surnames" aria-label="Search" aria-describedby="search-button">
-    
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <h1 class="h3"><strong> Student Records</strong></h1>
+    <div class="input-group" style="width: 25%;">
+        <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search.." aria-label="Search" aria-describedby="search-button" style="margin-top: 15px; border-color: black;">
+    </div>
 </div>
+
 <div class="table-responsive" style="overflow-x: auto;">
-  <table id="studentTable" class="table datatables table-bordered table-condensed table-striped p-0 m-0" style="width: 100%; border: 1px solid #696969; border-radius: 10px;">
-      <thead>
-          <tr>
-              <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Surname</th>
-              <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Given Name</th>
-              <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Middle Name</th>
-              <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
-              <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Present</th>
-              <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Late</th>
-              <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Absent</th>
-          </tr>
-      </thead>
-      <tbody>
-          {% for s in students %}
-          <tr role="row" style="background-color: #f9f9f9;">
-              <td>{{ s.last_name }}</td>
-              <td>{{ s.first_name }}</td>
-              <td>{{ s.middle_name }}</td>
-              <td>{{ s.section_code }}</td>
-              <td>{{ s.present_count }}</td>
-              <td>{{ s.late_count }}</td>
-              <td>{{ s.absent_count }}</td>
-          </tr>
-          {% endfor %}
-      </tbody>
-  </table>
+    <table id="studentTable" class="table datatables table-bordered table-condensed table-striped p-0 m-0" style="width: 100%; border: 1px solid #696969; border-radius: 10px;">
+        <thead>
+            <tr>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Surname</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Given Name</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Middle Name</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Present</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Late</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Absent</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for s in students %}
+            <tr role="row" style="background-color: #f9f9f9;">
+                <td>{{ s.last_name }}</td>
+                <td>{{ s.first_name }}</td>
+                <td>{{ s.middle_name }}</td>
+                <td>{{ s.section_code }}</td>
+                <td>{{ s.present_count }}</td>
+                <td>{{ s.late_count }}</td>
+                <td>{{ s.absent_count }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 
+<div id="studentTableCard" class="cards-container d-md-none">
+    {% for s in students %}
+    <div class="card mb-3">
+        <div class="card-header" onclick="toggleCard(this)">
+            <h5 class="mb-0">{{ s.last_name }}, {{ s.first_name }} {{ s.middle_name }}</h5>
+        </div>
+        <div class="card-body" style="display: none;">
+            <p><strong>Section:</strong> {{ s.section_code }}</p>
+            <p><strong>Present:</strong> {{ s.present_count }}</p>
+            <p><strong>Late:</strong> {{ s.late_count }}</p>
+            <p><strong>Absent:</strong> {{ s.absent_count }}</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
 
 <script>
     function searchFunction() {
-      // Declare variables
-      var input, filter, table, tr, td, i, txtValue;
-      input = document.getElementById("search-input");
-      filter = input.value.toUpperCase();
-      table = document.getElementById("studentTable");
-      tr = table.getElementsByTagName("tr");
-    
-      // Loop through all table rows, and hide those who don't match the search query
-      for (i = 0; i < tr.length; i++) {
-        td = tr[i].getElementsByTagName("td")[0];
-        if (td) {
-          txtValue = td.textContent || td.innerText;
-          if (txtValue.toUpperCase().indexOf(filter) > -1) {
-            tr[i].style.display = "";
-          } else {
-            tr[i].style.display = "none";
-          }
+        // Declare variables
+        var input, filter, table, tr, td, i, txtValue;
+        input = document.getElementById("search-input");
+        filter = input.value.toUpperCase();
+
+        // Search in the table
+        table = document.getElementById("studentTable");
+        tr = table.getElementsByTagName("tr");
+        for (i = 1; i < tr.length; i++) {
+            var found = false;
+            // Loop through only the relevant columns (1st, 2nd, and 3rd columns)
+            for (var j = 0; j < 3; j++) {
+                td = tr[i].getElementsByTagName("td")[j];
+                if (td) {
+                    txtValue = td.textContent || td.innerText;
+                    if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            tr[i].style.display = found ? "" : "none";
         }
-      }
+
+        // Search in the card container
+        var cardsContainer = document.getElementById("studentTableCard");
+        var cards = cardsContainer.getElementsByClassName("card");
+        for (i = 0; i < cards.length; i++) {
+            var cardBody = cards[i].getElementsByClassName("card-header")[0];
+            var cardText = cardBody.textContent || cardBody.innerText;
+            if (cardText.toUpperCase().indexOf(filter) > -1) {
+                cards[i].style.display = "";
+            } else {
+                cards[i].style.display = "none";
+            }
+        }
+    }
+
+
+    function toggleCard(element) {
+        var cardBody = element.nextElementSibling;
+        if (cardBody.style.display === "none") {
+            cardBody.style.display = "block";
+        } else {
+            cardBody.style.display = "none";
+        }
     }
 </script>
+
+<style>
+    /* Styles for cards and table - adjust as needed */
+    .card {
+        border: 1px solid #696969;
+        border-radius: 10px;
+        margin-bottom: 10px;
+        background-color: #f9f9f9;
+        box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+    }
+
+    .card-header {
+        background-color: #701c1c;
+        color: white;
+        padding: 10px;
+        cursor: pointer;
+    }
+
+    .card-body {
+        padding: 10px;
+        display: none;
+    }
+
+    /* Media query for responsive design */
+    @media (max-width: 768px) {
+        /* Hide the table on smaller screens */
+        .table-responsive {
+            display: none;
+        }
+
+        /* Show the cards on smaller screens */
+        .cards-container {
+            display: block;
+        }
+    }
+
+    @media (min-width: 769px) {
+        /* Show the table on larger screens */
+        .table-responsive {
+            display: block;
+        }
+
+        /* Hide the cards on larger screens */
+        .cards-container {
+            display: none;
+        }
+    }
+</style>
 {% endblock %}
