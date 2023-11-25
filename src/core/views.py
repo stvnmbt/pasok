@@ -1,11 +1,11 @@
 import base64
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
 import io
 from flask_login import login_required, current_user
 from src import db
 from src.utils.decorators import admin_required, admin_required, check_is_confirmed
-from src.accounts.models import Attendance, User, ClassList, assoc
+from src.accounts.models import Attendance, Status, User, ClassList, assoc
 import io
 import os
 import csv
@@ -111,7 +111,7 @@ def get_attendance_data():
 @check_is_confirmed
 @admin_required
 def realtime():
-    attendance_user = db.session.query(Attendance, User, ClassList.section_code)\
+    attendance_user = db.session.query(Attendance, User)\
     .join(User, User.id == Attendance.user_id)\
     .join(ClassList, Attendance.classlist_id == ClassList.id)\
     .add_columns(User.first_name, User.last_name, ClassList.section_code, Attendance.created, Attendance.attendance_status)\
@@ -125,13 +125,14 @@ def realtime():
 @check_is_confirmed
 @admin_required
 def records():
-    students = db.session.query(User)\
-    .join(assoc, User.id == assoc.c.user_id)\
+    students = db.session.query(User, assoc)\
+    .join(User, User.id == assoc.c.user_id)\
     .join(ClassList, ClassList.id == assoc.c.classlist_id)\
     .add_columns(User.first_name, User.last_name, User.middle_name, ClassList.section_code, User.present_count, User.late_count, User.absent_count)\
     .filter(User.is_faculty == False)\
     .order_by(User.last_name.asc())\
     .all()
+    #students = db.session.query(User).filter(User.is_faculty == False).all()
 
     return render_template('core/faculty/records.html', students=students)
 
@@ -152,33 +153,40 @@ def display_classlist(classlist_id):
 @check_is_confirmed
 @admin_required
 def delete_classlist(classlist_id):
+    try:
+        # Fetch the class list entry from the database
+        classlist_entry = ClassList.query.get(classlist_id)
 
-    # Fetch the class list entry from the database
-    classlist_entry = ClassList.query.get(classlist_id)
-
-    if classlist_entry:
-        try:
+        if classlist_entry:
             # Manually remove students from the classlist
             for student in classlist_entry.students:
                 print(f"Removing student {student.id} from classlist {classlist_entry.id}")
 
                 # Manually delete association from user_classlist_association table
-                db.session.query(assoc).filter_by(
-                    user_id=student.id,
-                    classlist_id=classlist_entry.id
-                ).delete()
+                db.session.execute(assoc.delete().where(
+                    (assoc.c.user_id == student.id) & (assoc.c.classlist_id == classlist_entry.id)
+                ))
 
-                db.session.commit()
+            # Commit the changes to the association table
+            db.session.commit()
+
+            # Remove the class list from the students' classlists
+            classlist_entry.students = []
 
             # Delete the class list entry
             db.session.delete(classlist_entry)
+
+            # Commit the changes to the database
             db.session.commit()
 
             flash('Class list deleted successfully', 'success')
-        except Exception as e:
-            db.session.rollback()
-            flash('Error deleting class list', 'error')
-            current_app.logger.error(f"Error deleting class list: {str(e)}")
+        else:
+            flash('Class list not found', 'error')
+
+    except Exception as e:
+        db.session.rollback()
+        flash('Error deleting class list', 'error')
+        current_app.logger.error(f"Error deleting class list: {str(e)}")
 
     # Redirect back to the class list collection
     return redirect(url_for('core.classlist'))
@@ -227,7 +235,7 @@ def export_classlist_attendance_csv():
     csv_writer.writerow(['Subject:', classlist.subject_name])
     csv_writer.writerow(['Section:', classlist.section_code])
     csv_writer.writerow([])  # Add an empty row for better readability
-    csv_writer.writerow(['Last Name', 'First Name', 'Middle Name', 'Present Count', 'Late Count', 'Absent Count'])
+    csv_writer.writerow(['Last Name', 'First Name', 'Middle Name', 'Present', 'Late', 'Absent'])
 
     for student in students:
         # Add student data to each row
@@ -244,12 +252,6 @@ def export_classlist_attendance_csv():
 
     return response
 
-
-
-
-
-
-
 def generate_random_password():
     characters = string.ascii_letters + string.digits + string.punctuation
     password = ''.join(random.choice(characters) for _ in range(8))
@@ -259,8 +261,6 @@ def read_and_store_data(file, school_year, semester):
     try:
         # Read CSV file and decode it using latin1 encoding, treat the first row as headers
         data = pd.read_csv(file, encoding='latin1', header=None)
-
-        # print(data.iloc[0])
 
         subject_name = str(data.iloc[0, 1]).strip()
         section_code = str(data.iloc[0, 5]).strip()
@@ -339,7 +339,7 @@ def read_and_store_data(file, school_year, semester):
                     # Create a new user and associate with the classlist
                     user = User(
                         email=email,
-                        password=generate_random_password(), 
+                        password=generate_random_password(),
                         first_name=first_name,
                         middle_name=middle_name,
                         last_name=last_name,
@@ -367,6 +367,7 @@ def read_and_store_data(file, school_year, semester):
     except Exception as e:
         print(f"Error: {e}")
         raise  # Re-raise the exception for further handling
+
 
 @core_bp.route('/upload_classlist', methods=['POST'])
 @login_required
@@ -441,7 +442,38 @@ def display_data():
 @check_is_confirmed
 @admin_required
 def qrscanner():
-    return render_template('core/faculty/qrscanner.html')
+    classlists = db.session.query(ClassList).all()
+    return render_template('core/faculty/qrscanner.html', classlists=classlists)
+
+@core_bp.route('/send_absents', methods=['POST'])
+@login_required
+@check_is_confirmed
+@admin_required
+def send_absents():
+    classlist_id = request.form['classlistId']
+
+    # if a user's last attendance is more than an hour ago, or if it does not exist, add to absents list
+    threshold_time = datetime.now() - timedelta(hours=1)
+    
+    absents = (
+        db.session.query(User)
+        .join(assoc)
+        .join(ClassList)
+        .outerjoin(User.classlist_attendance)
+        .group_by(User.id)
+        .having(
+            (db.func.max(Attendance.created) < threshold_time) |
+            (db.func.count(Attendance.id) == 0)
+        )
+        .filter(ClassList.id == classlist_id)
+        .all()
+    )
+
+    for absent in absents:
+        add_attendance(absent.id, classlist_id, Status.ABSENT)
+
+    # Return a response if necessary
+    return 'Success'
 
 @core_bp.route('/get_qr', methods=['POST'])
 @login_required
