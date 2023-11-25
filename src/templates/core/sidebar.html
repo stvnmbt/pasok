@@ -14,6 +14,7 @@
                             <i class="fa-solid fa-gauge" style="color:#6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Dashboard</span>
                         </a>
                     </li>
+                    {% if current_user.is_faculty %}
                     <li class="nav-item ">
                         <a href="{{ url_for('core.realtime') }}" class="nav-link px-sm-0 px-2 ms-2">
                         <i class="fa-regular fa-clock" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Real Time Attendance</span>
@@ -34,6 +35,13 @@
                         <i class="fa-solid fa-qrcode" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">    QR Scanner</span>
                         </a>
                     </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a href="{{ url_for('core.show_qrcode') }}" class="nav-link px-sm-0 px-2 ms-2">
+                            <i class="fa-regular fa-clock" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">QR Code</span>
+                        </a>
+                    </li>
+                    {% endif %}
                 </ul>
             </div>
         </div>
