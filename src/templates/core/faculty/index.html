@@ -1,16 +1,71 @@
 {% extends "core/sidebar.html" %}
 
 {% block header %}
-<style>
-    .btn-primary {
-        width: 78px; /* Adjust the width as needed */
-    }
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+{% endblock %}
 
-    .btn-danger{
-        width: 78px; /* Adjust the width as needed */
-    }
-</style>
-<script src="..\..\..\static\js\loader.js"></script>
+{% block body %}
+<h1 class="h3 mb-4" style="margin-top: 15px;"><strong> Dashboard</strong></h1>
+
+<div class="row justify-content-center">
+    <div class="col-md-4">
+        <div class="text-center">
+            <div id="attendancePieChart" class="mb-3" style="max-width: 400px;"></div>
+            <br>
+            <div class="text-muted" style="font-size: 12px; font-style: italic;">Attendance data across all classlists.</div>
+            <br><br>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-lg-3 mb-3">
+        <select id="selectSchoolYear" class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
+            <option selected>Select School Year</option>
+            <option value="2324">2324</option>
+            <option value="2425">2425</option>
+        </select>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-3">
+        <select id="selectSemester" class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
+            <option selected>Select Semester</option>
+            <option value="FIRST">First Semester</option>
+            <option value="SECOND">Second Semester</option>
+            <option value="SUMMER">Summer Semester</option>
+        </select>
+    </div>
+</div>
+
+<div class="table-responsive">
+    <table class="table datatables table-bordered table-condensed table-striped p-0 m-0 dataTable no-footer dtr-inline" id="sysemTable" role="grid" aria-describedby="DataTables_Table_0_info" style="width: 100%; border: 1px solid #696969; border-radius: 10px;">
+        <thead>
+            <tr role="row">
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">School Year</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Semester</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Subject</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for classlist in classlists %}
+            <tr role="row" style="background-color: #f9f9f9;">
+                <td tabindex="0">{{ classlist.school_year }}</td>
+                <td>{{ classlist.semester.value }}</td>
+                <td>{{ classlist.section_code }}</td>
+                <td>{{ classlist.subject_name }}</td>
+                <td>
+                    <button class="btn btn-link btn-sm custom-btn"
+                    style="background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 15px; font-family: roboto; "
+                    onclick="downloadAction('{{ classlist.id }}', '{{ classlist.subject_name }}', '{{ classlist.section_code }}', '{{ classlist.school_year }}', '{{ classlist.semester.value }}')">
+                    Download</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
 <script>
     google.charts.load('current', { 'packages': ['corechart'] });
     google.charts.setOnLoadCallback(drawChart);
@@ -47,7 +102,7 @@
         });
     }
 
-    function downloadAction(classlist_id, subject, section) {
+    function downloadAction(classlist_id, classlist_subject, classlist_section, classlist_school_year, classlist_semester) {
         console.log(classlist_id);  
         $.ajax({
             url: `/export_attendance_csv?classlist_id=${classlist_id}`,
@@ -56,85 +111,58 @@
                 responseType: 'blob' // Set the expected response type to blob
             },
             success: function (data) {
+                console.log('WTF' + classlist_id + classlist_subject + classlist_section)
                 var a = document.createElement('a');
                 var url = window.URL.createObjectURL(data);
                 a.href = url;
-                a.download = `attendance_records_${subject}_${section}.csv`;
+                a.download = `attendance_report_[${classlist_school_year}_${classlist_semester} Semester]_${classlist_subject}_${classlist_section}.csv`;
                 document.body.append(a);
                 a.click();
                 a.remove();
                 window.URL.revokeObjectURL(url);
             },
             error: function (xhr, status, error) {
-                console.error(`Error downloading attendance records for subject ${subject} and section ${section}:`, error);
-                alert(`Failed to download attendance records for subject ${subject} and section ${section}. Please try again later.`);
+                console.error(`Error downloading attendance records for subject ${classlist_subject} and section $classlist_{section}:`, error);
+                alert(`Failed to download attendance records for subject ${classlist_subject} and section ${classlist_section}. Please try again later.`);
             }
         });
     }
-    
+
+    $(document).ready(function () {
+        function handleFormSelectionChange() {
+            var selectedSchoolYear = $('#selectSchoolYear').val();
+            var selectedSemester = $('#selectSemester').val();
+
+            // Log the selected values for verification
+            console.log('Selected School Year:', selectedSchoolYear);
+            console.log('Selected Semester:', selectedSemester);
+
+            // Show/hide table rows based on the selected values
+            $('#sysemTable tbody tr').each(function () {
+                var rowSchoolYear = $(this).find('td:eq(0)').text();
+                var rowSemester = $(this).find('td:eq(1)').text();
+
+                var showRow = true;
+
+                if (selectedSchoolYear !== 'Select School Year' && rowSchoolYear !== selectedSchoolYear) {
+                    showRow = false;
+                }
+
+                if (selectedSemester !== 'Select Semester' && rowSemester !== selectedSemester) {
+                    showRow = false;
+                }
+
+                // Toggle row visibility
+                $(this).toggle(showRow);
+            });
+        }
+
+        // Add event listeners to form-select elements
+        $('#selectSchoolYear, #selectSemester').change(function () {
+            // Handle form selection change
+            handleFormSelectionChange();
+        });
+    });
 </script>
-
-{% endblock %}
-
-{% block body %}
-<h1 class="h3 mb-4" style="margin-top: 15px;"><strong> Dashboard</strong></h1>
-
-
-<div class="row">
-    <div class="col-md-6 col-lg-3 mb-3">
-        <select class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
-            <option selected>Select School Year</option>
-            <option value="2324">2324</option>
-            <option value="2425">2425</option>
-        </select>
-    </div>
-    <div class="col-md-6 col-lg-3 mb-3">
-        <select class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
-            <option selected>Select Semester</option>
-            <option value="Semester.FIRST">First Semester</option>
-            <option value="Semester.SECOND">Second Semester</option>
-            <option value="Semester.SUMMER">Summer Semester</option>
-        </select>
-    </div>
-</div>
-
-
-<div class="row justify-content-center">
-    <div class="col-md-4">
-        <div class="text-center">
-            <div id="attendancePieChart" class="mb-3" style="max-width: 400px;"></div>
-        </div>
-    </div>
-</div>
-
-
-<div class="table-responsive">
-    <table class="table datatables table-bordered table-condensed table-striped p-0 m-0 dataTable no-footer dtr-inline" id="DataTables_Table_0" role="grid" aria-describedby="DataTables_Table_0_info" style="width: 100%; border: 1px solid #696969; border-radius: 10px;">
-        <thead>
-            <tr role="row">
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">School Year</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Semester</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Subject</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for classlist in classlists %}
-            <tr role="row" style="background-color: #f9f9f9;">
-                <td tabindex="0">{{ classlist.school_year }}</td>
-                <td>{{ classlist.semester.value }}</td>
-                <td>{{ classlist.section_code }}</td>
-                <td>{{ classlist.subject_name }}</td>
-                <td>
-                    <button class="btn btn-primary btn-sm custom-btn" onclick="downloadAction('{{ classlist.id }}', '{{ classlist.subject }}', '{{ classlist.section }}')">Download </button>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
-
-
 
 {% endblock %}

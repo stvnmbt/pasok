@@ -27,10 +27,9 @@ core_bp = Blueprint("core", __name__)
 def home():
     user = current_user
     if user.is_faculty:
-        classlists = ClassList.query.all()
+        classlists = db.session.query(ClassList).filter(ClassList.faculty_creator==user).all()
         return render_template("core/faculty/index.html", classlists=classlists)
     else:
-
         return show_qrcode()
 
 
@@ -92,12 +91,17 @@ def is_password_complex(password):
 @check_is_confirmed
 @admin_required
 def get_attendance_data():
-    # Query the database to get the attendance data
+    classlists = ClassList.query.filter_by(faculty_creator=current_user).all()
+
+    # Extract class list IDs
+    classlist_ids = [classlist.id for classlist in classlists]
+
+    # Query the database to get the attendance data for the specific class lists
     attendance_data = db.session.query(
         db.func.sum(User.present_count).label('present_count'),
         db.func.sum(User.late_count).label('late_count'),
         db.func.sum(User.absent_count).label('absent_count')
-    ).first()
+    ).filter(User.classlists.any(ClassList.id.in_(classlist_ids))).first()
 
     # Map the data to a format suitable for the frontend
     result = [
@@ -113,12 +117,22 @@ def get_attendance_data():
 @check_is_confirmed
 @admin_required
 def realtime():
-    attendance_user = db.session.query(Attendance, User)\
-    .join(User, User.id == Attendance.user_id)\
-    .join(ClassList, Attendance.classlist_id == ClassList.id)\
-    .add_columns(User.first_name, User.last_name, ClassList.section_code, Attendance.created, Attendance.attendance_status)\
-    .order_by(Attendance.created.desc())\
-    .all()
+    attendance_user = (
+        db.session.query(Attendance, User)
+        .join(User, User.id == Attendance.user_id)
+        .join(ClassList, Attendance.classlist_id == ClassList.id)
+        .filter(ClassList.faculty_creator == current_user)  # Filter by the current faculty user
+        .add_columns(
+            User.first_name,
+            User.last_name,
+            User.middle_name,
+            ClassList.section_code,
+            Attendance.created,
+            Attendance.attendance_status,
+        )
+        .order_by(Attendance.created.desc())
+        .all()
+    )
 
     return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip)
 
@@ -127,14 +141,24 @@ def realtime():
 @check_is_confirmed
 @admin_required
 def records():
-    students = db.session.query(User, assoc)\
-    .join(User, User.id == assoc.c.user_id)\
-    .join(ClassList, ClassList.id == assoc.c.classlist_id)\
-    .add_columns(User.first_name, User.last_name, User.middle_name, ClassList.section_code, User.present_count, User.late_count, User.absent_count)\
-    .filter(User.is_faculty == False)\
-    .order_by(User.last_name.asc())\
-    .all()
-    #students = db.session.query(User).filter(User.is_faculty == False).all()
+    students = (
+        db.session.query(User, assoc)
+        .join(User, User.id == assoc.c.user_id)
+        .join(ClassList, ClassList.id == assoc.c.classlist_id)
+        .add_columns(
+            User.first_name,
+            User.last_name,
+            User.middle_name,
+            ClassList.section_code,
+            User.present_count,
+            User.late_count,
+            User.absent_count,
+        )
+        .filter(User.is_faculty == False)  # Filter only non-faculty students
+        .filter(ClassList.faculty_creator == current_user)  # Filter by the current faculty user
+        .order_by(User.last_name.asc())
+        .all()
+    )
 
     return render_template('core/faculty/records.html', students=students)
 
@@ -234,6 +258,8 @@ def export_classlist_attendance_csv():
     csv_writer = csv.writer(csv_data)
 
     # Add subject and section information to the CSV header
+    csv_writer.writerow(['School Year:', classlist.school_year])
+    csv_writer.writerow(['Semester:', classlist.semester.value])
     csv_writer.writerow(['Subject:', classlist.subject_name])
     csv_writer.writerow(['Section:', classlist.section_code])
     csv_writer.writerow([])  # Add an empty row for better readability
@@ -341,7 +367,7 @@ def read_and_store_data(file, school_year, semester):
                     # Create a new user and associate with the classlist
                     user = User(
                         email=email,
-                        password=generate_random_password(),
+                        password=f'{first_name}{last_name}',
                         first_name=first_name,
                         middle_name=middle_name,
                         last_name=last_name,
