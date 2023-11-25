@@ -12,19 +12,28 @@
     position: relative;
   }
 
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-image: url("https://raw.githubusercontent.com/stvnmbt/pasok/main/src/static/images/Lagoon.jpg");
-    background-size: cover;
-    filter: blur(0.9px);
-    opacity: 0.9;
-    z-index: -2;
-  }
+  #overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(128, 0, 0, 0.139); /* Maroon color with some transparency */
+  z-index: -1;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("https://raw.githubusercontent.com/stvnmbt/pasok/main/src/static/images/Lagoon.jpg");
+  background-size: cover;
+  opacity: 0.9;
+  z-index: -2;
+}
 
   .pup-form-container {
     background: #fff;
@@ -95,6 +104,7 @@
 {% endblock %}
 
 {% block content %}
+  <div id="overlay"></div>
   <div class="pup-form-container">
     <img src="https://storage.googleapis.com/pasoksystem.appspot.com/static/images/PUPLogo.png" alt="PUP Logo" style="display: block; margin: 0 auto; max-width: 80px; max-height: 80px; margin-bottom: 10px;">
     <div class="login-header">PASOK REGISTER</div>
