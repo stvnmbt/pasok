@@ -19,7 +19,7 @@
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Surname</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Given Name</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Middle Name</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Class List</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Date & Time</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Status</th>
             </tr>
@@ -30,8 +30,8 @@
                 <td>{{ au.last_name }}</td>
                 <td>{{ au.first_name }}</td>
                 <td>{{ au.middle_name }}</td>
-                <td>{{ au.section_code }}</td>
-                <td>{{ au.created }}</td>
+                <td>{{ s.subject_name }} {{ s.section_code }}</td>
+                <td>{{ au.created.replace(tzinfo=timezone('UTC')).astimezone(timezone('Asia/Manila')).strftime('%Y-%m-%d %I:%M:%S %p') }}</td>
                 <td>{{ au.attendance_status.value }}</td>
             </tr>
             {% endfor %}
@@ -45,7 +45,7 @@
                 <p class="card-text"><strong>Surname:</strong> {{ au.last_name }}</p>
                 <p class="card-text"><strong>Given Name:</strong> {{ au.first_name }}</p>
                 <p class="card-text"><strong>Middle Name:</strong> {{ au.middle_name }}</p>
-                <p class="card-text"><strong>Section:</strong> {{ au.section_code }}</p>
+                <p class="card-text"><strong>Class List:</strong> {{ s.subject_name }} {{ s.section_code }}</p>
                 <p class="card-text"><strong>Date & Time:</strong> {{ au.created }}</p>
                 <p class="card-text"><strong>Status:</strong> {{ au.attendance_status.value }}</p>
             </div>
