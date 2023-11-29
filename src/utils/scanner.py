@@ -19,7 +19,7 @@ def add_attendance(id, isLate: bool):
     db.session.add(attendance)
     db.session.commit()
 
-def add_attendance(id, classlist_id, status: Status):
+def add_absent(id, classlist_id, status: Status):
     user = User.query.get(id)
     
     attendance = Attendance(attendance_status=status, user_id=id, classlist_id=classlist_id)

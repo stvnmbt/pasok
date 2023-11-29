@@ -67,6 +67,7 @@ app.register_blueprint(core_bp)
 
 from src.accounts.models import User, Attendance, ClassList, Status, Semester
 with app.app_context():
+    #db.session.close()
     #db.drop_all() # remove later
     db.create_all()
 

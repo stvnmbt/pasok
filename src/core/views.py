@@ -6,12 +6,11 @@ from flask_login import login_required, current_user
 from src import db
 from src.utils.decorators import admin_required, admin_required, check_is_confirmed
 from src.accounts.models import Attendance, Status, User, ClassList, assoc
-import io
 import os
 import csv
 from src.utils.email import send_qr_email
 from src.utils.generate_qr import generate_qr, generate_qr_path
-from src.utils.scanner import add_attendance
+from src.utils.scanner import add_attendance, add_absent
 import json
 import pandas as pd
 import random
@@ -91,7 +90,7 @@ def is_password_complex(password):
 @check_is_confirmed
 @admin_required
 def get_attendance_data():
-    classlists = ClassList.query.filter_by(faculty_creator=current_user).all()
+    classlists = db.session.query(ClassList).filter(ClassList.faculty_creator==current_user).all()
 
     # Extract class list IDs
     classlist_ids = [classlist.id for classlist in classlists]
@@ -223,11 +222,11 @@ def delete_classlist(classlist_id):
 @admin_required
 def classlist():
     # Fetch data and prepare it to be passed to the template
-    classlist_entries = ClassList.query.filter_by(faculty_creator=current_user).all()
+    classlist_entries = db.session.query(ClassList).filter(ClassList.faculty_creator==current_user).all()
     classlistId = classlist_entries[0].id if classlist_entries else None
 
     # Fetch a list of class lists created by the current faculty user
-    classlist_data = ClassList.query.filter_by(faculty_creator=current_user).all()
+    classlist_data = db.session.query(ClassList).filter(ClassList.faculty_creator==current_user).all()
 
     # Manually convert to JSON format, handle None case
     classlistId_json = json.dumps(classlistId) if classlistId is not None else None
@@ -300,19 +299,19 @@ def read_and_store_data(file, school_year, semester):
                 raise ValueError("Missing values in subject or section information.")
 
             # Check if a ClassList with the same attributes already exists
-            classlist_entry = ClassList.query.filter_by(
-                subject_name=subject_name,
-                section_code=section_code,
-                school_year=school_year,
-                semester=semester,
-                faculty_creator=current_user,
+            classlist_entry = db.session.query(ClassList).filter(
+                ClassList.subject_name==subject_name,
+                ClassList.section_code==section_code,
+                ClassList.school_year==int(school_year),
+                ClassList.semester==semester,
+                ClassList.faculty_creator==current_user,
             ).first()
 
             if not classlist_entry:
                 classlist_entry = ClassList(
                     subject_name=subject_name,
                     section_code=section_code,
-                    school_year=school_year,
+                    school_year=int(school_year),
                     semester=semester,
                     faculty_creator=current_user,
                 )
@@ -343,9 +342,9 @@ def read_and_store_data(file, school_year, semester):
                 first_name = str(row[2]).strip()
                 middle_name = str(row[3]).strip()
                 email = str(row[4]).strip()
-                mobile_number = str(row[5]).strip()
-                delivery_mode = str(row[6]).strip()
-                remarks = str(row[7]).strip()
+                #mobile_number = str(row[5]).strip()
+                #delivery_mode = str(row[6]).strip()
+                #remarks = str(row[7]).strip()
 
                 # Check if any required field is missing
                 if not all([student_number, last_name, first_name, email]):
@@ -353,7 +352,7 @@ def read_and_store_data(file, school_year, semester):
                     continue  # Skip to the next iteration if there are missing values
 
                 # Query or create the user based on the email
-                existing_user = User.query.filter_by(email=email).first()
+                existing_user = db.session.query(User).filter(User.email==email).first()
 
                 if existing_user:
                     # Check if the association already exists before adding the user to the classlist
@@ -436,49 +435,12 @@ def upload_classlist():
         flash(f"Error: {e}")
         return redirect(request.url)
 
-@core_bp.route('/display_data', methods=['GET'])
-@login_required
-@check_is_confirmed
-@admin_required
-def display_data():
-    # Query all data from the ClassList table
-    classlist_data = ClassList.query.filter_by(creator_id=current_user.id).all()
-    
-    # Print the number of ClassList entries retrieved
-    print(f"Number of ClassList entries: {len(classlist_data)}")
-
-    # Create a list to store dictionaries with classlist and user information
-    classlist_with_users = []
-
-    # Iterate through each ClassList object and find the corresponding User objects
-    for classlist_entry in classlist_data:
-        users = classlist_entry.students  # Use the relationship attribute
-        users_info = [{'first_name': user.first_name, 'last_name': user.last_name, 'email': user.email} for user in users]
-
-        # Append a dictionary with classlist and user information to the list
-        classlist_with_users.append({
-            'classlist_entry': {'subject_name': classlist_entry.subject_name, 'section_code': classlist_entry.section_code},
-            'users': users_info
-        })
-
-    # Debugging print statements (move this outside the loop)
-    for item in classlist_with_users:
-        print(f"Classlist Entry: {item['classlist_entry']['subject_name']} - {item['classlist_entry']['section_code']}")
-        print(f"Number of Users: {len(item['users'])}")
-
-    for item in classlist_with_users:
-        for user in item['users']:
-            print(f"User: {user['first_name']} {user['last_name']} ({user['email']})")
-
-    # Render the template
-    return render_template('display_data.html', classlist_with_users=classlist_with_users)
-
 @core_bp.route('/qrscanner')
 @login_required
 @check_is_confirmed
 @admin_required
 def qrscanner():
-    classlists = db.session.query(ClassList).all()
+    classlists = db.session.query(ClassList).filter(ClassList.faculty_creator == current_user).all()
     return render_template('core/faculty/qrscanner.html', classlists=classlists)
 
 @core_bp.route('/send_absents', methods=['POST'])
@@ -501,12 +463,12 @@ def send_absents():
             (db.func.max(Attendance.created) < threshold_time) |
             (db.func.count(Attendance.id) == 0)
         )
-        .filter(ClassList.id == classlist_id)
+        .filter(ClassList.id == int(classlist_id))
         .all()
     )
 
     for absent in absents:
-        add_attendance(absent.id, classlist_id, Status.ABSENT)
+        add_absent(int(absent.id), int(classlist_id), Status.ABSENT)
 
     # Return a response if necessary
     return 'Success'
@@ -519,10 +481,9 @@ def get_qr():
     s = request.get_json()
 
     # anti duplicate measure
-    #last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s[0]).order_by(Attendance.created.desc()).first()
-    last_attendance = Attendance.query.filter(Attendance.user_id==int(s[0])).order_by(Attendance.created.desc()).first()
+    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==int(s[0])).order_by(Attendance.created.desc()).first()
     if last_attendance is None:
-        add_attendance(s[0], s[1])
+        add_attendance(int(s[0]), int(s[1]))
         return ('Success!', 200)
     else:
         time_now = datetime.now()
@@ -530,7 +491,7 @@ def get_qr():
         # str(last_attendance.user_id) != s and 
         if time_last > 10: # ADD: change duration later
             print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
-            add_attendance(s[0], s[1])
+            add_attendance(int(s[0]), int(s[1]))
             return ('Success!', 200)
     return ('', 204)
 
