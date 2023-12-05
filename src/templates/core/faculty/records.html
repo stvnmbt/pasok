@@ -6,15 +6,6 @@
     <h1 class="h3"><strong> Student Records</strong></h1>
 </div>
 <div class="d-flex align-items-center justify-content-between mb-4">
-    <div class="col-md-6 col-lg-3 mb-3">
-        <select id="selectClassList" class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
-            <option selected>Select Class List</option>
-            {% for classlist in classlists %}
-                <option value="{{ classlist.id }}">{{ classlist.subject_name }} {{ classlist.section_code }}</option>
-            {% endfor %}
-        </select>
-    </div>
-
     <div class="input-group" style="width: 25%;">
         <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search.." aria-label="Search" aria-describedby="search-button" style="margin-top: 15px; border-color: black;">
     </div>

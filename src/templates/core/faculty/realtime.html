@@ -5,8 +5,10 @@
 {% endblock %}
 
 {% block body %}
-<div class="d-flex align-items-center justify-content-between mb-4">
+<div class="text-center">
     <h1 class="h3"><strong> Real Time Attendance</strong></h1>
+</div>
+<div class="d-flex align-items-center justify-content-between mb-4">
     <div class="input-group" style="width: 25%;">
         <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search.." aria-label="Search" aria-describedby="search-button" style="margin-top: 15px; border-color: black;">
     </div>
@@ -30,7 +32,7 @@
                 <td>{{ au.last_name }}</td>
                 <td>{{ au.first_name }}</td>
                 <td>{{ au.middle_name }}</td>
-                <td>{{ s.subject_name }} {{ s.section_code }}</td>
+                <td>{{ au.subject_name }} {{ au.section_code }}</td>
                 <td>{{ au.created.replace(tzinfo=timezone('UTC')).astimezone(timezone('Asia/Manila')).strftime('%Y-%m-%d %I:%M:%S %p') }}</td>
                 <td>{{ au.attendance_status.value }}</td>
             </tr>
@@ -45,7 +47,7 @@
                 <p class="card-text"><strong>Surname:</strong> {{ au.last_name }}</p>
                 <p class="card-text"><strong>Given Name:</strong> {{ au.first_name }}</p>
                 <p class="card-text"><strong>Middle Name:</strong> {{ au.middle_name }}</p>
-                <p class="card-text"><strong>Class List:</strong> {{ s.subject_name }} {{ s.section_code }}</p>
+                <p class="card-text"><strong>Class List:</strong> {{ au.subject_name }} {{ au.section_code }}</p>
                 <p class="card-text"><strong>Date & Time:</strong> {{ au.created }}</p>
                 <p class="card-text"><strong>Status:</strong> {{ au.attendance_status.value }}</p>
             </div>
