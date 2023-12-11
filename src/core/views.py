@@ -12,6 +12,7 @@ import csv
 from src.utils.email import send_qr_email
 from src.utils.generate_qr import generate_qr, generate_qr_path
 from src.utils.scanner import add_attendance, add_absent
+from src.utils.count_attendance import count_attendance
 import json
 import pandas as pd
 import random
@@ -92,26 +93,37 @@ def is_password_complex(password):
 @check_is_confirmed
 @admin_required
 def get_attendance_data():
-    classlists = db.session.query(ClassList).filter(ClassList.faculty_creator==current_user).all()
+    try:
+        # Get the current user's created classlists
+        classlists = current_user.created_classlists
 
-    # Extract class list IDs
-    classlist_ids = [classlist.id for classlist in classlists]
+        # Define colors for each status
+        status_colors = {
+            'PRESENT': '#00FF00',  # Green
+            'LATE': '#FFA500',     # Orange
+            'ABSENT': '#FF0000'    # Red
+        }
 
-    # Query the database to get the attendance data for the specific class lists
-    attendance_data = db.session.query(
-        db.func.sum(User.present_count).label('present_count'),
-        db.func.sum(User.late_count).label('late_count'),
-        db.func.sum(User.absent_count).label('absent_count')
-    ).filter(User.classlists.any(ClassList.id.in_(classlist_ids))).first()
+        # Count attendance for each status in each classlist
+        data = []
+        for status in Status:
+            status_count = []
+            status_count.append(status.value)  # Status
+            status_count.append(
+                sum(count_attendance(status.value, student.id, [classlist.id])
+                    for classlist in classlists for student in classlist.students if not student.is_faculty)
+            )  # Count
+            status_count.append(status_colors.get(status.value, '#000000'))  # Color
+            data.append(status_count)
+        
+        print("Data:", data)  
 
-    # Map the data to a format suitable for the frontend
-    result = [
-        {'status': 'Present', 'count': attendance_data.present_count, 'color': 'green'},
-        {'status': 'Late', 'count': attendance_data.late_count, 'color': 'orange'},
-        {'status': 'Absent', 'count': attendance_data.absent_count, 'color': 'red'},
-    ]
+        return jsonify(data)
 
-    return jsonify(result)
+    except Exception as e:
+        # Handle exceptions as needed
+        print(f"Error in get_attendance_data: {str(e)}")
+        return jsonify({'error': 'Internal Server Error'}), 500
 
 @core_bp.route("/realtime")
 @login_required
@@ -145,6 +157,8 @@ def realtime():
 def records():
     classlists = db.session.query(ClassList).filter(ClassList.faculty_creator == current_user).all()
 
+    classlist_ids = [classlist.id for classlist in classlists]
+
     students = (
         db.session.query(User, assoc)
         .join(User, User.id == assoc.c.user_id)
@@ -155,17 +169,25 @@ def records():
             User.middle_name,
             ClassList.section_code,
             ClassList.subject_name,
-            User.present_count,
-            User.late_count,
-            User.absent_count,
         )
-        .filter(User.is_faculty == False)  # Filter only non-faculty students
-        .filter(ClassList.faculty_creator == current_user)  # Filter by the current faculty user
+        .filter(User.is_faculty == False)
+        .filter(ClassList.faculty_creator == current_user)
         .order_by(ClassList.id.asc(), User.last_name.asc())
         .all()
     )
 
-    return render_template('core/faculty/records.html', students=students, classlists=classlists)
+    # Separate attendance status counts into a list
+    status_counts = []
+    for result in students:
+        user = result[0]
+        status_count = {
+            Status.PRESENT: count_attendance(Status.PRESENT, user.id, classlist_ids),
+            Status.LATE: count_attendance(Status.LATE, user.id, classlist_ids),
+            Status.ABSENT: count_attendance(Status.ABSENT, user.id, classlist_ids),
+        }
+        status_counts.append(status_count)
+
+    return render_template('core/faculty/records.html', students=students, classlists=classlists, status_count=status_counts)
 
 @core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
 @login_required

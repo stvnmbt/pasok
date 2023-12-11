@@ -31,9 +31,9 @@
                 <td>{{ s.first_name }}</td>
                 <td>{{ s.middle_name }}</td>
                 <td>{{ s.subject_name }} {{ s.section_code }}</td>
-                <td>{{ s.present_count }}</td>
-                <td>{{ s.late_count }}</td>
-                <td>{{ s.absent_count }}</td>
+                <td>{{ status_count[0] }}</td>
+                <td>{{ status_count[1] }}</td>
+                <td>{{ status_count[2] }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -48,9 +48,9 @@
         </div>
         <div class="card-body" style="display: none;">
             <p><strong>Class List:</strong> {{ s.subject_name }} {{ s.section_code }}</p>
-            <p><strong>Present:</strong> {{ s.present_count }}</p>
-            <p><strong>Late:</strong> {{ s.late_count }}</p>
-            <p><strong>Absent:</strong> {{ s.absent_count }}</p>
+            <p><strong>Present:</strong> {{ status_count[0] }}</p>
+            <p><strong>Late:</strong> {{ status_count[1] }}</p>
+            <p><strong>Absent:</strong> {{ status_count[2] }}</p>
         </div>
     </div>
     {% endfor %}

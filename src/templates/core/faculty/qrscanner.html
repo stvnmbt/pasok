@@ -74,12 +74,16 @@
     var audio = new Audio('https://audio.jukehost.co.uk/knEZ8zciYnwmdVPG1W72H5SbFDIanomR');
 
     function onScanSuccess(decodedText) {
-        if (decodedText !== lastResult) {
+        var selectedValue = $('#classlistDropdown').val();
+        if (decodedText !== lastResult && selectedValue !== "Select Class List") {
             console.log(`Code matched ${decodedText}`);
-            get_qr(decodedText);
+            get_qr(decodedText, selectedValue);
             lastResult = decodedText;
             audio.play();
             
+        }
+        else {
+            alert('Please select a valid classlist');
         }
     }
     function onScanFailure(error) {
@@ -88,8 +92,8 @@
 
     var isLate = 0;
 
-    function get_qr(decodedText) {
-        var s = [decodedText, isLate];
+    function get_qr(decodedText, selectedValue) {
+        var s = [decodedText, isLate, selectedValue];
         var s_json = JSON.stringify(s);
         var xhttp = new XMLHttpRequest();
         xhttp.open("POST", "/get_qr", true);
