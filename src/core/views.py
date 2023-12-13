@@ -150,6 +150,10 @@ def realtime():
 
     return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip, datetime=datetime, timezone=timezone)
 
+from sqlalchemy import text
+
+from sqlalchemy import func
+
 @core_bp.route('/records')
 @login_required
 @check_is_confirmed
@@ -171,30 +175,56 @@ def records():
     print("CLASSLISTIDS", classlist_ids)
     print("USERIDS", user_ids)
     
-    students = (
-        db.session.query(User, assoc)
-        .join(User, User.id == assoc.c.user_id)
-        .join(ClassList, ClassList.id == assoc.c.classlist_id)
-        .add_columns(
-            User.first_name,
-            User.last_name,
-            User.middle_name,
-            ClassList.section_code,
-            ClassList.subject_name,
-            Attendance.count_attendance('PRESENT', classlist_ids, User.id),
-            Attendance.count_attendance('LATE', classlist_ids, User.id),
-            Attendance.count_attendance('ABSENT', classlist_ids, User.id),
-        )
-        .filter(User.is_faculty.is_(False))
-        .filter(ClassList.faculty_creator == current_user)
-        .filter(User.id.in_(user_ids))
-        .order_by(ClassList.id.asc(), User.last_name.asc())
-        .group_by(User.id)
-        .all()
-    )
+    students = []
+
+    for user_id in user_ids:
+        for classlist in classlists:
+            # Count attendance directly in the query
+            present_count = (
+                db.session.query(func.count())
+                .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'PRESENT', Attendance.classlist_id == classlist.id)
+                .scalar()
+            )
+            late_count = (
+                db.session.query(func.count())
+                .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'LATE', Attendance.classlist_id == classlist.id)
+                .scalar()
+            )
+            absent_count = (
+                db.session.query(func.count())
+                .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'ABSENT', Attendance.classlist_id == classlist.id)
+                .scalar()
+            )
+
+            user = (
+                db.session.query(User, assoc)
+                .join(User, User.id == assoc.c.user_id)
+                .join(ClassList, ClassList.id == assoc.c.classlist_id)
+                .add_columns(
+                    User.first_name,
+                    User.last_name,
+                    User.middle_name,
+                    ClassList.section_code,
+                    ClassList.subject_name,
+                    present_count,
+                    late_count,
+                    absent_count,
+                )
+                .filter(User.is_faculty.is_(False))
+                .filter(ClassList.faculty_creator == current_user)
+                .filter(User.id == user_id)
+                .filter(ClassList.id == classlist.id)  # Ensure we're filtering by the correct classlist
+                .first()
+            )
+            students.append(user)
+
     print("STUDENTS", students)
 
     return render_template('core/faculty/records.html', students=students, classlists=classlists)
+
+
+
+
 
 @core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
 @login_required
