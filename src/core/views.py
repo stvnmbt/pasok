@@ -7,7 +7,6 @@ from sqlalchemy import func
 from src import db
 from src.utils.decorators import admin_required, admin_required, check_is_confirmed
 from src.accounts.models import Attendance, Status, User, ClassList, assoc
-import io
 import os
 import csv
 from src.utils.email import send_qr_email
@@ -550,6 +549,7 @@ def get_qr():
         if time_last > 10: # ADD: change duration later
             print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
             add_attendance(int(s[0]), int(s[1]), int(s[2]))
+
             return ('Success!', 200)
     return ('', 204)
 
