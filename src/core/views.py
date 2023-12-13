@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
 import io
 from flask_login import login_required, current_user
+from sqlalchemy import func
 from src import db
 from src.utils.decorators import admin_required, admin_required, check_is_confirmed
 from src.accounts.models import Attendance, Status, User, ClassList, assoc
@@ -150,10 +151,6 @@ def realtime():
 
     return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip, datetime=datetime, timezone=timezone)
 
-from sqlalchemy import text
-
-from sqlalchemy import func
-
 @core_bp.route('/records')
 @login_required
 @check_is_confirmed
@@ -221,10 +218,6 @@ def records():
     print("STUDENTS", students)
 
     return render_template('core/faculty/records.html', students=students, classlists=classlists)
-
-
-
-
 
 @core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
 @login_required
