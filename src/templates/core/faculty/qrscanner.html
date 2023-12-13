@@ -75,12 +75,13 @@
 
     function onScanSuccess(decodedText) {
         var selectedValue = $('#classlistDropdown').val();
-        if (decodedText !== lastResult && selectedValue !== "Select Class List") {
-            console.log(`Code matched ${decodedText}`);
-            get_qr(decodedText, selectedValue);
-            lastResult = decodedText;
-            audio.play();
-            
+        if (selectedValue !== "Select Class List") {
+            if (decodedText !== lastResult) {
+                console.log(`Code matched ${decodedText}`);
+                get_qr(decodedText, selectedValue);
+                lastResult = decodedText;
+                audio.play();
+            }
         }
         else {
             alert('Please select a valid classlist');
