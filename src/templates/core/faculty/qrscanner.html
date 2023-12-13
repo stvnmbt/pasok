@@ -5,16 +5,20 @@
 <div class="text-center">
     <h1 class="h3 mb-4"><strong> QR Scanner</strong></h1>
 
-    <div id="reader" style="display: inline-block; position: relative; padding: 0px; border: 1px solid silver; border-radius: 10px; width: 280px;">
+    <div id="reader" style="display: inline-block; position: relative; padding: 0px; border: 1px solid silver; border-radius: 10px; width: 280px;"></div>
+
+    <br><br>
+
+    <div class="d-flex justify-content-center">
+        <div class="col-md-6 col-lg-3 mb-3">
+            <select id="classlistDropdown" class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
+                <option selected>Select Class List</option>
+                {% for classlist in classlists %}
+                    <option value="{{ classlist.id }}">{{ classlist.subject_name }} {{ classlist.section_code }}</option>
+                {% endfor %}
+            </select>
+        </div> 
     </div>
-        <!-- Corner indicators -->
-        <div class="corner-indicator top-left" style="position: absolute; top: 0; left: 0;"></div>
-        <div class="corner-indicator top-right" style="position: absolute; top: 0; right: 0;"></div>
-        <div class="corner-indicator bottom-left" style="position: absolute; bottom: 0; left: 0;"></div>
-        <div class="corner-indicator bottom-right" style="position: absolute; bottom: 0; right: 0;"></div>
-   
-    
-    <br><br><br>
     
     <div class="btn-group" role="group" aria-label="Basic radio toggle button group" style="outline: 1px #800000; margin-bottom: 20px; width: 320px;">
         <input type="radio" class="btn-check" name="btnradio" id="btnradio1" autocomplete="off" checked>
@@ -25,16 +29,7 @@
     </div>
     <br><br>
     <p>Note: This will mark all students from the selected classlist with no logged attendance for the past hour an ABSENT.</p>
-    <div class="d-flex justify-content-center">
-        <div class="col-md-6 col-lg-3 mb-3">
-            <select id="classlistDropdown" class="form-select" style="height: 35px; background-color: #f0f0f0; color: black;">
-                <option selected>Select Classlist</option>
-                {% for classlist in classlists %}
-                    <option value="{{ classlist.id }}">{{ classlist.subject_name }} {{ classlist.section_code }}</option>
-                {% endfor %}
-            </select>
-        </div> 
-    </div>
+    
     <div class="d-flex justify-content-center">
         <input type="button" onclick="absentButton()" class="btn-check" id="absent-btn" autocomplete="off">
         <label class="btn" for="absent-btn" style="background-color: white; color: #800000; outline: 2px solid #808080; padding: 7px 40px; font-family: roboto;">MARK AS ABSENT</label>
@@ -49,7 +44,7 @@
         const response = confirm("Are you sure you want to mark all remaining students as ABSENT?");
 
         // Check if a valid option is selected
-        if (selectedValue !== "Select Classlist" && response) {
+        if (selectedValue !== "Select Class List" && response) {
             // Make an AJAX request to the route function with the selected value
             $.ajax({
                 type: "POST",
@@ -79,15 +74,17 @@
     var audio = new Audio('https://audio.jukehost.co.uk/knEZ8zciYnwmdVPG1W72H5SbFDIanomR');
 
     function onScanSuccess(decodedText) {
-        if (decodedText !== lastResult) {
-            console.log(`Code matched ${decodedText}`);
-            get_qr(decodedText);
-            lastResult = decodedText;
-            audio.play();
-            
-            document.querySelectorAll('.corner-indicator').forEach(indicator => {
-                indicator.style.borderColor = 'green';
-            });
+        var selectedValue = $('#classlistDropdown').val();
+        if (selectedValue !== "Select Class List") {
+            if (decodedText !== lastResult) {
+                console.log(`Code matched ${decodedText}`);
+                get_qr(decodedText, selectedValue);
+                lastResult = decodedText;
+                audio.play();
+            }
+        }
+        else {
+            alert('Please select a valid classlist');
         }
     }
     function onScanFailure(error) {
@@ -96,8 +93,8 @@
 
     var isLate = 0;
 
-    function get_qr(decodedText) {
-        var s = [decodedText, isLate];
+    function get_qr(decodedText, selectedValue) {
+        var s = [decodedText, isLate, selectedValue];
         var s_json = JSON.stringify(s);
         var xhttp = new XMLHttpRequest();
         xhttp.open("POST", "/get_qr", true);
