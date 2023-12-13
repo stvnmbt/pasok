@@ -156,9 +156,21 @@ def realtime():
 @admin_required
 def records():
     classlists = db.session.query(ClassList).filter(ClassList.faculty_creator == current_user).all()
-
     classlist_ids = [classlist.id for classlist in classlists]
 
+    student_ids = (
+        db.session.query(User.id.distinct())
+        .join(assoc, User.id == assoc.c.user_id)
+        .join(ClassList, ClassList.id == assoc.c.classlist_id)
+        .filter(User.is_faculty.is_(False))
+        .filter(ClassList.id.in_(classlist_ids))
+        .all()
+    )
+
+    user_ids = [user_id[0] for user_id in student_ids]
+    print("CLASSLISTIDS", classlist_ids)
+    print("USERIDS", user_ids)
+    
     students = (
         db.session.query(User, assoc)
         .join(User, User.id == assoc.c.user_id)
@@ -169,25 +181,20 @@ def records():
             User.middle_name,
             ClassList.section_code,
             ClassList.subject_name,
+            Attendance.count_attendance('PRESENT', classlist_ids, User.id),
+            Attendance.count_attendance('LATE', classlist_ids, User.id),
+            Attendance.count_attendance('ABSENT', classlist_ids, User.id),
         )
-        .filter(User.is_faculty == False)
+        .filter(User.is_faculty.is_(False))
         .filter(ClassList.faculty_creator == current_user)
+        .filter(User.id.in_(user_ids))
         .order_by(ClassList.id.asc(), User.last_name.asc())
+        .group_by(User.id)
         .all()
     )
+    print("STUDENTS", students)
 
-    # Separate attendance status counts into a list
-    status_counts = []
-    for result in students:
-        user = result[0]
-        status_count = {
-            Status.PRESENT: count_attendance(Status.PRESENT, user.id, classlist_ids),
-            Status.LATE: count_attendance(Status.LATE, user.id, classlist_ids),
-            Status.ABSENT: count_attendance(Status.ABSENT, user.id, classlist_ids),
-        }
-        status_counts.append(status_count)
-
-    return render_template('core/faculty/records.html', students=students, classlists=classlists, status_count=status_counts)
+    return render_template('core/faculty/records.html', students=students, classlists=classlists)
 
 @core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
 @login_required
@@ -509,10 +516,9 @@ def get_qr():
     s = request.get_json()
 
     # anti duplicate measure
-    #last_attendance = db.session.query(Attendance).filter(Attendance.user_id==s[0]).order_by(Attendance.created.desc()).first()
     last_attendance = Attendance.query.filter(Attendance.user_id==int(s[0])).order_by(Attendance.created.desc()).first()
     if last_attendance is None:
-        add_attendance(int(s[0]), int(s[1]))
+        add_attendance(int(s[0]), int(s[1]), int(s[2]))
         return ('Success!', 200)
     else:
         time_now = datetime.now()
@@ -520,7 +526,7 @@ def get_qr():
         # str(last_attendance.user_id) != s and 
         if time_last > 10: # ADD: change duration later
             print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
-            add_attendance(int(s[0]), int(s[1]))
+            add_attendance(int(s[0]), int(s[1]), int(s[2]))
             return ('Success!', 200)
     return ('', 204)
 

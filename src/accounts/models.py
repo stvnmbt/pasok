@@ -1,8 +1,9 @@
 from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
-from sqlalchemy import Enum, func 
+from sqlalchemy import Enum, func
 import enum
+from sqlalchemy.ext.hybrid import hybrid_method
 
 class Status(enum.Enum):
     PRESENT = 'PRESENT'
@@ -58,6 +59,14 @@ class Attendance(db.Model):
 
     classlist_id = db.Column(db.Integer, db.ForeignKey('classlist.id'), nullable=False)
     classlist = db.relationship('ClassList', back_populates='attendance_records')
+
+    @hybrid_method
+    def count_attendance(self, status, classlist_ids, user_id):
+        return db.session.query(Attendance).filter(
+            Attendance.user_id == user_id,
+            Attendance.attendance_status == status,
+            Attendance.classlist_id.in_(classlist_ids)
+        ).count()
 
 class User(db.Model,UserMixin):
     __tablename__ = "user"
