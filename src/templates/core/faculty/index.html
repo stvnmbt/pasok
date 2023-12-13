@@ -5,7 +5,10 @@
 {% endblock %}
 
 {% block body %}
-<h1 class="h3 mb-4" style="margin-top: 15px;"><strong> Dashboard</strong></h1>
+<div class="text-center">
+    <h1 class="h3 mb-4" style="margin-top: 15px;"><strong> Dashboard</strong></h1>
+</div>
+
 
 <div class="row justify-content-center">
     <div class="col-md-4">
@@ -72,19 +75,31 @@
     google.charts.setOnLoadCallback(drawChart);
 
     function drawChart() {
-        // Make an AJAX request to the Flask route to get actual data
         $.ajax({
-            url: '/get_attendance_data',  // Replace with the actual route for your Flask view
+            url: '/get_attendance_data',
             method: 'GET',
             dataType: 'json',
             success: function (data) {
-                // Use the returned data to populate the chart
-                var chartData = [['Status', 'Count', { role: 'style' }]];
-                $.each(data, function (index, item) {
-                    chartData.push([item.status, item.count, item.color]);
+                console.log('Data received:', data);
+
+                // Transform the data to the expected format
+                var chartData = data.map(function (item) {
+                    return {
+                        status: item[0],
+                        count: item[1],
+                        color: item[2],
+                    };
                 });
 
-                var chartData = google.visualization.arrayToDataTable(chartData);
+                console.log('Transformed Chart data:', chartData);
+
+                // Use the transformed data to populate the chart
+                var chartDataTable = [['Status', 'Count', { role: 'style' }]];
+                chartData.forEach(function (item) {
+                    chartDataTable.push([item.status, item.count, item.color]);
+                });
+
+                var chartDataFinal = google.visualization.arrayToDataTable(chartDataTable);
 
                 var options = {
                     title: '',
@@ -95,7 +110,7 @@
                 };
 
                 var chart = new google.visualization.PieChart(document.getElementById('attendancePieChart'));
-                chart.draw(chartData, options);
+                chart.draw(chartDataFinal, options);
             },
             error: function (error) {
                 console.error('Error fetching data:', error);

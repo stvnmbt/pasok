@@ -1,8 +1,9 @@
 from datetime import datetime
 from flask_login import UserMixin
 from src import bcrypt, db
-from sqlalchemy import Enum 
+from sqlalchemy import Enum, func
 import enum
+from sqlalchemy.ext.hybrid import hybrid_method
 
 class Status(enum.Enum):
     PRESENT = 'PRESENT'
@@ -40,15 +41,18 @@ class ClassList(db.Model):
     user_classlist = db.relationship('User', back_populates='classlists')
     faculty_creator = db.relationship('User', back_populates='created_classlists', overlaps="user_classlist")
 
-    # Define the relationship with Attendance
-    attendance_records = db.relationship('Attendance', back_populates='classlist')
+    attendance_records = db.relationship(
+        'Attendance',
+        back_populates='classlist',
+        cascade='all, delete-orphan',
+    )
 
 class Attendance(db.Model):
     __tablename__ = "attendance"
 
     id = db.Column(db.Integer, primary_key=True)
     attendance_status = db.Column(Enum(Status, values_callable=lambda x: [str(e.value) for e in Status]), nullable=False)
-    created = db.Column(db.DateTime, default=datetime.now, nullable=False)
+    created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user_attendance = db.relationship('User', back_populates='classlist_attendance')
@@ -56,7 +60,6 @@ class Attendance(db.Model):
     classlist_id = db.Column(db.Integer, db.ForeignKey('classlist.id'), nullable=False)
     classlist = db.relationship('ClassList', back_populates='attendance_records')
 
-    
 class User(db.Model,UserMixin):
     __tablename__ = "user"
 

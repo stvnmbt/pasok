@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
 import io
 from flask_login import login_required, current_user
+from sqlalchemy import func
 from src import db
 from src.utils.decorators import admin_required, admin_required, check_is_confirmed
 from src.accounts.models import Attendance, Status, User, ClassList, assoc
@@ -11,11 +12,13 @@ import csv
 from src.utils.email import send_qr_email
 from src.utils.generate_qr import generate_qr, generate_qr_path
 from src.utils.scanner import add_attendance, add_absent
+from src.utils.count_attendance import count_attendance
 import json
 import pandas as pd
 import random
 import string
 from flask_bcrypt import Bcrypt, check_password_hash, generate_password_hash
+from pytz import timezone
 
 bcrypt = Bcrypt()
 core_bp = Blueprint("core", __name__)
@@ -90,26 +93,37 @@ def is_password_complex(password):
 @check_is_confirmed
 @admin_required
 def get_attendance_data():
-    classlists = db.session.query(ClassList).filter(ClassList.faculty_creator==current_user).all()
+    try:
+        # Get the current user's created classlists
+        classlists = current_user.created_classlists
 
-    # Extract class list IDs
-    classlist_ids = [classlist.id for classlist in classlists]
+        # Define colors for each status
+        status_colors = {
+            'PRESENT': '#00FF00',  # Green
+            'LATE': '#FFA500',     # Orange
+            'ABSENT': '#FF0000'    # Red
+        }
 
-    # Query the database to get the attendance data for the specific class lists
-    attendance_data = db.session.query(
-        db.func.sum(User.present_count).label('present_count'),
-        db.func.sum(User.late_count).label('late_count'),
-        db.func.sum(User.absent_count).label('absent_count')
-    ).filter(User.classlists.any(ClassList.id.in_(classlist_ids))).first()
+        # Count attendance for each status in each classlist
+        data = []
+        for status in Status:
+            status_count = []
+            status_count.append(status.value)  # Status
+            status_count.append(
+                sum(count_attendance(status.value, student.id, [classlist.id])
+                    for classlist in classlists for student in classlist.students if not student.is_faculty)
+            )  # Count
+            status_count.append(status_colors.get(status.value, '#000000'))  # Color
+            data.append(status_count)
+        
+        print("Data:", data)  
 
-    # Map the data to a format suitable for the frontend
-    result = [
-        {'status': 'Present', 'count': attendance_data.present_count, 'color': 'green'},
-        {'status': 'Late', 'count': attendance_data.late_count, 'color': 'orange'},
-        {'status': 'Absent', 'count': attendance_data.absent_count, 'color': 'red'},
-    ]
+        return jsonify(data)
 
-    return jsonify(result)
+    except Exception as e:
+        # Handle exceptions as needed
+        print(f"Error in get_attendance_data: {str(e)}")
+        return jsonify({'error': 'Internal Server Error'}), 500
 
 @core_bp.route("/realtime")
 @login_required
@@ -126,6 +140,7 @@ def realtime():
             User.last_name,
             User.middle_name,
             ClassList.section_code,
+            ClassList.subject_name,
             Attendance.created,
             Attendance.attendance_status,
         )
@@ -133,33 +148,75 @@ def realtime():
         .all()
     )
 
-    return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip)
+    return render_template("core/faculty/realtime.html", attendance_user=attendance_user, zip=zip, datetime=datetime, timezone=timezone)
 
 @core_bp.route('/records')
 @login_required
 @check_is_confirmed
 @admin_required
 def records():
-    students = (
-        db.session.query(User, assoc)
-        .join(User, User.id == assoc.c.user_id)
+    classlists = db.session.query(ClassList).filter(ClassList.faculty_creator == current_user).all()
+    classlist_ids = [classlist.id for classlist in classlists]
+
+    student_ids = (
+        db.session.query(User.id.distinct())
+        .join(assoc, User.id == assoc.c.user_id)
         .join(ClassList, ClassList.id == assoc.c.classlist_id)
-        .add_columns(
-            User.first_name,
-            User.last_name,
-            User.middle_name,
-            ClassList.section_code,
-            User.present_count,
-            User.late_count,
-            User.absent_count,
-        )
-        .filter(User.is_faculty == False)  # Filter only non-faculty students
-        .filter(ClassList.faculty_creator == current_user)  # Filter by the current faculty user
-        .order_by(User.last_name.asc())
+        .filter(User.is_faculty.is_(False))
+        .filter(ClassList.id.in_(classlist_ids))
         .all()
     )
 
-    return render_template('core/faculty/records.html', students=students)
+    user_ids = [user_id[0] for user_id in student_ids]
+    print("CLASSLISTIDS", classlist_ids)
+    print("USERIDS", user_ids)
+    
+    students = []
+
+    for user_id in user_ids:
+        for classlist in classlists:
+            # Count attendance directly in the query
+            present_count = (
+                db.session.query(func.count())
+                .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'PRESENT', Attendance.classlist_id == classlist.id)
+                .scalar()
+            )
+            late_count = (
+                db.session.query(func.count())
+                .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'LATE', Attendance.classlist_id == classlist.id)
+                .scalar()
+            )
+            absent_count = (
+                db.session.query(func.count())
+                .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'ABSENT', Attendance.classlist_id == classlist.id)
+                .scalar()
+            )
+
+            user = (
+                db.session.query(User, assoc)
+                .join(User, User.id == assoc.c.user_id)
+                .join(ClassList, ClassList.id == assoc.c.classlist_id)
+                .add_columns(
+                    User.first_name,
+                    User.last_name,
+                    User.middle_name,
+                    ClassList.section_code,
+                    ClassList.subject_name,
+                    present_count,
+                    late_count,
+                    absent_count,
+                )
+                .filter(User.is_faculty.is_(False))
+                .filter(ClassList.faculty_creator == current_user)
+                .filter(User.id == user_id)
+                .filter(ClassList.id == classlist.id)  # Ensure we're filtering by the correct classlist
+                .first()
+            )
+            students.append(user)
+
+    print("STUDENTS", students)
+
+    return render_template('core/faculty/records.html', students=students, classlists=classlists)
 
 @core_bp.route('/display_classlist/<int:classlist_id>', methods=['GET'])
 @login_required
@@ -481,9 +538,9 @@ def get_qr():
     s = request.get_json()
 
     # anti duplicate measure
-    last_attendance = db.session.query(Attendance).filter(Attendance.user_id==int(s[0])).order_by(Attendance.created.desc()).first()
+    last_attendance = Attendance.query.filter(Attendance.user_id==int(s[0])).order_by(Attendance.created.desc()).first()
     if last_attendance is None:
-        add_attendance(int(s[0]), int(s[1]))
+        add_attendance(int(s[0]), int(s[1]), int(s[2]))
         return ('Success!', 200)
     else:
         time_now = datetime.now()
@@ -491,7 +548,8 @@ def get_qr():
         # str(last_attendance.user_id) != s and 
         if time_last > 10: # ADD: change duration later
             print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
-            add_attendance(int(s[0]), int(s[1]))
+            add_attendance(int(s[0]), int(s[1]), int(s[2]))
+
             return ('Success!', 200)
     return ('', 204)
 

@@ -2,8 +2,10 @@
 
 {% block body %}
 
-<div class="d-flex align-items-center justify-content-between mb-4">
+<div class="text-center">
     <h1 class="h3"><strong> Student Records</strong></h1>
+</div>
+<div class="d-flex align-items-center justify-content-between mb-4">
     <div class="input-group" style="width: 25%;">
         <input type="text" class="form-control" id="search-input" onkeyup="searchFunction()" placeholder="Search.." aria-label="Search" aria-describedby="search-button" style="margin-top: 15px; border-color: black;">
     </div>
@@ -16,7 +18,7 @@
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Surname</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Given Name</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Middle Name</th>
-                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section</th>
+                <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Class List</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Present</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Late</th>
                 <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Absent</th>
@@ -28,10 +30,10 @@
                 <td>{{ s.last_name }}</td>
                 <td>{{ s.first_name }}</td>
                 <td>{{ s.middle_name }}</td>
-                <td>{{ s.section_code }}</td>
-                <td>{{ s.present_count }}</td>
-                <td>{{ s.late_count }}</td>
-                <td>{{ s.absent_count }}</td>
+                <td>{{ s.subject_name }} {{ s.section_code }}</td>
+                <td>{{ s[8] }}</td>
+                <td>{{ s[9] }}</td>
+                <td>{{ s[10] }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -45,10 +47,10 @@
             <h5 class="mb-0">{{ s.last_name }}, {{ s.first_name }} {{ s.middle_name }}</h5>
         </div>
         <div class="card-body" style="display: none;">
-            <p><strong>Section:</strong> {{ s.section_code }}</p>
-            <p><strong>Present:</strong> {{ s.present_count }}</p>
-            <p><strong>Late:</strong> {{ s.late_count }}</p>
-            <p><strong>Absent:</strong> {{ s.absent_count }}</p>
+            <p><strong>Class List:</strong> {{ s.subject_name }} {{ s.section_code }}</p>
+            <p><strong>Present:</strong> {{ s[8] }}</p>
+            <p><strong>Late:</strong> {{ s[8] }}</p>
+            <p><strong>Absent:</strong> {{ s[8] }}</p>
         </div>
     </div>
     {% endfor %}
