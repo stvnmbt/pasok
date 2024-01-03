@@ -16,7 +16,7 @@ from src import db
 from src.accounts.models import Attendance, ClassList, Status, User, assoc
 from src.utils.check_password import is_password_complex
 from src.utils.count_attendance import count_attendance
-from src.utils.decorators import admin_required, check_is_confirmed
+from src.utils.decorators import admin_required, check_is_confirmed, student_required
 from src.utils.generate_qr import generate_qr
 from src.utils.read_uploaded import read_uploaded
 from src.utils.scanner import add_absent, add_attendance
@@ -33,7 +33,7 @@ def home():
         classlists = db.session.query(ClassList).filter(ClassList.faculty_creator==user).all()
         return render_template("core/faculty/index.html", classlists=classlists)
     else:
-        return show_qrcode()
+        return student_scanner()
 
 @core_bp.route('/account_settings', methods=['GET', 'POST'])
 @login_required
@@ -420,7 +420,15 @@ def get_qr():
 # STUDENT VIEWS
 #################
 
+@core_bp.route('/student_scanner')
+@student_required
+@login_required
+@check_is_confirmed
+def student_scanner():
+    return render_template("core/student/qrscanner.html")
+
 @core_bp.route('/show_qrcode')
+@student_required
 @login_required
 @check_is_confirmed
 def show_qrcode():
@@ -428,6 +436,7 @@ def show_qrcode():
     return render_template("core/student/qrcode.html", qr_image=qr_image)
 
 @core_bp.route('/view_qr_code')
+@student_required
 @login_required
 @check_is_confirmed
 def view_qr_code():
@@ -452,6 +461,7 @@ def view_qr_code():
     return "QR code not found", 404
 
 @core_bp.route('/download_qr_code')
+@student_required
 @login_required
 @check_is_confirmed
 def download_qr_code():
