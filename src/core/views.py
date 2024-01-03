@@ -544,13 +544,13 @@ def get_qr():
         add_attendance(int(s[0]), int(s[1]), int(s[2]))
         return ('Success!', 200)
     else:
-        time_now = datetime.now()
-        time_last = (time_now-last_attendance.created).total_seconds()
+        #time_now = datetime.now()
+        #time_last = (time_now-last_attendance.created).total_seconds()
         # str(last_attendance.user_id) != s and 
-        if time_last > 10: # ADD: change duration later
-            print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
-            add_attendance(int(s[0]), int(s[1]), int(s[2]))
-            return ('Success!', 200)
+        #if time_last > 10: # ADD: change duration later
+            #print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
+        add_attendance(int(s[0]), int(s[1]), int(s[2]))
+        return ('Success!', 200)
     return ('', 204)
 
 #################
