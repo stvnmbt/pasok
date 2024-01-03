@@ -1,25 +1,25 @@
 import base64
-from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, send_file, jsonify, Response, redirect, flash, current_app, url_for
-import io
-from flask_login import login_required, current_user
-from sqlalchemy import func
-from src import db
-from src.utils.decorators import admin_required, admin_required, check_is_confirmed
-from src.accounts.models import Attendance, Status, User, ClassList, assoc
-import io
-import os
 import csv
-from src.utils.email import send_qr_email
-from src.utils.generate_qr import generate_qr, generate_qr_path
-from src.utils.scanner import add_attendance, add_absent
-from src.utils.count_attendance import count_attendance
+import io
 import json
-import pandas as pd
-import random
-import string
+import os
+from datetime import datetime, timedelta
+
+from flask import (Blueprint, Response, current_app, flash, jsonify, redirect,
+                   render_template, request, send_file, url_for)
 from flask_bcrypt import Bcrypt, check_password_hash, generate_password_hash
+from flask_login import current_user, login_required
 from pytz import timezone
+from sqlalchemy import func
+
+from src import db
+from src.accounts.models import Attendance, ClassList, Status, User, assoc
+from src.utils.check_password import is_password_complex
+from src.utils.count_attendance import count_attendance
+from src.utils.decorators import admin_required, check_is_confirmed
+from src.utils.generate_qr import generate_qr
+from src.utils.read_uploaded import read_uploaded
+from src.utils.scanner import add_absent, add_attendance
 
 bcrypt = Bcrypt()
 core_bp = Blueprint("core", __name__)
@@ -34,7 +34,6 @@ def home():
         return render_template("core/faculty/index.html", classlists=classlists)
     else:
         return show_qrcode()
-
 
 @core_bp.route('/account_settings', methods=['GET', 'POST'])
 @login_required
@@ -73,17 +72,6 @@ def account_settings():
             return redirect(url_for('core.home'))
 
     return render_template('core/account_settings.html', user=current_user)
-
-
-def is_password_complex(password):
-    # Add your password complexity requirements here
-    return (
-        len(password) >= 8 and
-        any(c.islower() for c in password) and
-        any(c.isupper() for c in password) and
-        any(c.isdigit() for c in password) and
-        any(c in "!@#$%^&*()-_=+{};:,<.>/?'" for c in password)
-    )
 
 #################
 # FACULTY VIEWS
@@ -337,131 +325,6 @@ def export_classlist_attendance_csv():
 
     return response
 
-def generate_random_password():
-    characters = string.ascii_letters + string.digits + string.punctuation
-    password = ''.join(random.choice(characters) for _ in range(8))
-    return password
-
-def read_and_store_data(file, school_year, semester):
-    try:
-        # Read CSV file and decode it using latin1 encoding, treat the first row as headers
-        data = pd.read_csv(file, encoding='latin1', header=None)
-
-        subject_name = str(data.iloc[0, 1]).strip()
-        section_code = str(data.iloc[0, 5]).strip()
-        print(f"Subject Name: {subject_name}, Section Name: {section_code}")
-
-        try:
-            # Check if any required field is missing
-            if not all([subject_name, section_code]):
-                raise ValueError("Missing values in subject or section information.")
-
-            # Check if a ClassList with the same attributes already exists
-            classlist_entry = db.session.query(ClassList).filter(
-                ClassList.subject_name==subject_name,
-                ClassList.section_code==section_code,
-                ClassList.school_year==int(school_year),
-                ClassList.semester==semester,
-                ClassList.faculty_creator==current_user,
-            ).first()
-
-            if not classlist_entry:
-                classlist_entry = ClassList(
-                    subject_name=subject_name,
-                    section_code=section_code,
-                    school_year=int(school_year),
-                    semester=semester,
-                    faculty_creator=current_user,
-                )
-
-                # Associate the classlist with the current faculty user
-                classlist_entry.faculty_creator = current_user
-
-                db.session.add(classlist_entry)
-
-                # Commit changes to the database to get the ID for classlist_entry
-                db.session.commit()
-            else:
-                # If a ClassList with the same attributes already exists, you can choose to update it or skip
-                print("ClassList with the same attributes already exists. You may want to update it or skip.")
-
-            for index, row in data.iloc[3:].iterrows():
-                # Debugging: Print row information
-                print(f"Processing row {index} - {row}")
-
-                # Skip the rows with missing or invalid values
-                if pd.isnull(row[0]) or pd.isnull(row[4]) or pd.isnull(row[5]) or pd.isnull(row[6]):
-                    print(f"Skipping row {index} due to missing values.")
-                    continue
-
-                # Extract student information from each row
-                student_number = str(row[0]).strip()
-                last_name = str(row[1]).strip()
-                first_name = str(row[2]).strip()
-                middle_name = str(row[3]).strip()
-                email = str(row[4]).strip()
-                #mobile_number = str(row[5]).strip()
-                #delivery_mode = str(row[6]).strip()
-                #remarks = str(row[7]).strip()
-
-                # Check if any required field is missing
-                if not all([student_number, last_name, first_name, email]):
-                    print(f"Skipping row {index} due to missing values.")
-                    continue  # Skip to the next iteration if there are missing values
-
-                # Query or create the user based on the email
-                existing_user = db.session.query(User).filter(User.email==email).first()
-
-                if existing_user:
-                    # Check if the association already exists before adding the user to the classlist
-                    if existing_user not in classlist_entry.students:
-                        # SQLAlchemy will automatically handle the association in the database
-                        classlist_entry.students.append(existing_user)
-                        print("User already exists. Adding the user to the classlist.")
-                    else:
-                        print("User is already associated with the classlist.")
-                else:
-                    # Create a new user and associate with the classlist
-                    user = User(
-                        email=email,
-                        password=f'{first_name}{last_name}',
-                        first_name=first_name,
-                        middle_name=middle_name,
-                        last_name=last_name,
-                    )
-
-                    db.session.add(user)
-                    # Associate the user with the classlist
-                    # SQLAlchemy will automatically handle the association in the database
-                    classlist_entry.students.append(user)
-                    print(f"New user. Adding the user to the classlist with password: {user.password}")
-
-                # db flush to get user_id
-                db.session.flush()
-
-                # send QR code to student email
-                user_id = (db.session.query(User).filter(User.email == email).first()).get_id()
-                subject = f'You have been enrolled to {subject_name} {section_code} classlist of PASOK attendance system'
-                body = 'Welcome! You can now use the QR code image attached to use PASOK attendance system as a student.'
-                name = f'{last_name}, {first_name}'
-                send_qr_email(email, subject, body, generate_qr_path(user_id, name))
-
-            db.session.commit()
-            print("Data successfully committed to the database.")
-
-        except Exception as e:
-            db.session.rollback()  # Rollback changes in case of an exception
-            print(f"Error processing CSV file: {e}")
-            raise ValueError("Error processing CSV file.")
-
-    except ValueError as e:
-        raise ValueError('Invalid file format. Please upload a CSV file.')
-
-    except Exception as e:
-        print(f"Error: {e}")
-        raise  # Re-raise the exception for further handling
-
-
 @core_bp.route('/upload_classlist', methods=['POST'])
 @login_required
 @check_is_confirmed
@@ -481,7 +344,7 @@ def upload_classlist():
 
             try:
                 # Call your function here without saving to the local file system
-                read_and_store_data(file, school_year, semester)
+                read_uploaded(file, school_year, semester)
                 flash('Data successfully saved to the database.')
             except ValueError as e:
                 flash(f'Error processing file: {str(e)}')
