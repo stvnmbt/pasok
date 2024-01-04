@@ -1,3 +1,5 @@
+import logging
+import re
 from datetime import datetime
 
 from flask import Blueprint, flash, redirect, render_template, request, url_for
@@ -6,13 +8,10 @@ from flask_login import current_user, login_required, login_user, logout_user
 from src import bcrypt, db
 from src.accounts.models import User
 from src.accounts.token import confirm_token, generate_token
+from src.utils.check_password import is_password_complex
 from src.utils.decorators import logout_required
 from src.utils.email import send_email
 
-import re
-#import base64  # accessing base64 module
-#import os
-import logging
 from .forms import LoginForm, RegisterForm
 
 logger = logging.getLogger("accounts_bp")
@@ -61,16 +60,6 @@ def register():
         return redirect(url_for("accounts.inactive"))
 
     return render_template("accounts/register.html", form=form)
-
-def is_password_complex(password):
-    # Add your password complexity requirements here
-    return (
-        len(password) >= 8 and
-        any(c.islower() for c in password) and
-        any(c.isupper() for c in password) and
-        any(c.isdigit() for c in password) and
-        any(c in "!@#$%^&*()-_=+{};:,<.>/?'" for c in password)
-    )
 
 @accounts_bp.route("/login", methods=["GET", "POST"])
 @logout_required
