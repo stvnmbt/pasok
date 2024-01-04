@@ -52,7 +52,7 @@ class Attendance(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     attendance_status = db.Column(Enum(Status, values_callable=lambda x: [str(e.value) for e in Status]), nullable=False)
-    created = db.Column(db.DateTime(timezone=True), default=func.now(), nullable=False)
+    created = db.Column(db.DateTime(timezone=True), default=datetime.now, nullable=False)
     
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user_attendance = db.relationship('User', back_populates='classlist_attendance')
