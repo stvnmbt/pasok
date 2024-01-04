@@ -32,7 +32,12 @@
                     </li>
                     <li class="nav-item ">
                         <a href=" {{ url_for('core.qrscanner') }}" class="nav-link px-sm-0 px-2 ms-2">
-                        <i class="fa-solid fa-qrcode" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">    QR Scanner</span>
+                        <i class="fa-solid fa-camera" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">QR Scanner</span>
+                        </a>
+                    </li>
+                    <li class="nav-item ">
+                        <a href=" {{ url_for('core.qrgenerator') }}" class="nav-link px-sm-0 px-2 ms-2">
+                        <i class="fa-solid fa-qrcode" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">QR Generator</span>
                         </a>
                     </li>
                     {% else %}

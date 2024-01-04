@@ -416,6 +416,13 @@ def get_qr():
         return ('Success!', 200)
     return ('', 204)
 
+@core_bp.route('/qrgenerator')
+@login_required
+@check_is_confirmed
+@admin_required
+def qrgenerator():
+    return render_template("core/faculty/qrgenerator.html")
+
 #################
 # STUDENT VIEWS
 #################
