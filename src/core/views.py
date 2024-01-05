@@ -4,7 +4,7 @@ import io
 import json
 import os
 from datetime import datetime, timedelta
-
+import pytz
 from flask import (Blueprint, Response, current_app, flash, jsonify, redirect,
                    render_template, request, send_file, url_for)
 from flask_bcrypt import Bcrypt, check_password_hash, generate_password_hash
@@ -292,11 +292,27 @@ def export_classlist_attendance_csv():
     classlist = ClassList.query.get(classlist_id)
 
     # Check if the user has permission to access this classlist
-    if current_user.is_faculty and current_user != classlist.user_classlist:
+    if current_user.is_faculty and current_user != classlist.faculty_creator:
         return jsonify({"error": "You don't have permission to access this classlist"}), 403
 
     # Get the students associated with the classlist
-    students = classlist.students.all()
+    students = (
+        db.session.query(User, assoc)
+        .join(User, User.id == assoc.c.user_id)
+        .join(ClassList, ClassList.id == assoc.c.classlist_id)
+        .add_columns(
+            User.last_name,
+            User.first_name,
+            User.middle_name,
+            User.present_count,
+            User.late_count,
+            User.absent_count,
+        )
+        .filter(ClassList.id == classlist_id)  # Ensure filtering by the specific classlist_id
+        .filter(User.is_faculty.is_(False))
+        .filter(ClassList.faculty_creator == current_user)
+        .all()
+    )
 
     # Create CSV data
     csv_data = io.StringIO()
@@ -311,9 +327,27 @@ def export_classlist_attendance_csv():
     csv_writer.writerow(['Last Name', 'First Name', 'Middle Name', 'Present', 'Late', 'Absent'])
 
     for student in students:
+        user_id = student.User.id  # Extract user_id from the result tuple
+        # Count attendance directly in the query for the specific classlist
+        present_count = (
+            db.session.query(func.count())
+            .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'PRESENT', Attendance.classlist_id == classlist_id)
+            .scalar()
+        )
+        late_count = (
+            db.session.query(func.count())
+            .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'LATE', Attendance.classlist_id == classlist_id)
+            .scalar()
+        )
+        absent_count = (
+            db.session.query(func.count())
+            .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'ABSENT', Attendance.classlist_id == classlist_id)
+            .scalar()
+        )
+
         # Add student data to each row
-        csv_writer.writerow([student.last_name, student.first_name, student.middle_name,
-                             student.present_count, student.late_count, student.absent_count])
+        csv_writer.writerow([student.User.last_name, student.User.first_name, student.User.middle_name,
+                             present_count, late_count, absent_count])
 
     # Prepare response
     response = Response(
@@ -325,6 +359,9 @@ def export_classlist_attendance_csv():
 
     return response
 
+
+
+
 @core_bp.route('/upload_classlist', methods=['POST'])
 @login_required
 @check_is_confirmed
@@ -333,6 +370,8 @@ def upload_classlist():
     try:
         school_year = request.form.get('school_year')
         semester = request.form.get('semester')
+        subject_name = request.form.get('subject_name')
+        section_code = request.form.get('section_code')
 
         # Assuming 'files[]' is the name attribute of your file input in the form
         uploaded_files = request.files.getlist('files[]')
@@ -344,7 +383,7 @@ def upload_classlist():
 
             try:
                 # Call your function here without saving to the local file system
-                read_uploaded(file, school_year, semester)
+                read_uploaded(file, school_year, semester, subject_name, section_code)
                 flash('Data successfully saved to the database.')
             except ValueError as e:
                 flash(f'Error processing file: {str(e)}')
@@ -355,7 +394,7 @@ def upload_classlist():
         # Handle other exceptions or errors
         flash(f"Error: {e}")
         return redirect(request.url)
-
+    
 @core_bp.route('/qrscanner')
 @login_required
 @check_is_confirmed
@@ -363,6 +402,15 @@ def upload_classlist():
 def qrscanner():
     classlists = db.session.query(ClassList).filter(ClassList.faculty_creator == current_user).all()
     return render_template('core/faculty/qrscanner.html', classlists=classlists)
+
+@core_bp.route('/classlist_details/<classlist_id>')
+@login_required
+@check_is_confirmed
+@admin_required
+def classlist_details(classlist_id):
+    classlist_entry = ClassList.query.get_or_404(classlist_id)
+    return render_template('core/classlist_details.html', classlist_entry=classlist_entry, users=classlist_entry.students)
+
 
 @core_bp.route('/send_absents', methods=['POST'])
 @login_required
@@ -372,8 +420,8 @@ def send_absents():
     classlist_id = request.form['classlistId']
 
     # if a user's last attendance is more than an hour ago, or if it does not exist, add to absents list
-    threshold_time = datetime.now() - timedelta(hours=1)
-    
+    threshold_time = datetime.now(pytz.timezone('Asia/Manila')) - timedelta(hours=1)
+
     absents = (
         db.session.query(User)
         .join(assoc)
@@ -393,6 +441,7 @@ def send_absents():
 
     # Return a response if necessary
     return 'Success'
+
 
 @core_bp.route('/get_qr', methods=['POST'])
 @login_required
@@ -426,6 +475,35 @@ def get_qr():
 @check_is_confirmed
 def student_scanner():
     return render_template("core/student/qrscanner.html")
+
+@core_bp.route('/join_classlist', methods=['GET', 'POST'])
+@student_required
+@login_required
+@check_is_confirmed
+def join_classlist():
+    if request.method == 'POST':
+        code = request.form.get('code')
+
+        # Check if the code exists
+        classlist = db.session.query(ClassList).filter_by(code=code).first()
+
+        if classlist:
+            # Check if the student is already in the classlist
+            if classlist in current_user.classlists:
+                flash('You are already in this classlist.', 'info')
+            else:
+                # Associate the student with the classlist
+                current_user.classlists.append(classlist)
+                db.session.commit()
+                flash('You have successfully joined the classlist.', 'success')
+                return redirect(url_for('core.home'))
+        else:
+            flash('Invalid code. Please try again.', 'danger')
+
+    return render_template('core/student/join_classlist.html')
+
+
+
 
 @core_bp.route('/show_qrcode')
 @student_required

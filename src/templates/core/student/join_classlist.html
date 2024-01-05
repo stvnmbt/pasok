@@ -1,0 +1,11 @@
+{% extends "core/sidebar.html" %}
+
+{% block body %}
+
+  <h2>Join Classlist</h2>
+  <form method="post" action="{{ url_for('core.join_classlist') }}">
+    <label for="code">Enter Classlist Code:</label>
+    <input type="text" name="code" required>
+    <button type="submit">Join Classlist</button>
+  </form>
+{% endblock %}
