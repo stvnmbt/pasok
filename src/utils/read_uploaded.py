@@ -5,29 +5,26 @@ from src import db
 from src.accounts.models import ClassList, User
 from src.utils.email import send_qr_email
 from src.utils.generate_qr import generate_qr_path
+import string
+import random
 
+def generate_random_code(length=6):
+    characters = string.ascii_letters + string.digits
+    return ''.join(random.choice(characters) for i in range(length))
 
-def read_uploaded(file, school_year, semester):
+def read_uploaded(file, school_year, semester, subject_name, section_code):
     try:
         # Read CSV file and decode it using latin1 encoding, treat the first row as headers
         data = pd.read_csv(file, encoding='latin1', header=None)
 
-        subject_name = str(data.iloc[0, 1]).strip()
-        section_code = str(data.iloc[0, 5]).strip()
-        print(f"Subject Name: {subject_name}, Section Name: {section_code}")
-
         try:
-            # Check if any required field is missing
-            if not all([subject_name, section_code]):
-                raise ValueError("Missing values in subject or section information.")
-
             # Check if a ClassList with the same attributes already exists
             classlist_entry = db.session.query(ClassList).filter(
                 ClassList.subject_name==subject_name,
                 ClassList.section_code==section_code,
-                ClassList.school_year==int(school_year),
-                ClassList.semester==semester,
-                ClassList.faculty_creator==current_user,
+                ClassList.school_year == int(school_year),
+                ClassList.semester == semester,
+                ClassList.faculty_creator == current_user,
             ).first()
 
             if not classlist_entry:
@@ -42,6 +39,9 @@ def read_uploaded(file, school_year, semester):
                 # Associate the classlist with the current faculty user
                 classlist_entry.faculty_creator = current_user
 
+                code = generate_random_code()
+                classlist_entry.code = code  # Change this line to set the code attribute
+
                 db.session.add(classlist_entry)
 
                 # Commit changes to the database to get the ID for classlist_entry
@@ -49,7 +49,7 @@ def read_uploaded(file, school_year, semester):
             else:
                 print("ClassList with the same attributes already exists. You may want to update it or skip.")
 
-            for index, row in data.iloc[3:].iterrows():
+            for index, row in data.iloc[1:].iterrows():
                 # Debugging: Print row information
                 print(f"Processing row {index} - {row}")
 
@@ -64,9 +64,6 @@ def read_uploaded(file, school_year, semester):
                 first_name = str(row[2]).strip()
                 middle_name = str(row[3]).strip()
                 email = str(row[4]).strip()
-                #mobile_number = str(row[5]).strip()
-                #delivery_mode = str(row[6]).strip()
-                #remarks = str(row[7]).strip()
 
                 # Check if any required field is missing
                 if not all([student_number, last_name, first_name, email]):
@@ -74,7 +71,7 @@ def read_uploaded(file, school_year, semester):
                     continue  # Skip to the next iteration if there are missing values
 
                 # Query or create the user based on the email
-                existing_user = db.session.query(User).filter(User.email==email).first()
+                existing_user = db.session.query(User).filter(User.email == email).first()
 
                 if existing_user:
                     # Check if the association already exists before adding the user to the classlist
@@ -124,3 +121,4 @@ def read_uploaded(file, school_year, semester):
     except Exception as e:
         print(f"Error: {e}")
         raise  # Re-raise the exception for further handling
+

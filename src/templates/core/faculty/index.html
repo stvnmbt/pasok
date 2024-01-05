@@ -118,30 +118,31 @@
     }
 
     function downloadAction(classlist_id, classlist_subject, classlist_section, classlist_school_year, classlist_semester) {
-        console.log(classlist_id);  
-        $.ajax({
-            url: `/export_attendance_csv?classlist_id=${classlist_id}`,
-            method: 'GET',
-            xhrFields: {
-                responseType: 'blob' // Set the expected response type to blob
-            },
-            success: function (data) {
-                console.log('WTF' + classlist_id + classlist_subject + classlist_section)
-                var a = document.createElement('a');
-                var url = window.URL.createObjectURL(data);
-                a.href = url;
-                a.download = `attendance_report_[${classlist_school_year}_${classlist_semester} Semester]_${classlist_subject}_${classlist_section}.csv`;
-                document.body.append(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-            },
-            error: function (xhr, status, error) {
-                console.error(`Error downloading attendance records for subject ${classlist_subject} and section $classlist_{section}:`, error);
-                alert(`Failed to download attendance records for subject ${classlist_subject} and section ${classlist_section}. Please try again later.`);
-            }
-        });
-    }
+    console.log(classlist_id);  
+    $.ajax({
+        url: `/export_attendance_csv?classlist_id=${classlist_id}`,
+        method: 'GET',
+        xhrFields: {
+            responseType: 'blob' // Set the expected response type to blob
+        },
+        success: function (data) {
+            console.log('WTF' + classlist_id + classlist_subject + classlist_section)
+            var a = document.createElement('a');
+            var url = window.URL.createObjectURL(data);
+            a.href = url;
+            a.download = `attendance_report_[${classlist_school_year}_${classlist_semester} Semester]_${classlist_subject}_${classlist_section}.csv`;
+            document.body.append(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
+        },
+        error: function (xhr, status, error) {
+            console.error(`Error downloading attendance records for subject ${classlist_subject} and section ${classlist_section}:`, error);
+            alert(`Failed to download attendance records for subject ${classlist_subject} and section ${classlist_section}. Please try again later.`);
+        }
+    });
+}
+
 
     $(document).ready(function () {
         function handleFormSelectionChange() {

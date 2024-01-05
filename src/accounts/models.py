@@ -20,7 +20,6 @@ assoc = db.Table(
     db.Column('user_id', db.Integer, db.ForeignKey('user.id', ondelete='CASCADE')),
     db.Column('classlist_id', db.Integer, db.ForeignKey('classlist.id', ondelete='CASCADE')),
 )
-
 class ClassList(db.Model):
     __tablename__ = "classlist"
     
@@ -29,6 +28,7 @@ class ClassList(db.Model):
     school_year = db.Column(db.Integer, nullable=False)
     semester = db.Column(Enum(Semester, values_callable=lambda x: [str(e.value) for e in Semester]), nullable=False)
     section_code = db.Column(db.String(100), nullable=False)
+    code = db.Column(db.String(20), unique=True, nullable=True)  # Add this field
 
     students = db.relationship(
         'User',
@@ -36,7 +36,6 @@ class ClassList(db.Model):
         back_populates='classlists',
         lazy='dynamic'
     )
-
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     user_classlist = db.relationship('User', back_populates='classlists')
     faculty_creator = db.relationship('User', back_populates='created_classlists', overlaps="user_classlist")
@@ -46,7 +45,7 @@ class ClassList(db.Model):
         back_populates='classlist',
         cascade='all, delete-orphan',
     )
-
+    
 class Attendance(db.Model):
     __tablename__ = "attendance"
 
@@ -97,7 +96,7 @@ class User(db.Model,UserMixin):
         self.first_name = first_name
         self.middle_name = middle_name
         self.last_name = last_name
-        self.created_on = datetime.now()
+        self.created_on = datetime.utcnow()
         self.is_faculty = is_faculty
         self.is_confirmed = is_confirmed
         self.confirmed_on = confirmed_on
