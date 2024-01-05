@@ -18,6 +18,7 @@ from src.utils.check_password import is_password_complex
 from src.utils.count_attendance import count_attendance
 from src.utils.decorators import admin_required, check_is_confirmed, student_required
 from src.utils.generate_qr import generate_qr
+from src.utils.qrtoken import generate_qrtoken, validate_qrtoken
 from src.utils.read_uploaded import read_uploaded
 from src.utils.scanner import add_absent, add_attendance
 
@@ -33,7 +34,7 @@ def home():
         classlists = db.session.query(ClassList).filter(ClassList.faculty_creator==user).all()
         return render_template("core/faculty/index.html", classlists=classlists)
     else:
-        return student_scanner()
+        return join_classlist()
 
 @core_bp.route('/account_settings', methods=['GET', 'POST'])
 @login_required
@@ -465,12 +466,43 @@ def get_qr():
         return ('Success!', 200)
     return ('', 204)
 
-@core_bp.route('/qrgenerator')
+@core_bp.route('/qrgenerator', methods=['GET', 'POST'])
 @login_required
 @check_is_confirmed
 @admin_required
 def qrgenerator():
-    return render_template("core/faculty/qrgenerator.html")
+    if request.method == 'POST':
+        classlist_id = request.form.get('classlist_id')
+
+        # Check if the user has permission to access this classlist
+        classlist = ClassList.query.get(classlist_id)
+        if not classlist or classlist.faculty_creator != current_user:
+            flash('Invalid classlist selection', 'danger')
+            return redirect(url_for('core.qrgenerator'))
+
+        # Generate a unique token for the QR code based on classlist_id
+        token = generate_qrtoken(classlist_id)
+
+        # Save the token in the database or any other storage mechanism
+        # You may want to create a new model for tokens and associate it with classlists
+        # For simplicity, we assume the token data is stored directly in the ClassList model
+        classlist.token_data = token
+        db.session.commit()
+
+        # Construct the URL with the token
+        url_with_token = url_for('core.qr_attendance', token=token, _external=True)
+
+        # Generate the QR code
+        qr_image = generate_qr(url_with_token)
+
+        classlistname = f"{classlist.subject_name} {classlist.section_code}"
+
+        return render_template("core/faculty/qrcode.html", qr_image=qr_image, classlistname=classlistname)
+
+    # Fetch classlists to populate the dropdown
+    classlists = db.session.query(ClassList).filter(ClassList.faculty_creator == current_user).all()
+
+    return render_template("core/faculty/qrgenerator.html", classlists=classlists)
 
 #################
 # STUDENT VIEWS
@@ -508,9 +540,6 @@ def join_classlist():
             flash('Invalid code. Please try again.', 'danger')
 
     return render_template('core/student/join_classlist.html')
-
-
-
 
 @core_bp.route('/show_qrcode')
 @student_required
@@ -560,3 +589,22 @@ def download_qr_code():
 
     # Send the file for download
     return send_file(image_io, mimetype='image/png', as_attachment=True, download_name=f'{current_user.last_name}, {current_user.first_name}_qr_code.png')
+
+@core_bp.route('/qr_attendance/<token>')
+@login_required
+@check_is_confirmed
+@student_required
+def qr_attendance(token):
+    # Check the validity of the token and retrieve associated information
+    # You may want to implement a function to validate and fetch data based on the token
+    # For simplicity, let's assume you have a function named validate_token(token) that returns classlist_id
+    classlist_id = validate_qrtoken(token)
+
+    if classlist_id:
+        # Create an attendance record for the current user for the specified classlist
+        add_attendance(current_user.id, classlist_id, Status.PRESENT)
+        flash('Attendance recorded successfully', 'success')
+    else:
+        flash('Invalid token', 'danger')
+
+    return redirect(url_for('core.home'))

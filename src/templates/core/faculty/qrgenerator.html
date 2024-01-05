@@ -9,6 +9,20 @@
     <br><br>
 </div>
 
+<h2>Generate QR Code</h2>
+
+<form method="POST" action="{{ url_for('core.qrgenerator') }}">
+<div class="form-group">
+    <label for="classlist">Select Classlist:</label>
+    <select class="form-control" id="classlist" name="classlist_id" required>
+    {% for classlist in classlists %}
+        <option value="{{ classlist.id }}">{{ classlist.subject_name }} - {{ classlist.section_code }}</option>
+    {% endfor %}
+    </select>
+</div>
+<button type="submit" class="btn btn-primary">Generate QR Code</button>
+</form>
+
 <script>
 
 </script>

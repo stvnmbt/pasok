@@ -1,0 +1,53 @@
+{% extends "core/sidebar.html" %}
+
+{% block body %}
+    <div class="qr-code-container">
+        <h1 class="header-text">QR Code for {{ classlistname }}</h1>
+        <p>Instruct students to scan this QR code to record their attendance.</p>
+        <hr>
+        <div class="qr-code-image-container">
+            <img src="data:image/png;base64, {{ qr_image }}" alt="QR Code" class="qr-code-img">
+        </div>
+    </div>
+
+    <style>
+
+        .box{
+        -ms-flex: 1 1 auto;
+        flex: 1 1 auto;
+        margin-top: 17px;
+        padding: 1.25rem;
+        border: 0.001px solid rgba(0, 0, 0, 0.16);
+        border-top: 5px solid maroon;
+        border-radius: 10px;
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;
+    }
+        .box-qr-code{
+        -ms-flex: 1 1 auto;
+        flex: 1 1 auto;
+        margin-top: 17px;
+        padding: 1.25rem;
+        border: 0.001px solid rgba(0, 0, 0, 0.16);
+        border-top: 5px solid maroon;
+        border-radius: 10px;
+        box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 2px;
+    }
+        .qr-code-container {
+            text-align: center;
+        }
+        .header-text {
+            font-size: 35px;
+            font-weight: bold;
+            color: black;
+            margin-bottom: 10px;
+            margin-top: 25px;
+        }
+        .qr-code-image-container {
+            position: relative;
+        }
+        .qr-code-img {
+            max-width: 100%;
+            height: auto;
+        }
+    </style>
+{% endblock %}

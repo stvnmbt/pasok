@@ -28,7 +28,7 @@
             <input type="text" id="subject_name" name="subject_name" class="form-control">
         </div>
         <div class="mb-3">
-            <label for="section_code" class="form-label">Section Code:</label>
+            <label for="section_code" class="form-label">Course, Year, and Section:</label>
             <input type="text" id="section_code" name="section_code" class="form-control">
         </div>
         <!-- Add the submit button -->
@@ -37,7 +37,7 @@
                 <!-- File upload section -->
                 <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple onchange="displaySelectedFile()">
                 <label class="btn btn-link" for="classListFile" style="background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">
-                    <i class="fas fa-upload"></i> Upload Class List </label>
+                    <i class="fas fa-upload"></i> Select Class List </label>
                 <button type="button" class="btn btn-link" onclick="handleFileUpload()" style="margin-left:20px; background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">Submit</button>
                 <p id="selectedFile" class="mt-2"></p> <!-- Display the selected file name -->
             </div>
