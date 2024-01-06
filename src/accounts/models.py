@@ -1,9 +1,11 @@
-from datetime import datetime
-from flask_login import UserMixin
-from src import bcrypt, db
-from sqlalchemy import Enum, func
 import enum
-from sqlalchemy.ext.hybrid import hybrid_method
+from datetime import datetime
+
+from flask_login import UserMixin
+from sqlalchemy import Enum
+
+from src import bcrypt, db
+
 
 class Status(enum.Enum):
     PRESENT = 'PRESENT'
