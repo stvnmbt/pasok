@@ -2,10 +2,61 @@
 
 {% block body %}
 
-  <h2>Join Classlist</h2>
-  <form method="post" action="{{ url_for('core.join_classlist') }}">
-    <label for="code">Enter Classlist Code:</label>
-    <input type="text" name="code" required>
-    <button type="submit">Join Classlist</button>
-  </form>
+<div style="text-align: center;">
+    <h2 class="header-text">Join Classlist</h1>
+    <hr>
+
+    <form method="post" action="{{ url_for('core.join_classlist') }}" style="max-width: 400px; margin: auto; text-align: left;">
+        <div class="mb-3">
+            <label for="code" class="form-label">Enter Classlist Code:</label>
+            <input type="text" name="code" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Join Classlist</button>
+    </form>
+
+    <h2 class="header-text">Your Joined Classlists</h1>
+    <hr>
+
+    <div class="table-responsive">
+        <table class="table datatables table-bordered table-condensed table-striped p-0 m-0 dataTable no-footer dtr-inline" id="JoinedClasslistsTable" role="grid" aria-describedby="JoinedClasslistsTable_info" style="width: 100%; border: 1px solid #696969; border-radius: 10px;">
+            <thead>
+                <tr role="row">
+                    <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Subject Name</th>
+                    <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Section Code</th>
+                    <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">School Year</th>
+                    <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Semester</th>
+                    <th class="sorting_disabled" rowspan="1" colspan="1" style="background-color: #701c1c; color: white;">Professor</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if current_user.classlists %}
+                    {% for classlist in current_user.classlists %}
+                        <tr role="row" style="background-color: #f9f9f9;">
+                            <td>{{ classlist.subject_name }}</td>
+                            <td>{{ classlist.section_code }}</td>
+                            <td>{{ classlist.school_year }}</td>
+                            <td>{{ classlist.semester.value }}</td>
+                            <td>{{ classlist.faculty_creator.first_name }} {{ classlist.faculty_creator.last_name }}</td>
+                        </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr role="row" style="background-color: #f9f9f9;">
+                        <td colspan="5">You haven't joined any classlists yet.</td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    .header-text {
+        font-size: 35px;
+        font-weight: bold;
+        color: black;
+        margin-bottom: 10px;
+        margin-top: 25px;
+    }
+</style>
+
 {% endblock %}
