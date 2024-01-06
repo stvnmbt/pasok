@@ -8,7 +8,7 @@ from flask_login import current_user, login_required, login_user, logout_user
 from src import bcrypt, db
 from src.accounts.models import User
 from src.accounts.token import confirm_token, generate_token
-from src.utils.check_password import is_password_complex
+from src.utils.password import is_password_complex
 from src.utils.decorators import logout_required
 from src.utils.email import send_email
 

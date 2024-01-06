@@ -14,7 +14,7 @@ from sqlalchemy import func
 
 from src import db
 from src.accounts.models import Attendance, ClassList, Status, User, assoc
-from src.utils.check_password import is_password_complex
+from src.utils.password import is_password_complex
 from src.utils.count_attendance import count_attendance
 from src.utils.decorators import admin_required, check_is_confirmed, student_required
 from src.utils.generate_qr import generate_qr
