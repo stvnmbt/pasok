@@ -464,6 +464,7 @@ def get_qr():
             #print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
         add_attendance(int(s[0]), int(s[1]), int(s[2]))
         return ('Success!', 200)
+
     return ('', 204)
 
 @core_bp.route('/qrgenerator', methods=['GET', 'POST'])
