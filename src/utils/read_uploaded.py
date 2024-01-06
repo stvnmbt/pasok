@@ -64,7 +64,7 @@ def read_uploaded(file, school_year, semester, subject_name, section_code):
                 student_number = str(row[0]).strip()
                 last_name = str(row[1]).strip()
                 first_name = str(row[2]).strip()
-                middle_name = str(row[3]).strip()
+                middle_name = str(row[3]).strip() if not pd.isna(row[3]) else ''
                 email = str(row[4]).strip()
 
                 # Check if any required field is missing
