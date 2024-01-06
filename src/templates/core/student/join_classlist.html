@@ -7,11 +7,15 @@
     <hr>
 
     <form method="post" action="{{ url_for('core.join_classlist') }}" style="max-width: 400px; margin: auto; text-align: left;">
-        <div class="mb-3">
+        <div class="mb-3" style="text-align: center;">
             <label for="code" class="form-label">Enter Classlist Code:</label>
             <input type="text" name="code" class="form-control" required>
         </div>
-        <button type="submit" class="btn btn-primary">Join Classlist</button>
+        <div class="mb-3" style="text-align: center;">
+            <button type="submit" class="btn btn-link"
+            style="margin-left:1px; background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 45px; font-family: roboto; ">Join Class List</button>
+        </div>
+        
     </form>
 
     <h2 class="header-text">Your Joined Classlists</h1>
