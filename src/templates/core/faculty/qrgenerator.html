@@ -4,60 +4,23 @@
 
 <div class="text-center">
     <h1 class="h3 mb-4"><strong>QR Generator</strong></h1>
-
-
-    <br><br>
+    <p>Generate QR code for your students to scan and record their attendance</p>
 </div>
 
-<h2>Generate QR Code</h2>
 
 <form method="POST" action="{{ url_for('core.qrgenerator') }}">
-<div class="form-group">
-    <label for="classlist">Select Classlist:</label>
-    <select class="form-control" id="classlist" name="classlist_id" required>
-    {% for classlist in classlists %}
-        <option value="{{ classlist.id }}">{{ classlist.subject_name }} - {{ classlist.section_code }}</option>
-    {% endfor %}
-    </select>
-</div>
-<button type="submit" class="btn btn-primary">Generate QR Code</button>
-</form>
-
-<script>
-
-</script>
-
-<style>
-    #html5-qrcode-button-camera-start {
-        background-color: #800000;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-       
-    }
-    #html5-qrcode-button-camera-stop {
-        background-color: #800000;
-        color: white;
-        padding: 10px 20px;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-    }
-    #html5-qrcode-anchor-scan-type-change{
-        margin-top: 10px;
-        font-size: 15px;
-    }
-    #html5-qrcode-button-camera-permission{
-    background-color: #800000;
-        color: white;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        width: 150px;
-    }
-</style>
+    <div class="mb-3">
+        <label for="classlist">Select Classlist:</label>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <select class="form-select" id="classlist" name="classlist_id" required>
+                {% for classlist in classlists %}
+                    <option value="{{ classlist.id }}">{{ classlist.subject_name }} - {{ classlist.section_code }}</option>
+                {% endfor %}
+                </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-link" style="margin-left:20px; background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">Generate QR Code</button>
+    </form>
 
 
 {% endblock %}

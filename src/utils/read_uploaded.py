@@ -64,7 +64,7 @@ def read_uploaded(file, school_year, semester, subject_name, section_code):
                 student_number = str(row[0]).strip()
                 last_name = str(row[1]).strip()
                 first_name = str(row[2]).strip()
-                middle_name = str(row[3]).strip()
+                middle_name = str(row[3]).strip() if not pd.isna(row[3]) else ''
                 email = str(row[4]).strip()
 
                 # Check if any required field is missing
@@ -100,17 +100,17 @@ def read_uploaded(file, school_year, semester, subject_name, section_code):
                     # Associate the user with the classlist
                     # SQLAlchemy will automatically handle the association in the database
                     classlist_entry.students.append(user)
+
+                    # db flush to get user_id
+                    db.session.flush()
+
+                    # send QR code to student email
+                    user_id = (db.session.query(User).filter(User.email == email).first()).get_id()
+                    subject = f'You have been enrolled to {subject_name} {section_code} classlist of PASOK attendance system'
+                    body = f'Welcome! You can now use the QR code image attached to use PASOK attendance system as a student.\nUse this password to login: {secure_password}'
+                    name = f'{last_name}, {first_name}'
+                    send_qr_email(email, subject, body, generate_qr_path(user_id, name))
                     
-                # db flush to get user_id
-                db.session.flush()
-
-                # send QR code to student email
-                user_id = (db.session.query(User).filter(User.email == email).first()).get_id()
-                subject = f'You have been enrolled to {subject_name} {section_code} classlist of PASOK attendance system'
-                body = f'Welcome! You can now use the QR code image attached to use PASOK attendance system as a student.\nUse this password to login: {secure_password}'
-                name = f'{last_name}, {first_name}'
-                send_qr_email(email, subject, body, generate_qr_path(user_id, name))
-
             db.session.commit()
             print("Data successfully committed to the database.")
 

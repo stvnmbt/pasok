@@ -35,11 +35,13 @@
         <div class="row mb-3">
             <div class="col-auto">
                 <!-- File upload section -->
-                <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple onchange="displaySelectedFile()">
-                <label class="btn btn-link" for="classListFile" style="background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">
-                    <i class="fas fa-upload"></i> Select Class List </label>
-                <button type="button" class="btn btn-link" onclick="handleFileUpload()" style="margin-left:20px; background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">Submit</button>
-                <p id="selectedFile" class="mt-2"></p> <!-- Display the selected file name -->
+                <div class="mb-3">
+                    <label for="formFile" class="form-label">Upload a Class List:</label>
+                    <input class="form-control" type="file" id="classListFile" accept=".csv, .xlsx">
+                  </div>
+                
+                <button type="button" class="btn btn-link" onclick="handleFileUpload()"
+                    style="margin-left:1px; background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 45px; font-family: roboto; ">Submit</button>
             </div>
         </div>
         
@@ -115,9 +117,6 @@
             return;
         }
 
-        // Display the selected file name
-        document.getElementById('selectedFile').innerText = 'Selected File: ' + fileInput.files[0].name;
-
         var formData = new FormData();
 
         // Add the selected files to the FormData object
@@ -174,16 +173,6 @@
         .catch(error => {
             console.error('Error:', error);
         });
-    }
-
-    // Function to display the selected file name
-    function displaySelectedFile() {
-        var fileInput = document.getElementById('classListFile');
-        if (fileInput.files.length > 0) {
-            document.getElementById('selectedFile').innerText = 'Selected File: ' + fileInput.files[0].name;
-        } else {
-            document.getElementById('selectedFile').innerText = '';
-        }
     }
 </script>
 {% endblock %}
