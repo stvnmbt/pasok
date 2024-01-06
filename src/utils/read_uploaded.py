@@ -8,6 +8,8 @@ from src.utils.generate_qr import generate_qr_path
 import string
 import random
 
+from src.utils.password import generate_random_string
+
 def generate_random_code(length=6):
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for i in range(length))
@@ -82,10 +84,13 @@ def read_uploaded(file, school_year, semester, subject_name, section_code):
                     else:
                         print("User is already associated with the classlist.")
                 else:
+                    secure_password = generate_random_string()
+                    print(f"New user. Adding the user to the classlist with password: {secure_password}")
+
                     # Create a new user and associate with the classlist
                     user = User(
                         email=email,
-                        password=f'{first_name}{last_name}',
+                        password=secure_password,
                         first_name=first_name,
                         middle_name=middle_name,
                         last_name=last_name,
@@ -95,15 +100,14 @@ def read_uploaded(file, school_year, semester, subject_name, section_code):
                     # Associate the user with the classlist
                     # SQLAlchemy will automatically handle the association in the database
                     classlist_entry.students.append(user)
-                    print(f"New user. Adding the user to the classlist with password: {user.password}")
-
+                    
                 # db flush to get user_id
                 db.session.flush()
 
                 # send QR code to student email
                 user_id = (db.session.query(User).filter(User.email == email).first()).get_id()
                 subject = f'You have been enrolled to {subject_name} {section_code} classlist of PASOK attendance system'
-                body = 'Welcome! You can now use the QR code image attached to use PASOK attendance system as a student.'
+                body = f'Welcome! You can now use the QR code image attached to use PASOK attendance system as a student.\nUse this password to login: {secure_password}'
                 name = f'{last_name}, {first_name}'
                 send_qr_email(email, subject, body, generate_qr_path(user_id, name))
 
