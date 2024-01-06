@@ -5,7 +5,7 @@ from src.accounts.models import ClassList
 
 def generate_qrtoken(classlist_id):
     # Generate a secure random token based on classlist_id
-    token_data = f"{classlist_id}{secrets.token_hex(8)}"
+    token_data = f"{int(classlist_id):08d}{secrets.token_urlsafe(16)}"
     # Use base64 encoding to create a URL-safe token
     token = base64.urlsafe_b64encode(token_data.encode('utf-8')).decode('utf-8')
     return token
@@ -17,7 +17,8 @@ def validate_qrtoken(token):
         token_data = token_data_bytes.decode('utf-8')
         
         # Extract classlist_id from token data
-        classlist_id = int(token_data[:8])
+        classlist_id_str = token_data[:8]
+        classlist_id = int(classlist_id_str)
 
         # Check if the classlist_id exists in the database
         classlist = ClassList.query.get(classlist_id)
