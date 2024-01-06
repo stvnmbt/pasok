@@ -1,0 +1,26 @@
+{% extends "core/sidebar.html" %}
+
+{% block body %}
+
+<div class="text-center">
+    <h1 class="h3 mb-4"><strong>QR Generator</strong></h1>
+    <p>Generate QR code for your students to scan and record their attendance</p>
+</div>
+
+
+<form method="POST" action="{{ url_for('core.qrgenerator') }}">
+    <div class="mb-3">
+        <label for="classlist">Select Classlist:</label>
+        <div class="col-md-6 col-lg-3 mb-3">
+            <select class="form-select" id="classlist" name="classlist_id" required>
+                {% for classlist in classlists %}
+                    <option value="{{ classlist.id }}">{{ classlist.subject_name }} - {{ classlist.section_code }}</option>
+                {% endfor %}
+                </select>
+        </div>
+    </div>
+    <button type="submit" class="btn btn-link" style="margin-left:20px; background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">Generate QR Code</button>
+    </form>
+
+
+{% endblock %}

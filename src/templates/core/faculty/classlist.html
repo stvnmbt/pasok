@@ -22,15 +22,26 @@
                 <option value="SUMMER">Summer</option>
             </select>
         </div>
+        <!-- Add the subject code and section code input fields -->
+        <div class="mb-3">
+            <label for="subject_name" class="form-label">Subject Code:</label>
+            <input type="text" id="subject_name" name="subject_name" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label for="section_code" class="form-label">Course, Year, and Section:</label>
+            <input type="text" id="section_code" name="section_code" class="form-control">
+        </div>
         <!-- Add the submit button -->
         <div class="row mb-3">
             <div class="col-auto">
                 <!-- File upload section -->
-                <input type="file" id="classListFile" accept=".csv, .xlsx" style="display: none;" multiple onchange="displaySelectedFile()">
-                <label class="btn btn-link" for="classListFile" style="background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">
-                    <i class="fas fa-upload"></i> Upload Class List </label>
-                <button type="button" class="btn btn-link" onclick="handleFileUpload()" style="margin-left:20px; background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 25px; font-family: roboto; ">Submit</button>
-                <p id="selectedFile" class="mt-2"></p> <!-- Display the selected file name -->
+                <div class="mb-3">
+                    <label for="formFile" class="form-label">Upload a Class List:</label>
+                    <input class="form-control" type="file" id="classListFile" accept=".csv, .xlsx">
+                  </div>
+                
+                <button type="button" class="btn btn-link" onclick="handleFileUpload()"
+                    style="margin-left:1px; background-color: #800000; color: white; outline: 2px solid #800000; padding: 2px 45px; font-family: roboto; ">Submit</button>
             </div>
         </div>
         
@@ -49,7 +60,7 @@
             </li>
         {% endfor %}
     </ul>
-<div>
+</div>
 
 <script src="core.classlist.html" data-classlist-id="{{ classlistId|default(0) }}"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
@@ -88,54 +99,61 @@
 
     // Update this function to handle the file upload and trigger the Flask route
     function handleFileUpload() {
-    var fileInput = document.getElementById('classListFile');
-    var schoolYear = document.getElementById('school_year').value;
-    var semester = document.getElementById('semester').value;
+        var fileInput = document.getElementById('classListFile');
+        var schoolYear = document.getElementById('school_year').value;
+        var semester = document.getElementById('semester').value;
+        var subjectCode = document.getElementById('subject_name').value;
+        var sectionCode = document.getElementById('section_code').value;
 
-    // Check if a file is selected
-    if (fileInput.files.length === 0) {
-        alert('Please select a file before submitting.');
-        return;
-    }
-
-    // Display the selected file name
-    document.getElementById('selectedFile').innerText = 'Selected File: ' + fileInput.files[0].name;
-
-    var formData = new FormData();
-
-    // Add the selected files to the FormData object
-    for (var i = 0; i < fileInput.files.length; i++) {
-        formData.append('files[]', fileInput.files[i]);
-    }
-
-    // Add school_year and semester to the FormData object
-    formData.append('school_year', schoolYear);
-    formData.append('semester', semester);
-
-    // Use fetch to send a POST request to the Flask route
-    fetch('/upload_classlist', {
-        method: 'POST',
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Handle the response
-        if ('files' in data) {
-            // Display uploaded files
-            data.files.forEach(function(filename) {
-                var hasClasslist = '{{ filename in classlists_by_user[current_user.id] }}' === 'True';
-                var classlistId = classlists_by_user[current_user.id][filename];
-                createFileEntry(filename, hasClasslist, classlistId);
-            });
-
-        } else if ('error' in data) {
-            console.error('Error:', data.error);
+        // Check if a file is selected
+        if (fileInput.files.length === 0) {
+            alert('Please select a file before submitting.');
+            return;
         }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-    });
-}
+
+        // Check if subject code and section code are provided
+        if (!subjectCode || !sectionCode) {
+            alert('Please enter Subject Code and Section Code before submitting.');
+            return;
+        }
+
+        var formData = new FormData();
+
+        // Add the selected files to the FormData object
+        for (var i = 0; i < fileInput.files.length; i++) {
+            formData.append('files[]', fileInput.files[i]);
+        }
+
+        // Add school_year, semester, subject code, and section code to the FormData object
+        formData.append('school_year', schoolYear);
+        formData.append('semester', semester);
+        formData.append('subject_name', subjectCode);
+        formData.append('section_code', sectionCode);
+
+        // Use fetch to send a POST request to the Flask route
+        fetch('/upload_classlist', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Handle the response
+            if ('files' in data) {
+                // Display uploaded files
+                data.files.forEach(function(filename) {
+                    var hasClasslist = '{{ filename in classlists_by_user[current_user.id] }}' === 'True';
+                    var classlistId = classlists_by_user[current_user.id][filename];
+                    createFileEntry(filename, hasClasslist, classlistId);
+                });
+
+            } else if ('error' in data) {
+                console.error('Error:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        });
+    }
 
     function viewFileData(filename) {
         // Use fetch to get the file data
@@ -155,16 +173,6 @@
         .catch(error => {
             console.error('Error:', error);
         });
-    }
-
-    // Function to display the selected file name
-    function displaySelectedFile() {
-        var fileInput = document.getElementById('classListFile');
-        if (fileInput.files.length > 0) {
-            document.getElementById('selectedFile').innerText = 'Selected File: ' + fileInput.files[0].name;
-        } else {
-            document.getElementById('selectedFile').innerText = '';
-        }
     }
 </script>
 {% endblock %}
