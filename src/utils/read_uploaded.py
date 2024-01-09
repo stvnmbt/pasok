@@ -14,12 +14,19 @@ def generate_random_code(length=6):
     characters = string.ascii_letters + string.digits
     return ''.join(random.choice(characters) for i in range(length))
 
-def read_uploaded(file, school_year, semester, subject_name, section_code):
+def read_uploaded(file, school_year, semester):
     try:
         # Read CSV file and decode it using latin1 encoding, treat the first row as headers
         data = pd.read_csv(file, encoding='latin1', header=None)
 
+        subject_name = str(data.iloc[1, 4]).strip()
+        section_code = str(data.iloc[1, 5]).strip()
+
         try:
+            # Check if any required field is missing
+            if not all([subject_name, section_code]):
+                raise ValueError("Missing values in subject or section information.")
+            
             # Check if a ClassList with the same attributes already exists
             classlist_entry = db.session.query(ClassList).filter(
                 ClassList.subject_name==subject_name,
@@ -65,7 +72,9 @@ def read_uploaded(file, school_year, semester, subject_name, section_code):
                 last_name = str(row[1]).strip()
                 first_name = str(row[2]).strip()
                 middle_name = str(row[3]).strip() if not pd.isna(row[3]) else ''
-                email = str(row[4]).strip()
+                subject_name = str(row[4]).strip()
+                section_code = str(row[5]).strip()
+                email = str(row[6]).strip()
 
                 # Check if any required field is missing
                 if not all([student_number, last_name, first_name, email]):
