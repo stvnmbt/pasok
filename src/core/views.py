@@ -4,6 +4,7 @@ import io
 import json
 import os
 from datetime import datetime, timedelta
+from markupsafe import Markup
 import pytz
 from flask import (Blueprint, Response, current_app, flash, jsonify, redirect,
                    render_template, request, send_file, url_for)
@@ -29,6 +30,7 @@ core_bp = Blueprint("core", __name__)
 @login_required
 @check_is_confirmed
 def home():
+    flash(Markup('Do not forget to tell us what you think of our system <a href="https://forms.gle/NeQhNamP8MmJaizX7" class="alert-link">by answering our survey form!</a>'), "success")
     user = current_user
     if user.is_faculty:
         classlists = db.session.query(ClassList).filter(ClassList.faculty_creator==user).all()
@@ -106,8 +108,6 @@ def get_attendance_data():
             status_count.append(status_colors.get(status.value, '#000000'))  # Color
             data.append(status_count)
         
-        print("Data:", data)  
-
         return jsonify(data)
 
     except Exception as e:
@@ -360,9 +360,6 @@ def export_classlist_attendance_csv():
 
     return response
 
-
-
-
 @core_bp.route('/upload_classlist', methods=['POST'])
 @login_required
 @check_is_confirmed
@@ -371,29 +368,27 @@ def upload_classlist():
     try:
         school_year = request.form.get('school_year')
         semester = request.form.get('semester')
-        subject_name = request.form.get('subject_name')
-        section_code = request.form.get('section_code')
 
         # Assuming 'files[]' is the name attribute of your file input in the form
         uploaded_files = request.files.getlist('files[]')
 
         for file in uploaded_files:
             if file.filename == '':
-                flash('No selected file')
+                flash('No selected file', 'danger')
                 return redirect(request.url)
 
             try:
                 # Call your function here without saving to the local file system
-                read_uploaded(file, school_year, semester, subject_name, section_code)
-                flash('Data successfully saved to the database.')
+                read_uploaded(file, school_year, semester)
+                flash('Data successfully saved to the database.', 'success')
             except ValueError as e:
-                flash(f'Error processing file: {str(e)}')
+                flash(f'Error processing file: {str(e)}', 'danger')
 
         return redirect(request.url)
 
     except Exception as e:
         # Handle other exceptions or errors
-        flash(f"Error: {e}")
+        flash(f"Error: {e}", "danger")
         return redirect(request.url)
     
 @core_bp.route('/qrscanner')
@@ -464,6 +459,7 @@ def get_qr():
             #print(f'USERID {s}, TIMENOW {time_now}, LAST TIME {last_attendance.created}, TIMELAST {time_last}')
         add_attendance(int(s[0]), int(s[1]), int(s[2]))
         return ('Success!', 200)
+
     return ('', 204)
 
 @core_bp.route('/qrgenerator', methods=['GET', 'POST'])
