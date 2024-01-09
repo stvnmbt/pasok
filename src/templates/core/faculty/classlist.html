@@ -3,9 +3,9 @@
 
 {% block body %}
 <div class="container mt-0">
-    <h2 class="h3 mt-1"><strong>Class List</strong></h2>
+    <h2 class="h3 mt-1"><strong>Add a Class List</strong></h2>
     <br>
- 
+
     <form id="classlistForm">
         <div class="mb-3">
             <label for="school_year" class="form-label">Select School Year:</label>
@@ -22,15 +22,7 @@
                 <option value="SUMMER">Summer</option>
             </select>
         </div>
-        <!-- Add the subject code and section code input fields -->
-        <div class="mb-3">
-            <label for="subject_name" class="form-label">Subject Code:</label>
-            <input type="text" id="subject_name" name="subject_name" class="form-control">
-        </div>
-        <div class="mb-3">
-            <label for="section_code" class="form-label">Course, Year, and Section:</label>
-            <input type="text" id="section_code" name="section_code" class="form-control">
-        </div>
+        
         <!-- Add the submit button -->
         <div class="row mb-3">
             <div class="col-auto">
@@ -46,6 +38,8 @@
         </div>
         
     </form>
+
+    <hr>
 
     <!-- Display a list of class lists with links to view details -->
     <h2 class="h4 mt-4"><strong>Class List Collection</strong></h2>
@@ -102,18 +96,10 @@
         var fileInput = document.getElementById('classListFile');
         var schoolYear = document.getElementById('school_year').value;
         var semester = document.getElementById('semester').value;
-        var subjectCode = document.getElementById('subject_name').value;
-        var sectionCode = document.getElementById('section_code').value;
 
         // Check if a file is selected
         if (fileInput.files.length === 0) {
             alert('Please select a file before submitting.');
-            return;
-        }
-
-        // Check if subject code and section code are provided
-        if (!subjectCode || !sectionCode) {
-            alert('Please enter Subject Code and Section Code before submitting.');
             return;
         }
 
@@ -124,11 +110,8 @@
             formData.append('files[]', fileInput.files[i]);
         }
 
-        // Add school_year, semester, subject code, and section code to the FormData object
         formData.append('school_year', schoolYear);
         formData.append('semester', semester);
-        formData.append('subject_name', subjectCode);
-        formData.append('section_code', sectionCode);
 
         // Use fetch to send a POST request to the Flask route
         fetch('/upload_classlist', {
