@@ -11,35 +11,52 @@
                 <ul class="nav flex-sm-column flex-row flex-nowrap flex-shrink-1 flex-sm-grow-0 flex-grow-1 mb-sm-auto mb-0 justify-content-center align-items-center align-items-sm-start" id="menu">
                     {% if current_user.is_faculty %}
                     <li class="nav-item ">
-                        <a href="{{ url_for('core.home') }}" class="nav-link px-sm-0 px-2 ms-2">
-                            <i class="fa-solid fa-gauge" style="color:#6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Dashboard</span>
+                        <a href="{{ url_for('core.home') }}" class="nav-link px-sm-0 px-2 ms-2 text-center"> 
+                            <i class="fa-solid fa-gauge" style="color:#6c757d;"></i> 
+                            <span class="d-block d-sm-none" style="color: black; font-size: 10px;">Dashboard</span> 
+                            <span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Dashboard</span> 
                         </a>
                     </li>
-                    <li class="nav-item ">
-                        <a href="{{ url_for('core.realtime') }}" class="nav-link px-sm-0 px-2 ms-2">
-                        <i class="fa-regular fa-clock" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Real Time Attendance</span>
+                    <li class="nav-item">
+                        <a href="{{ url_for('core.realtime') }}" class="nav-link px-sm-0 px-2 ms-2 ">
+                            <i class="fa-regular fa-clock" style="color: #6c757d; "></i> 
+                            <span class="d-block d-sm-none" style="color: black; font-size: 9px; ">Real Time</span> 
+                            <span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Real Time Attendance</span> 
                         </a>
                     </li>
-                    <li class="nav-item ">
-                        <a href="{{ url_for('core.records') }}" class="nav-link px-sm-0 px-2 ms-2">
-                        <i class="fa-solid fa-clipboard-list" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Student Records</span>
+                    
+                    <li class="nav-item">
+                        <a href="{{ url_for('core.records') }}" class="nav-link px-sm-0 px-2 ms-2 text-center"> 
+                            <i class="fa-solid fa-clipboard-list" style="color: #6c757d; "></i> 
+                            <span class="d-block d-sm-none" style="color: black; font-size: 9px;">Student Records</span> 
+                            <span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Student Records</span> 
                         </a>
                     </li>
-                    <li class="nav-item ">
-                        <a href=" {{ url_for('core.classlist') }}" class="nav-link px-sm-0 px-2 ms-2">
-                        <i class="fa-solid fa-list" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Class List</span>
+                    
+                    <li class="nav-item">
+                        <a href="{{ url_for('core.classlist') }}" class="nav-link px-sm-0 px-2 ms-2 text-center"> 
+                            <i class="fa-solid fa-list" style="color: #6c757d; ;"></i> 
+                            <span class="d-block d-sm-none" style="color: black; font-size: 9px;">Class List</span> 
+                            <span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">Class List</span> 
                         </a>
                     </li>
-                    <li class="nav-item ">
-                        <a href=" {{ url_for('core.qrscanner') }}" class="nav-link px-sm-0 px-2 ms-2">
-                        <i class="fa-solid fa-camera" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">QR Scanner</span>
+                    
+                    <li class="nav-item">
+                        <a href="{{ url_for('core.qrscanner') }}" class="nav-link px-sm-0 px-2 ms-2 text-center"> 
+                            <i class="fa-solid fa-camera" style="color: #6c757d; "></i> 
+                            <span class="d-block d-sm-none" style="color: black; font-size: 9px;">QR Scanner</span> 
+                            <span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">QR Scanner</span> 
                         </a>
                     </li>
-                    <li class="nav-item ">
-                        <a href=" {{ url_for('core.qrgenerator') }}" class="nav-link px-sm-0 px-2 ms-2">
-                        <i class="fa-solid fa-qrcode" style="color: #6c757d;"></i><span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">QR Generator</span>
+                    
+                    <li class="nav-item">
+                        <a href="{{ url_for('core.qrgenerator') }}" class="nav-link px-sm-0 px-2 ms-2 text-center"> 
+                            <i class="fa-solid fa-qrcode" style="color: #6c757d; "></i> 
+                            <span class="d-block d-sm-none" style="color: black; font-size: 9px;">QR Generator</span> 
+                            <span class="ms-1 d-none d-sm-inline" style="color: black; font-size: 15px;">QR Generator</span> 
                         </a>
                     </li>
+                    
                     {% else %}
                     <li class="nav-item">
                         <a href="{{ url_for('core.join_classlist') }}" class="nav-link px-sm-0 px-2 ms-2">
