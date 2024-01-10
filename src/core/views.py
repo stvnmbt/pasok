@@ -309,7 +309,7 @@ def export_classlist_attendance_csv():
             User.late_count,
             User.absent_count,
         )
-        .filter(ClassList.id == classlist_id)  # Ensure filtering by the specific classlist_id
+        .filter(ClassList.id == int(classlist_id))  # Ensure filtering by the specific classlist_id
         .filter(User.is_faculty.is_(False))
         .filter(ClassList.faculty_creator == current_user)
         .all()
@@ -332,17 +332,17 @@ def export_classlist_attendance_csv():
         # Count attendance directly in the query for the specific classlist
         present_count = (
             db.session.query(func.count())
-            .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'PRESENT', Attendance.classlist_id == classlist_id)
+            .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'PRESENT', Attendance.classlist_id == int(classlist_id))
             .scalar()
         )
         late_count = (
             db.session.query(func.count())
-            .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'LATE', Attendance.classlist_id == classlist_id)
+            .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'LATE', Attendance.classlist_id == int(classlist_id))
             .scalar()
         )
         absent_count = (
             db.session.query(func.count())
-            .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'ABSENT', Attendance.classlist_id == classlist_id)
+            .filter(Attendance.user_id == user_id, Attendance.attendance_status == 'ABSENT', Attendance.classlist_id == int(classlist_id))
             .scalar()
         )
 
@@ -579,13 +579,11 @@ def download_qr_code():
 @login_required
 #@check_is_confirmed
 def qr_attendance(token, classlistid):
-    tokenIsValid = validate_qrtoken(token)
+    lateness_minutes = 1
+    tokenIsValid = validate_qrtoken(token, lateness_minutes, current_user.id, classlistid)
 
-    if tokenIsValid:
-        # Create an attendance record for the current user for the specified classlist
-        add_attendance(current_user.id, False, classlistid)
-        flash('Attendance recorded successfully', 'success')
-    else:
-        flash('Invalid token', 'danger')
+    if not tokenIsValid:
+        flash('Attendance link has expired.', 'danger')
+        add_absent(current_user.id, classlistid, Status.ABSENT)
 
     return redirect(url_for('core.home'))
